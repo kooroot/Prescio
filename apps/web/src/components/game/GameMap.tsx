@@ -263,7 +263,8 @@ export function GameMap({ gameId }: { gameId: string }) {
                   x={room.cx - room.w / 2 + 4}
                   y={room.cy - room.h / 2 + 22}
                   width={room.w - 8}
-                  height={room.h - 26}
+                  height={Math.max(room.h - 26, players.length * 12 + 30)}
+                  style={{ overflow: "visible" }}
                 >
                   <div
                     xmlns="http://www.w3.org/1999/xhtml"
@@ -273,6 +274,7 @@ export function GameMap({ gameId }: { gameId: string }) {
                       gap: "3px",
                       justifyContent: "center",
                       alignItems: "flex-start",
+                      overflow: "visible",
                     }}
                   >
                     {players.map((p, i) => (
