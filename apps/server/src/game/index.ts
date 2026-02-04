@@ -38,3 +38,11 @@ export {
   getActiveGames,
   getGameCount,
 } from "./state.js";
+
+export {
+  addMessage,
+  addSystemMessage,
+  getMessages,
+  getRecentMessages,
+  DiscussionError,
+} from "./discussion.js";

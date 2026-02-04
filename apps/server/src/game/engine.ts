@@ -20,6 +20,7 @@ import {
 import { getGame, updateGame, deleteGame } from "./state.js";
 import { executeNightAuto, checkGameOver } from "./round.js";
 import { startVote, tallyVotes, allVotesCast, type VoteResult } from "./vote.js";
+import { agentManager } from "../agents/manager.js";
 
 // ============================================
 // Event Types
@@ -133,25 +134,69 @@ export class GameEngine extends EventEmitter {
 
   /**
    * Called when NIGHT timer expires.
-   * Execute auto-kills, check win condition, then move to REPORT.
+   * Let AI agents choose kill targets, then check win condition, then move to REPORT.
    */
   private processNight(gameId: string): void {
-    try {
-      const { game, kills } = executeNightAuto(gameId);
-      this.emit("nightKills", gameId, kills);
+    // Use agent manager for AI-driven kills, fallback to auto
+    agentManager
+      .runNightAction(gameId)
+      .then((agentKills) => {
+        const game = getGame(gameId);
+        if (!game) return;
 
-      // Check if game is over after kills
-      const winner = checkGameOver(game);
-      if (winner) {
-        this.endGame(game, winner);
-        return;
-      }
+        // If agents didn't kill anyone, fallback to auto
+        if (agentKills.length === 0) {
+          try {
+            const { game: updatedGame, kills } = executeNightAuto(gameId);
+            this.emit("nightKills", gameId, kills);
 
-      // Move to REPORT phase (body discovered)
-      this.transitionTo(gameId, Phase.REPORT);
-    } catch (err) {
-      this.emit("engineError", gameId, err instanceof Error ? err : new Error(String(err)));
-    }
+            const winner = checkGameOver(updatedGame);
+            if (winner) {
+              this.endGame(updatedGame, winner);
+              return;
+            }
+          } catch (err) {
+            this.emit("engineError", gameId, err instanceof Error ? err : new Error(String(err)));
+            return;
+          }
+        } else {
+          // Agent kills already executed via executeKill in manager
+          const kills = agentKills.map((k) => ({
+            killerId: k.killerId,
+            targetId: k.targetId,
+            round: game.round,
+            timestamp: Date.now(),
+          }));
+          this.emit("nightKills", gameId, kills);
+
+          const latestGame = getGame(gameId);
+          if (!latestGame) return;
+          const winner = checkGameOver(latestGame);
+          if (winner) {
+            this.endGame(latestGame, winner);
+            return;
+          }
+        }
+
+        // Move to REPORT phase
+        this.transitionTo(gameId, Phase.REPORT);
+      })
+      .catch((err) => {
+        this.emit("engineError", gameId, err instanceof Error ? err : new Error(String(err)));
+        // Fallback to auto on error
+        try {
+          const { game, kills } = executeNightAuto(gameId);
+          this.emit("nightKills", gameId, kills);
+          const winner = checkGameOver(game);
+          if (winner) {
+            this.endGame(game, winner);
+            return;
+          }
+          this.transitionTo(gameId, Phase.REPORT);
+        } catch (innerErr) {
+          this.emit("engineError", gameId, innerErr instanceof Error ? innerErr : new Error(String(innerErr)));
+        }
+      });
   }
 
   // ---- REPORT ----
@@ -170,6 +215,11 @@ export class GameEngine extends EventEmitter {
     updateGame(game);
     this.emit("phaseChange", game.id, Phase.DISCUSSION, game.round);
     this.schedulePhase(game.id, Phase.DISCUSSION);
+
+    // Trigger AI discussion (runs async, doesn't block phase timer)
+    agentManager.runDiscussion(game.id).catch((err) => {
+      console.error(`[Engine] Agent discussion error:`, err instanceof Error ? err.message : err);
+    });
   }
 
   // ---- VOTE ----
@@ -181,6 +231,17 @@ export class GameEngine extends EventEmitter {
     if (!updatedGame) return;
     this.emit("phaseChange", game.id, Phase.VOTE, updatedGame.round);
     this.schedulePhase(game.id, Phase.VOTE);
+
+    // Trigger AI voting (runs async)
+    agentManager
+      .runVoting(game.id)
+      .then(() => {
+        // Check if all votes are in after bots voted
+        this.onVoteCast(game.id);
+      })
+      .catch((err) => {
+        console.error(`[Engine] Agent voting error:`, err instanceof Error ? err.message : err);
+      });
   }
 
   /**
@@ -237,6 +298,7 @@ export class GameEngine extends EventEmitter {
     game.winner = winner;
     updateGame(game);
     this.emit("gameOver", game.id, winner, game);
+    agentManager.cleanup(game.id);
   }
 
   // ============================================

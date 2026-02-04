@@ -14,6 +14,7 @@ import {
   gameEngine,
   LobbyError,
 } from "../game/index.js";
+import { agentManager } from "../agents/manager.js";
 import { asyncHandler } from "./middleware.js";
 
 // ============================================
@@ -240,6 +241,9 @@ apiRouter.post(
 
     try {
       const startedGame = startGameLobby(gameId, requesterId);
+
+      // Initialize AI agents with personalities
+      agentManager.initializeAgents(startedGame);
 
       // Start the engine loop
       gameEngine.startLoop(startedGame.id);

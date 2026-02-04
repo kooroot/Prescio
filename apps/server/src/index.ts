@@ -28,6 +28,7 @@ import {
   RoundError,
   VoteError,
 } from "./game/index.js";
+import { agentManager } from "./agents/manager.js";
 import { apiRouter } from "./api/routes.js";
 import { requestLogger, corsMiddleware, errorHandler } from "./api/middleware.js";
 
@@ -99,6 +100,21 @@ function sendTo(clientId: string, event: ServerEvent): void {
     client.ws.send(serializeEvent(event));
   }
 }
+
+// ============================================
+// Agent Manager — Wire up chat broadcast
+// ============================================
+
+agentManager.setOnChatMessage((gameId, chatMsg) => {
+  broadcast(gameId, createServerEvent("CHAT_MESSAGE", chatMsg));
+});
+
+agentManager.setOnVoteCast((gameId, voterId) => {
+  broadcast(gameId, createServerEvent("VOTE_CAST", {
+    voterId,
+    hasVoted: true,
+  }));
+});
 
 wss.on("connection", (ws) => {
   const clientId = uuidv4();
@@ -320,6 +336,8 @@ function handleClientEvent(clientId: string, event: ClientEvent): void {
             }));
           }
         }
+        // Initialize AI agents with personalities
+        agentManager.initializeAgents(game);
         // Start the game engine loop
         gameEngine.startLoop(game.id);
         console.log(`[Game] Game ${game.code} started! Round 1`);
