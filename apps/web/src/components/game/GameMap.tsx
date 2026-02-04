@@ -310,11 +310,11 @@ export function GameMap({ gameId }: { gameId: string }) {
                 </foreignObject>
               )}
 
-              {/* Count badge */}
+              {/* Count badge — inside top-right corner */}
               {hasPlayers && (
-                <g transform={`translate(${room.cx + room.w / 2 - 8}, ${room.cy - room.h / 2 - 4})`}>
-                  <circle r={11} fill="#7c3aed" stroke="#a78bfa" strokeWidth={1.5} />
-                  <text textAnchor="middle" y={4} fill="white" fontSize="12" fontWeight="bold">
+                <g transform={`translate(${room.cx + room.w / 2 - 16}, ${room.cy - room.h / 2 + 14})`}>
+                  <circle r={10} fill="#7c3aed" stroke="#a78bfa" strokeWidth={1.5} />
+                  <text textAnchor="middle" y={4} fill="white" fontSize="11" fontWeight="bold">
                     {players.length}
                   </text>
                 </g>
