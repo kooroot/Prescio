@@ -236,10 +236,15 @@ export function GameMap({ gameId }: { gameId: string }) {
         })}
 
         {/* Room shapes */}
-        {ROOMS.map((room) => {
-          const players = playersByRoom[room.id] ?? [];
+        {ROOMS.map((roomDef) => {
+          const players = playersByRoom[roomDef.id] ?? [];
           const hasPlayers = players.length > 0;
-          const roomName = room.names[lang] ?? room.names.en;
+          const roomName = roomDef.names[lang] ?? roomDef.names.en;
+
+          // Expand room height based on player count
+          const pillRows = hasPlayers ? Math.ceil(players.length / 2) : 0;
+          const extraH = Math.max(0, (pillRows - 2) * 20);
+          const room = { ...roomDef, h: roomDef.h + extraH };
 
           return (
             <g key={room.id}>
@@ -258,78 +263,57 @@ export function GameMap({ gameId }: { gameId: string }) {
               </text>
 
               {/* Player pills via foreignObject */}
-              {hasPlayers && (() => {
-                // Show max 3 pills, then "+N"
-                const maxShow = 3;
-                const visible = players.slice(0, maxShow);
-                const extra = players.length - maxShow;
-
-                return (
-                  <foreignObject
-                    x={room.cx - room.w / 2 + 4}
-                    y={room.cy - room.h / 2 + 22}
-                    width={room.w - 8}
-                    height={room.h - 10}
-                    style={{ overflow: "visible" }}
+              {hasPlayers && (
+                <foreignObject
+                  x={room.cx - room.w / 2 + 4}
+                  y={room.cy - room.h / 2 + 22}
+                  width={room.w - 8}
+                  height={room.h - 10}
+                >
+                  <div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "2px",
+                      justifyContent: "center",
+                      alignItems: "flex-start",
+                    }}
                   >
-                    <div
-                      xmlns="http://www.w3.org/1999/xhtml"
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2px",
-                        justifyContent: "center",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      {visible.map((p, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "3px",
-                            padding: "1px 5px",
-                            borderRadius: "9999px",
-                            fontSize: "9px",
-                            fontWeight: 600,
-                            lineHeight: "14px",
-                            backgroundColor: p.isAlive ? p.color + "30" : "#1f2937",
-                            border: `1.5px solid ${p.isAlive ? p.color : "#374151"}`,
-                            color: p.isAlive ? "#fff" : "#6b7280",
-                            textDecoration: p.isAlive ? "none" : "line-through",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: "5px",
-                              height: "5px",
-                              borderRadius: "50%",
-                              backgroundColor: p.isAlive ? p.color : "#4b5563",
-                              flexShrink: 0,
-                            }}
-                          />
-                          {p.nickname}
-                        </span>
-                      ))}
-                      {extra > 0 && (
+                    {players.map((p, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: "1px 5px",
+                          borderRadius: "9999px",
+                          fontSize: "9px",
+                          fontWeight: 600,
+                          lineHeight: "14px",
+                          backgroundColor: p.isAlive ? p.color + "30" : "#1f2937",
+                          border: `1.5px solid ${p.isAlive ? p.color : "#374151"}`,
+                          color: p.isAlive ? "#fff" : "#6b7280",
+                          textDecoration: p.isAlive ? "none" : "line-through",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         <span
                           style={{
-                            fontSize: "9px",
-                            fontWeight: 700,
-                            color: "#a78bfa",
-                            lineHeight: "14px",
-                            padding: "1px 4px",
+                            width: "5px",
+                            height: "5px",
+                            borderRadius: "50%",
+                            backgroundColor: p.isAlive ? p.color : "#4b5563",
+                            flexShrink: 0,
                           }}
-                        >
-                          +{extra}
-                        </span>
-                      )}
-                    </div>
-                  </foreignObject>
-                );
-              })()}
+                        />
+                        {p.nickname}
+                      </span>
+                    ))}
+                  </div>
+                </foreignObject>
+              )}
 
               {/* Count badge — inside top-right corner */}
               {hasPlayers && (
