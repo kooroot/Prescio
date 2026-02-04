@@ -40,6 +40,14 @@ app.use(corsMiddleware(config.corsOrigins));
 app.use(express.json());
 app.use(requestLogger());
 
+// Disable caching for API responses
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.set("Pragma", "no-cache");
+  res.removeHeader("ETag");
+  next();
+});
+
 // Health check
 app.get("/health", (_req, res) => {
   res.json({

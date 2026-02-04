@@ -9,4 +9,4 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 
 [vars]
-API_BACKEND = "https://preservation-search-allocated-counts.trycloudflare.com"
+API_BACKEND = "https://broader-sunshine-divisions-accompanying.trycloudflare.com"
