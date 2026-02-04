@@ -1,37 +1,77 @@
 import { useState } from "react";
-import {
-  MAX_PLAYERS,
-  MIN_PLAYERS,
-  MAX_NICKNAME_LENGTH,
-  MIN_NICKNAME_LENGTH,
-  GAME_CODE_LENGTH,
-} from "@prescio/common";
+import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Phase } from "@prescio/common";
+import type { GameLanguage } from "@prescio/common";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Gamepad2, DoorOpen, Users, Zap, Coins } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Plus, Users, Zap, Coins, Loader2, Gamepad2 } from "lucide-react";
+import { createGame, startGame } from "@/lib/api";
+import { useActiveGames, useFinishedGames } from "@/hooks/useGames";
+import { ActiveGameCard, FinishedGameCard } from "@/components/game/GameCard";
 
 export function LobbyPage() {
-  const [nickname, setNickname] = useState("");
-  const [gameCode, setGameCode] = useState("");
-  const [mode, setMode] = useState<"menu" | "create" | "join">("menu");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: activeGames = [], isLoading: loadingActive, error: activeError } = useActiveGames();
+  const { data: finishedGames = [], isLoading: loadingFinished } = useFinishedGames();
 
-  const isValidNickname =
-    nickname.length >= MIN_NICKNAME_LENGTH &&
-    nickname.length <= MAX_NICKNAME_LENGTH;
-  const isValidCode = gameCode.length === GAME_CODE_LENGTH;
+  // Create game dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [botCount, setBotCount] = useState("5");
+  const [impostorCount, setImpostorCount] = useState("1");
+  const [language, setLanguage] = useState<GameLanguage>("en");
+
+  // Create + auto-start mutation
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const result = await createGame({
+        botCount: Number(botCount),
+        impostorCount: Number(impostorCount),
+        language,
+      });
+      // Auto-start the game immediately
+      await startGame(result.id, result.hostId);
+      return result;
+    },
+    onSuccess: (result) => {
+      setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["games"] });
+      navigate({ to: "/game/$gameId", params: { gameId: result.id } });
+    },
+  });
+
+  const handleWatch = (gameId: string) => {
+    navigate({ to: "/game/$gameId", params: { gameId } });
+  };
+
+  // Filter active games into in-progress vs lobby
+  const inProgressGames = activeGames.filter((g) => g.phase !== Phase.LOBBY);
+  const lobbyGames = activeGames.filter((g) => g.phase === Phase.LOBBY);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center px-4 py-16">
+    <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12">
       {/* Hero */}
-      <div className="mb-12 text-center">
-        <div className="mb-4 text-6xl">🔮</div>
+      <div className="mb-10 text-center">
+        <div className="mb-3 text-5xl">🔮</div>
         <h2 className="mb-2 text-4xl font-bold tracking-tight">
           <span className="gradient-text">Prescio</span>
         </h2>
@@ -39,7 +79,7 @@ export function LobbyPage() {
           Among Us × Prediction Market
         </p>
         <p className="mt-1 text-sm text-gray-500">
-          Social deduction meets on-chain betting. Predict. Bet. Win.
+          Watch AI agents deceive each other. Predict the impostor. Win.
         </p>
       </div>
 
@@ -47,7 +87,7 @@ export function LobbyPage() {
       <div className="mb-8 flex flex-wrap justify-center gap-3">
         <Badge variant="outline" className="border-purple-500/30 text-purple-300 px-3 py-1">
           <Users className="mr-1.5 h-3 w-3" />
-          {MIN_PLAYERS}-{MAX_PLAYERS} Players
+          AI Agents
         </Badge>
         <Badge variant="outline" className="border-pink-500/30 text-pink-300 px-3 py-1">
           <Zap className="mr-1.5 h-3 w-3" />
@@ -59,127 +99,208 @@ export function LobbyPage() {
         </Badge>
       </div>
 
-      {/* Nickname input */}
-      <Card className="mb-6 w-full max-w-sm border-gray-800 bg-gray-900/50">
-        <CardContent className="pt-6">
-          <label className="mb-2 block text-sm font-medium text-gray-300">
-            Your Nickname
-          </label>
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) =>
-              setNickname(e.target.value.slice(0, MAX_NICKNAME_LENGTH))
-            }
-            placeholder="Enter nickname..."
-            className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-white placeholder-gray-500 outline-none transition-colors focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-            maxLength={MAX_NICKNAME_LENGTH}
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            {nickname.length}/{MAX_NICKNAME_LENGTH} characters
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Action buttons */}
-      {mode === "menu" && (
-        <div className="flex w-full max-w-sm flex-col gap-3">
+      {/* Create Game Button + Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
           <Button
-            onClick={() => setMode("create")}
-            disabled={!isValidNickname}
             size="lg"
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold"
+            className="mb-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold px-8"
           >
-            <Gamepad2 className="mr-2 h-5 w-5" />
-            Create Game
+            <Plus className="mr-2 h-5 w-5" />
+            Create New Game
           </Button>
-          <Button
-            onClick={() => setMode("join")}
-            disabled={!isValidNickname}
-            variant="outline"
-            size="lg"
-            className="w-full border-gray-600 bg-gray-800 hover:bg-gray-700 text-white font-semibold"
-          >
-            <DoorOpen className="mr-2 h-5 w-5" />
-            Join Game
-          </Button>
-        </div>
-      )}
+        </DialogTrigger>
+        <DialogContent className="border-gray-800 bg-gray-900 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-purple-400" />
+              New Game
+            </DialogTitle>
+            <DialogDescription>
+              Configure your AI social deduction game.
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Create game */}
-      {mode === "create" && (
-        <div className="w-full max-w-sm">
-          <Button
-            onClick={() => {
-              // TODO: Create game via API + WebSocket
-              console.log("Creating game as", nickname);
-            }}
-            size="lg"
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold"
-          >
-            🚀 Create & Start Lobby
-          </Button>
-          <Button
-            onClick={() => setMode("menu")}
-            variant="ghost"
-            className="mt-3 w-full text-gray-400 hover:text-white"
-          >
-            ← Back
-          </Button>
-        </div>
-      )}
+          <div className="grid gap-5 py-4">
+            {/* Bot Count */}
+            <div className="grid gap-2">
+              <Label htmlFor="botCount">Number of Bots</Label>
+              <Select value={botCount} onValueChange={setBotCount}>
+                <SelectTrigger id="botCount" className="border-gray-700 bg-gray-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-gray-700 bg-gray-800">
+                  <SelectItem value="5">5 Bots</SelectItem>
+                  <SelectItem value="6">6 Bots</SelectItem>
+                  <SelectItem value="7">7 Bots</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Total players including the host</p>
+            </div>
 
-      {/* Join game */}
-      {mode === "join" && (
-        <div className="w-full max-w-sm">
-          <label className="mb-2 block text-sm font-medium text-gray-300">
-            Game Code
-          </label>
-          <input
-            type="text"
-            value={gameCode}
-            onChange={(e) =>
-              setGameCode(
-                e.target.value.toUpperCase().slice(0, GAME_CODE_LENGTH)
-              )
-            }
-            placeholder="Enter game code..."
-            className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-3 text-center text-xl font-mono tracking-widest text-white uppercase placeholder-gray-500 outline-none transition-colors focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-            maxLength={GAME_CODE_LENGTH}
-          />
-          <Button
-            onClick={() => {
-              // TODO: Join game via WebSocket
-              console.log("Joining game", gameCode, "as", nickname);
-            }}
-            disabled={!isValidCode}
-            size="lg"
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold"
-          >
-            🚪 Join Lobby
-          </Button>
-          <Button
-            onClick={() => setMode("menu")}
-            variant="ghost"
-            className="mt-3 w-full text-gray-400 hover:text-white"
-          >
-            ← Back
-          </Button>
-        </div>
-      )}
+            {/* Impostor Count */}
+            <div className="grid gap-2">
+              <Label htmlFor="impostorCount">Impostors</Label>
+              <Select value={impostorCount} onValueChange={setImpostorCount}>
+                <SelectTrigger id="impostorCount" className="border-gray-700 bg-gray-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-gray-700 bg-gray-800">
+                  <SelectItem value="1">1 Impostor</SelectItem>
+                  <SelectItem value="2">2 Impostors</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* Active games */}
-      <div className="mt-12 w-full max-w-sm">
-        <h3 className="mb-3 text-sm font-medium text-gray-400">
-          Active Games
-        </h3>
-        <Card className="border-gray-800 bg-gray-900/30">
-          <CardContent className="flex items-center justify-center p-8">
-            <p className="text-sm text-gray-500">
-              No active games yet. Create one to get started!
+            {/* Language */}
+            <div className="grid gap-2">
+              <Label htmlFor="language">Language</Label>
+              <Select value={language} onValueChange={(v) => setLanguage(v as GameLanguage)}>
+                <SelectTrigger id="language" className="border-gray-700 bg-gray-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-gray-700 bg-gray-800">
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="ko">🇰🇷 한국어</SelectItem>
+                  <SelectItem value="ja">🇯🇵 日本語</SelectItem>
+                  <SelectItem value="zh">🇨🇳 中文</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {createMutation.error && (
+            <p className="text-sm text-red-400">
+              {createMutation.error instanceof Error
+                ? createMutation.error.message
+                : "Failed to create game"}
             </p>
-          </CardContent>
-        </Card>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setDialogOpen(false)}
+              disabled={createMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white"
+            >
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  🚀 Create & Start
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Games Tabs */}
+      <div className="w-full">
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="mb-4 grid w-full grid-cols-2 bg-gray-800/50">
+            <TabsTrigger value="active" className="data-[state=active]:bg-purple-600/20">
+              In Progress
+              {inProgressGames.length > 0 && (
+                <Badge className="ml-2 bg-purple-600/30 text-purple-300 text-xs px-1.5">
+                  {inProgressGames.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="finished" className="data-[state=active]:bg-gray-600/20">
+              Completed
+              {finishedGames.length > 0 && (
+                <Badge className="ml-2 bg-gray-600/30 text-gray-300 text-xs px-1.5">
+                  {finishedGames.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Active Games Tab */}
+          <TabsContent value="active" className="space-y-3">
+            {loadingActive && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+              </div>
+            )}
+
+            {activeError && (
+              <div className="rounded-lg border border-red-800 bg-red-900/20 p-4 text-center text-sm text-red-400">
+                Failed to load games. Is the server running?
+              </div>
+            )}
+
+            {!loadingActive && !activeError && activeGames.length === 0 && (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-gray-800 bg-gray-900/30 py-16">
+                <div className="mb-3 text-4xl">🎮</div>
+                <p className="text-gray-400 font-medium">No active games</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Create a new game to get started!
+                </p>
+              </div>
+            )}
+
+            {/* Lobby games */}
+            {lobbyGames.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500 px-1">
+                  Waiting in Lobby
+                </h3>
+                {lobbyGames.map((game) => (
+                  <ActiveGameCard key={game.id} game={game} onWatch={handleWatch} />
+                ))}
+              </div>
+            )}
+
+            {/* In-progress games */}
+            {inProgressGames.length > 0 && (
+              <div className="space-y-2">
+                {lobbyGames.length > 0 && (
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-gray-500 px-1 mt-4">
+                    Live Games
+                  </h3>
+                )}
+                {inProgressGames.map((game) => (
+                  <ActiveGameCard key={game.id} game={game} onWatch={handleWatch} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Finished Games Tab */}
+          <TabsContent value="finished" className="space-y-2">
+            {loadingFinished && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              </div>
+            )}
+
+            {!loadingFinished && finishedGames.length === 0 && (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-gray-800 bg-gray-900/30 py-16">
+                <div className="mb-3 text-4xl">📜</div>
+                <p className="text-gray-400 font-medium">No completed games yet</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Finished games will appear here.
+                </p>
+              </div>
+            )}
+
+            {finishedGames.map((game) => (
+              <FinishedGameCard key={game.id} game={game} onWatch={handleWatch} />
+            ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
