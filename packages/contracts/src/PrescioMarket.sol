@@ -38,7 +38,7 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     // Constants
     // ============================================
 
-    uint256 public constant MIN_BET = 0.001 ether;
+    uint256 public constant MIN_BET = 0.1 ether; // 0.1 MON
     uint256 public constant MAX_FEE_RATE = 1000; // 10% max
 
     // ============================================

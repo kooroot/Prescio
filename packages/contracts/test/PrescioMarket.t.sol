@@ -15,7 +15,7 @@ contract PrescioMarketTest is Test {
     address public charlie = makeAddr("charlie");
 
     bytes32 public gameId = keccak256("game-1");
-    uint256 public constant FEE_RATE = 200; // 2%
+    uint256 public constant FEE_RATE = 100; // 1%
 
     function setUp() public {
         vault = new PrescioVault();
@@ -115,7 +115,7 @@ contract PrescioMarketTest is Test {
 
         vm.prank(alice);
         vm.expectRevert(PrescioMarket.BetTooSmall.selector);
-        market.placeBet{value: 0.0001 ether}(gameId, 2);
+        market.placeBet{value: 0.01 ether}(gameId, 2);
     }
 
     function test_placeBet_revertAlreadyBet() public {
@@ -201,8 +201,8 @@ contract PrescioMarketTest is Test {
         market.closeMarket(gameId);
         market.resolve(gameId, 2);
 
-        // 2% of 2 ether = 0.04 ether
-        assertEq(address(vault).balance, 0.04 ether);
+        // 1% of 2 MON = 0.02 MON
+        assertEq(address(vault).balance, 0.02 ether);
     }
 
     function test_resolve_revertNotOwner() public {
@@ -249,8 +249,8 @@ contract PrescioMarketTest is Test {
         vm.prank(alice);
         market.claim(gameId);
 
-        // Alice gets 2 ether - 2% fee = 1.96 ether
-        assertEq(alice.balance - aliceBefore, 1.96 ether);
+        // Alice gets 2 MON - 1% fee = 1.98 MON
+        assertEq(alice.balance - aliceBefore, 1.98 ether);
     }
 
     function test_claim_multipleWinners() public {
@@ -268,20 +268,20 @@ contract PrescioMarketTest is Test {
         market.closeMarket(gameId);
         market.resolve(gameId, 2);
 
-        // Total pool: 6 ether, fee: 0.12 ether, distributable: 5.88 ether
-        // Winning pool: 4 ether (alice 1 + bob 3)
-        // Alice payout: 5.88 * 1 / 4 = 1.47 ether
-        // Bob payout: 5.88 * 3 / 4 = 4.41 ether
+        // Total pool: 6 MON, fee: 0.06 MON, distributable: 5.94 MON
+        // Winning pool: 4 MON (alice 1 + bob 3)
+        // Alice payout: 5.94 * 1 / 4 = 1.485 MON
+        // Bob payout: 5.94 * 3 / 4 = 4.455 MON
 
         uint256 aliceBefore = alice.balance;
         vm.prank(alice);
         market.claim(gameId);
-        assertEq(alice.balance - aliceBefore, 1.47 ether);
+        assertEq(alice.balance - aliceBefore, 1.485 ether);
 
         uint256 bobBefore = bob.balance;
         vm.prank(bob);
         market.claim(gameId);
-        assertEq(bob.balance - bobBefore, 4.41 ether);
+        assertEq(bob.balance - bobBefore, 4.455 ether);
     }
 
     function test_claim_revertNotResolved() public {
@@ -362,7 +362,7 @@ contract PrescioMarketTest is Test {
         market.resolve(gameId, 4); // nobody bet on 4
 
         // Fees still go to vault
-        assertEq(address(vault).balance, 0.04 ether);
+        assertEq(address(vault).balance, 0.02 ether);
         // Remaining funds locked in contract (no winners to claim)
     }
 
@@ -414,12 +414,12 @@ contract PrescioMarketTest is Test {
         market.closeMarket(gameId);
         market.resolve(gameId, 2);
 
-        // 2% of 5 ether = 0.1 ether
-        assertEq(vault.feeBalance(), 0.1 ether);
+        // 1% of 5 MON = 0.05 MON
+        assertEq(vault.feeBalance(), 0.05 ether);
 
         uint256 ownerBefore = owner.balance;
         vault.withdrawFees();
-        assertEq(owner.balance - ownerBefore, 0.1 ether);
+        assertEq(owner.balance - ownerBefore, 0.05 ether);
     }
 
     function test_vault_revertNoFees() public {
@@ -441,12 +441,12 @@ contract PrescioMarketTest is Test {
         market.placeBet{value: 3 ether}(gameId, 1);
 
         uint256[] memory odds = market.getOdds(gameId);
-        // Total: 4 ether, distributable after 2% = 3.92 ether
-        // Odds[0] = 3.92/1 * 10000 = 39200
-        // Odds[1] = 3.92/3 * 10000 ≈ 13066
+        // Total: 4 MON, distributable after 1% = 3.96 MON
+        // Odds[0] = 3.96/1 * 10000 = 39600
+        // Odds[1] = 3.96/3 * 10000 = 13200
         // Odds[2] = 0 (no bets)
-        assertEq(odds[0], 39200);
-        assertEq(odds[1], 13066); // truncated
+        assertEq(odds[0], 39600);
+        assertEq(odds[1], 13200);
         assertEq(odds[2], 0);
     }
 

@@ -8,7 +8,7 @@ import "../src/PrescioVault.sol";
 contract DeployScript is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        uint256 feeRate = 200; // 2%
+        uint256 feeRate = 100; // 1%
 
         vm.startBroadcast(deployerPrivateKey);
 
