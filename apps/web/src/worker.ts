@@ -28,9 +28,13 @@ export default {
         body: request.method !== "GET" && request.method !== "HEAD" ? request.body : undefined,
       });
 
-      // Add CORS headers
+      // Add CORS + no-cache headers
       const response = new Response(resp.body, resp);
       response.headers.set("Access-Control-Allow-Origin", "*");
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      response.headers.set("Pragma", "no-cache");
+      response.headers.delete("ETag");
+      response.headers.delete("Last-Modified");
       return response;
     }
 
