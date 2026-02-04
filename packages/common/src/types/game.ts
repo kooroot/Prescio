@@ -68,6 +68,8 @@ export interface GameState {
   createdAt: number;
   updatedAt: number;
   settings: GameSettings;
+  /** Map state (locations, tasks) — undefined for legacy games */
+  map?: import("./map.js").MapState;
 }
 
 /** Supported game languages */

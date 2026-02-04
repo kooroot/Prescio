@@ -9,6 +9,7 @@ import {
   type KillEvent,
 } from "@prescio/common";
 import { getGame, updateGame } from "./state.js";
+import { canKillInRange } from "./map-manager.js";
 
 // ============================================
 // Errors
@@ -78,6 +79,11 @@ export function executeKill(
     throw new RoundError("CANNOT_KILL_IMPOSTOR", "Impostors cannot kill other impostors");
   }
 
+  // Map-based kill range check
+  if (game.map && !canKillInRange(game.map, killerId, targetId)) {
+    throw new RoundError("OUT_OF_RANGE", "Target is not in the same room");
+  }
+
   // Execute the kill
   const killEvent: KillEvent = {
     killerId,
@@ -137,6 +143,15 @@ export function executeNightAuto(gameId: string): {
     // Random target selection
     const target =
       availableTargets[Math.floor(Math.random() * availableTargets.length)];
+
+    // Move impostor to target's room if map is active
+    if (game.map) {
+      const targetRoom = game.map.locations[target.id]?.room;
+      if (targetRoom && game.map.locations[impostor.id]) {
+        game.map.locations[impostor.id].room = targetRoom;
+        game.map.locations[impostor.id].movedAt = Date.now();
+      }
+    }
 
     const killEvent: KillEvent = {
       killerId: impostor.id,

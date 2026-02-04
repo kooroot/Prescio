@@ -3,7 +3,7 @@
  */
 import { Router, type Router as RouterType } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { Phase } from "@prescio/common";
+import { Phase, Room } from "@prescio/common";
 import {
   createGame,
   addPlayer,
@@ -14,6 +14,11 @@ import {
   getActiveGames,
   gameEngine,
   LobbyError,
+  movePlayer,
+  ventPlayer,
+  completeTask,
+  getPlayersInRoom,
+  getRoomPopulation,
 } from "../game/index.js";
 import { agentManager } from "../agents/manager.js";
 import { asyncHandler } from "./middleware.js";
@@ -438,6 +443,121 @@ apiRouter.get(
       total: finishedGames.length,
       limit,
       offset,
+    });
+  })
+);
+
+// ------------------------------------------
+// GET /api/games/:id/map — Map state (locations, tasks, population)
+// ------------------------------------------
+apiRouter.get(
+  "/games/:id/map",
+  asyncHandler(async (req, res) => {
+    const game = getGame(String(req.params.id));
+    if (!game) {
+      res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
+      return;
+    }
+    if (!game.map) {
+      res.json({ gameId: game.id, mapEnabled: false });
+      return;
+    }
+
+    const population = getRoomPopulation(game.map);
+
+    // Build player location list (hide dead player locations from non-dead)
+    const locations = Object.values(game.map.locations).map((loc) => {
+      const player = game.players.find((p) => p.id === loc.playerId);
+      return {
+        playerId: loc.playerId,
+        nickname: player?.nickname ?? "Unknown",
+        room: loc.room,
+        isAlive: player?.isAlive ?? false,
+      };
+    });
+
+    res.json({
+      gameId: game.id,
+      mapEnabled: true,
+      locations,
+      population,
+      taskProgress: game.map.taskProgress,
+      totalTasks: game.map.totalTasks,
+      completedTasks: game.map.completedTasks,
+    });
+  })
+);
+
+// ------------------------------------------
+// POST /api/games/:id/move — Move player to adjacent room
+// ------------------------------------------
+apiRouter.post(
+  "/games/:id/move",
+  asyncHandler(async (req, res) => {
+    const game = getGame(String(req.params.id));
+    if (!game) {
+      res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
+      return;
+    }
+    if (!game.map) {
+      res.status(400).json({ error: { code: "MAP_NOT_ENABLED", message: "Map not enabled" } });
+      return;
+    }
+
+    const { playerId, room } = req.body as { playerId: string; room: string };
+    if (!playerId || !room) {
+      res.status(400).json({ error: { code: "MISSING_PARAMS", message: "playerId and room required" } });
+      return;
+    }
+
+    const result = movePlayer(game.map, playerId, room as Room);
+    if (!result.success) {
+      res.status(400).json({ error: { code: "MOVE_FAILED", message: result.error } });
+      return;
+    }
+
+    updateGame(game);
+    res.json({ success: true, from: result.from, to: result.to });
+  })
+);
+
+// ------------------------------------------
+// POST /api/games/:id/task — Complete a task
+// ------------------------------------------
+apiRouter.post(
+  "/games/:id/task",
+  asyncHandler(async (req, res) => {
+    const game = getGame(String(req.params.id));
+    if (!game) {
+      res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
+      return;
+    }
+    if (!game.map) {
+      res.status(400).json({ error: { code: "MAP_NOT_ENABLED", message: "Map not enabled" } });
+      return;
+    }
+
+    const { playerId, taskId } = req.body as { playerId: string; taskId: string };
+    if (!playerId || !taskId) {
+      res.status(400).json({ error: { code: "MISSING_PARAMS", message: "playerId and taskId required" } });
+      return;
+    }
+
+    const player = game.players.find((p) => p.id === playerId);
+    const isImpostor = player?.role === "IMPOSTOR";
+
+    const result = completeTask(game.map, playerId, taskId, isImpostor);
+    if (!result.success) {
+      res.status(400).json({ error: { code: "TASK_FAILED", message: result.error } });
+      return;
+    }
+
+    updateGame(game);
+    res.json({
+      success: true,
+      taskName: result.taskName,
+      isVisual: result.isVisual,
+      taskProgress: result.taskProgress,
     });
   })
 );
