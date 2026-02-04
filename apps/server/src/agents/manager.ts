@@ -3,11 +3,12 @@
  *
  * Assigns personalities, coordinates discussion/voting/night actions.
  */
-import { Role, Phase, type GameState, type Player, type ChatMessage } from "@prescio/common";
+import { Role, Phase, Room, THE_SKELD, isAdjacent, type GameState, type Player, type ChatMessage } from "@prescio/common";
 import { getGame, updateGame } from "../game/state.js";
 import { addMessage, addSystemMessage, getRecentMessages } from "../game/discussion.js";
 import { castVote } from "../game/vote.js";
 import { executeKill } from "../game/round.js";
+import { movePlayer } from "../game/map-manager.js";
 import { ImpostorAgent } from "./impostor.js";
 import { CrewAgent } from "./crew.js";
 import { BaseAgent, type AgentContext } from "./base.js";
@@ -133,6 +134,16 @@ export class AgentManager {
       round: game.round,
       language,
     };
+
+    // Add map location info
+    if (game.map) {
+      ctx.currentRoom = game.map.locations[bot.playerId]?.room;
+      ctx.playerLocations = {};
+      for (const p of alivePlayers) {
+        const loc = game.map.locations[p.id];
+        if (loc) ctx.playerLocations[p.id] = loc.room;
+      }
+    }
 
     // Add teammate info for impostors
     if (bot.role === Role.IMPOSTOR) {
@@ -341,9 +352,66 @@ export class AgentManager {
    * Run night actions: impostor(s) choose kill target.
    * Returns the kill target ID for each impostor, or null.
    */
+  /**
+   * Scatter agents across the map during night.
+   * Crew move toward task rooms, impostors roam strategically.
+   */
+  private scatterAgents(gameId: string): void {
+    const game = getGame(gameId);
+    if (!game?.map) return;
+
+    const rooms = Object.values(Room);
+    const bots = this.getBots(gameId);
+
+    for (const bot of bots) {
+      const player = game.players.find((p) => p.id === bot.playerId);
+      if (!player?.isAlive) continue;
+
+      const loc = game.map.locations[bot.playerId];
+      if (!loc) continue;
+
+      let targetRoom: Room | null = null;
+
+      if (bot.role === Role.CREW) {
+        // Move toward next incomplete task room
+        const tasks = game.map.tasks[bot.playerId];
+        const nextTask = tasks?.find((t) => !t.completed);
+        if (nextTask) {
+          targetRoom = nextTask.room;
+        }
+      } else {
+        // Impostor: move to a random room (not current)
+        const others = rooms.filter((r) => r !== loc.room);
+        targetRoom = others[Math.floor(Math.random() * others.length)];
+      }
+
+      if (targetRoom && targetRoom !== loc.room) {
+        // Move step by step toward target (1 step per scatter)
+        const adjacent = THE_SKELD[loc.room].adjacent;
+        // Pick the adjacent room closest to target
+        let bestNext = adjacent[0];
+        let bestDist = Infinity;
+        for (const adj of adjacent) {
+          if (adj === targetRoom) { bestNext = adj; break; }
+          // Simple heuristic: distance by coordinates
+          const dx = THE_SKELD[adj].x - THE_SKELD[targetRoom].x;
+          const dy = THE_SKELD[adj].y - THE_SKELD[targetRoom].y;
+          const dist = dx * dx + dy * dy;
+          if (dist < bestDist) { bestDist = dist; bestNext = adj; }
+        }
+        movePlayer(game.map, bot.playerId, bestNext);
+      }
+    }
+
+    updateGame(game);
+  }
+
   async runNightAction(gameId: string): Promise<Array<{ killerId: string; targetId: string }>> {
     const game = getGame(gameId);
     if (!game) return [];
+
+    // Scatter agents on map before kills
+    this.scatterAgents(gameId);
 
     const impostorBots = this.getBots(gameId).filter((b) => {
       const player = game.players.find((p) => p.id === b.playerId);

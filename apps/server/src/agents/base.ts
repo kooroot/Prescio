@@ -48,6 +48,10 @@ export interface AgentContext {
   teammates?: Player[];
   /** Game language setting */
   language: GameLanguage;
+  /** Current room of this agent */
+  currentRoom?: string;
+  /** Map of player locations (playerId → room) */
+  playerLocations?: Record<string, string>;
 }
 
 /**
@@ -83,11 +87,27 @@ export function buildContextString(ctx: AgentContext): string {
     })
     .join("\n") || `  ${msgs.noDeathsYet}`;
 
+  // Map location info
+  let locationInfo = "";
+  if (ctx.currentRoom && ctx.playerLocations) {
+    const locationList = alivePlayers
+      .map((p) => {
+        const room = ctx.playerLocations![p.id];
+        return `  - ${p.nickname}: ${room ?? "unknown"}${p.id === ctx.playerId ? " (me)" : ""}`;
+      })
+      .join("\n");
+    locationInfo = `
+=== Map Locations ===
+My Location: ${ctx.currentRoom}
+${locationList}
+`;
+  }
+
   return `
 === Game State ===
 Current Round: ${round}
 My Nickname: ${player.nickname}
-
+${locationInfo}
 === Alive Players ===
 ${aliveList}
 
