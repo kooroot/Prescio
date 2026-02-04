@@ -74,54 +74,54 @@ function RoomNode({ room, population, players }: RoomNodeProps) {
   const hasPlayers = population > 0;
 
   return (
-    <g transform={`translate(${room.x * 8}, ${room.y * 5})`}>
+    <g transform={`translate(${room.x * 10}, ${room.y * 6})`}>
       {/* Room background */}
       <rect
-        x={-35}
-        y={-20}
-        width={70}
-        height={40}
-        rx={6}
+        x={-55}
+        y={-28}
+        width={110}
+        height={56}
+        rx={8}
         fill={color}
-        fillOpacity={hasPlayers ? 0.6 : 0.25}
+        fillOpacity={hasPlayers ? 0.65 : 0.3}
         stroke={hasPlayers ? "#a78bfa" : "#4a5568"}
-        strokeWidth={hasPlayers ? 1.5 : 0.5}
+        strokeWidth={hasPlayers ? 2 : 1}
       />
 
       {/* Room name */}
       <text
         textAnchor="middle"
-        y={-5}
+        y={-6}
         fill="white"
-        fontSize="7"
-        fontWeight="600"
+        fontSize="12"
+        fontWeight="700"
       >
         {ROOM_NAMES[room.id]}
       </text>
 
-      {/* Player count */}
+      {/* Player names */}
       {hasPlayers && (
-        <g transform="translate(0, 10)">
+        <g transform="translate(0, 12)">
           <text
             textAnchor="middle"
-            fill="#e2e8f0"
-            fontSize="6"
+            fill="#cbd5e0"
+            fontSize="9"
           >
-            {players.map((p) => p.nickname).join(", ").slice(0, 20)}
-            {players.length > 2 ? "..." : ""}
+            {players.map((p) => p.nickname.replace("Agent-", "")).join(", ").slice(0, 24)}
+            {players.length > 3 ? "..." : ""}
           </text>
         </g>
       )}
 
       {/* Population badge */}
       {hasPlayers && (
-        <g transform="translate(25, -15)">
-          <circle r={7} fill="#7c3aed" />
+        <g transform="translate(42, -20)">
+          <circle r={10} fill="#7c3aed" />
           <text
             textAnchor="middle"
-            y={3}
+            y={4}
             fill="white"
-            fontSize="7"
+            fontSize="11"
             fontWeight="bold"
           >
             {population}
@@ -135,14 +135,14 @@ function RoomNode({ room, population, players }: RoomNodeProps) {
 function ConnectionLine({ from, to }: { from: RoomInfo; to: RoomInfo }) {
   return (
     <line
-      x1={from.x * 8}
-      y1={from.y * 5}
-      x2={to.x * 8}
-      y2={to.y * 5}
+      x1={from.x * 10}
+      y1={from.y * 6}
+      x2={to.x * 10}
+      y2={to.y * 6}
       stroke="#4a5568"
-      strokeWidth={0.8}
-      strokeDasharray="3,3"
-      opacity={0.4}
+      strokeWidth={1.5}
+      strokeDasharray="6,4"
+      opacity={0.5}
     />
   );
 }
@@ -150,14 +150,14 @@ function ConnectionLine({ from, to }: { from: RoomInfo; to: RoomInfo }) {
 function VentLine({ from, to }: { from: RoomInfo; to: RoomInfo }) {
   return (
     <line
-      x1={from.x * 8}
-      y1={from.y * 5}
-      x2={to.x * 8}
-      y2={to.y * 5}
+      x1={from.x * 10}
+      y1={from.y * 6}
+      x2={to.x * 10}
+      y2={to.y * 6}
       stroke="#ef4444"
-      strokeWidth={0.6}
-      strokeDasharray="2,4"
-      opacity={0.3}
+      strokeWidth={1}
+      strokeDasharray="4,6"
+      opacity={0.35}
     />
   );
 }
@@ -231,9 +231,9 @@ export function GameMap({ gameId }: { gameId: string }) {
       </div>
 
       <svg
-        viewBox="-10 -10 820 500"
+        viewBox="-70 -40 1140 600"
         className="w-full"
-        style={{ maxHeight: "350px" }}
+        style={{ minHeight: "280px" }}
       >
         {/* Connections */}
         {connections.map(([a, b], i) => (
@@ -256,13 +256,13 @@ export function GameMap({ gameId }: { gameId: string }) {
         ))}
       </svg>
 
-      <div className="mt-2 flex items-center gap-4 text-[10px] text-gray-600">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-4 border-t border-dashed border-gray-500" />
+      <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-0 w-6 border-t border-dashed border-gray-500" />
           Hallway
         </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-4 border-t border-dashed border-red-500" />
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-0 w-6 border-t border-dashed border-red-500" />
           Vent
         </span>
       </div>
