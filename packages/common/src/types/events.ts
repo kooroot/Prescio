@@ -22,6 +22,8 @@ export type ServerEvent =
   | { type: "MARKET_UPDATED"; payload: ServerPayloads["MARKET_UPDATED"] }
   | { type: "MARKET_RESOLVED"; payload: ServerPayloads["MARKET_RESOLVED"] }
   | { type: "BET_CONFIRMED"; payload: ServerPayloads["BET_CONFIRMED"] }
+  | { type: "BETTING_UPDATE"; payload: ServerPayloads["BETTING_UPDATE"] }
+  | { type: "SPECTATOR_COUNT"; payload: ServerPayloads["SPECTATOR_COUNT"] }
   | { type: "ERROR"; payload: ServerPayloads["ERROR"] }
   | { type: "PONG"; payload: ServerPayloads["PONG"] };
 
@@ -72,6 +74,22 @@ export interface ServerPayloads {
     resolvedOutcomeId: string;
   };
   BET_CONFIRMED: Bet;
+  BETTING_UPDATE: {
+    gameId: string;
+    marketId: string;
+    odds: Odds[];
+    totalPool: string;
+    recentBets: Array<{
+      address: string;
+      outcomeId: string;
+      amount: string;
+      timestamp: number;
+    }>;
+  };
+  SPECTATOR_COUNT: {
+    gameId: string;
+    count: number;
+  };
   ERROR: {
     code: string;
     message: string;
@@ -95,6 +113,8 @@ export type ClientEvent =
   | { type: "KILL_PLAYER"; payload: ClientPayloads["KILL_PLAYER"] }
   | { type: "REPORT_BODY"; payload: ClientPayloads["REPORT_BODY"] }
   | { type: "PLACE_BET"; payload: ClientPayloads["PLACE_BET"] }
+  | { type: "JOIN_SPECTATE"; payload: ClientPayloads["JOIN_SPECTATE"] }
+  | { type: "LEAVE_SPECTATE"; payload: ClientPayloads["LEAVE_SPECTATE"] }
   | { type: "PING"; payload: ClientPayloads["PING"] };
 
 export interface ClientPayloads {
@@ -134,6 +154,12 @@ export interface ClientPayloads {
     marketId: string;
     outcomeId: string;
     amount: string;
+  };
+  JOIN_SPECTATE: {
+    gameId: string;
+  };
+  LEAVE_SPECTATE: {
+    gameId: string;
   };
   PING: {
     timestamp: number;
