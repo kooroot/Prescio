@@ -92,8 +92,17 @@ export function GamePage() {
           </CardContent>
         </Card>
 
-        {/* Right: Players + (future) Betting */}
+        {/* Right: Betting + Players */}
         <div className="flex flex-col gap-4">
+          {/* Betting panel */}
+          {game.phase !== Phase.LOBBY && (
+            <BetPanel
+              gameId={gameId}
+              players={game.players}
+              phase={game.phase}
+            />
+          )}
+
           <Card className="border-monad-border bg-monad-card/40">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -110,15 +119,6 @@ export function GamePage() {
               />
             </CardContent>
           </Card>
-
-          {/* Betting panel */}
-          {game.phase !== Phase.LOBBY && (
-            <BetPanel
-              gameId={gameId}
-              players={game.players}
-              phase={game.phase}
-            />
-          )}
         </div>
       </div>
 
