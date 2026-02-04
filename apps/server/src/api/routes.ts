@@ -10,6 +10,7 @@ import {
   startGame as startGameLobby,
   getRoleAssignment,
   getGame,
+  updateGame,
   getActiveGames,
   gameEngine,
   LobbyError,
@@ -99,7 +100,7 @@ apiRouter.post(
     const {
       nickname = "Host",
       address,
-      botCount = 5,
+      botCount = 6,
       impostorCount,
       settings,
     } = req.body as {
@@ -119,11 +120,9 @@ apiRouter.post(
     if (impostorCount !== undefined) {
       settingsOverride.impostorCount = impostorCount;
     }
-    // Ensure minPlayers allows bot-only games
-    const totalPlayers = 1 + safeBotCount;
-    if (totalPlayers < 4) {
-      settingsOverride.minPlayers = Math.max(totalPlayers, 2);
-    }
+    // Ensure minPlayers allows bot-only games (host is spectator, not player)
+    const totalPlayers = safeBotCount;
+    settingsOverride.minPlayers = Math.min(totalPlayers, 2);
 
     // Create game with a virtual host
     const hostId = uuidv4();
@@ -138,6 +137,14 @@ apiRouter.post(
       throw err;
     }
 
+    // Remove host from players (spectator-only mode)
+    // Host created the game but doesn't participate as a player
+    const gameState = getGame(game.id);
+    if (gameState) {
+      gameState.players = gameState.players.filter((p) => p.id !== hostId);
+      updateGame(gameState);
+    }
+
     // Auto-add bots
     const bots: Array<{ id: string; nickname: string }> = [];
     for (let i = 0; i < safeBotCount; i++) {
@@ -148,7 +155,6 @@ apiRouter.post(
         addPlayer(game.code, botId, botNickname, botAddr);
         bots.push({ id: botId, nickname: botNickname });
       } catch (err) {
-        // If game full or other error, stop adding bots
         console.warn(`[API] Failed to add bot ${botNickname}:`, err instanceof Error ? err.message : err);
         break;
       }

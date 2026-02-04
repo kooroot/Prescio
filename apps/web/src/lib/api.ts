@@ -1,4 +1,5 @@
 import type { GameState, Market, Bet, Odds, LobbyInfo, GameLanguage } from "@prescio/common";
+import { BetStatus } from "@prescio/common";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -86,7 +87,7 @@ export function createGame(options: CreateGameOptions = {}): Promise<CreateGameR
   return request<CreateGameResponse>("/games", {
     method: "POST",
     body: JSON.stringify({
-      nickname: options.nickname ?? "Spectator",
+      nickname: options.nickname ?? "Host",
       botCount: options.botCount ?? 5,
       impostorCount: options.impostorCount ?? 1,
       settings: options.language ? { language: options.language } : undefined,
@@ -111,9 +112,46 @@ export function fetchOdds(gameId: string): Promise<Record<string, Odds[]>> {
   return request<Record<string, Odds[]>>(`/games/${gameId}/odds`);
 }
 
-export function fetchBets(gameId: string, address?: string): Promise<Bet[]> {
+interface BetsResponse {
+  gameId: string;
+  phase: string;
+  bettingEnabled: boolean;
+  market: {
+    state: number;
+    playerCount: number;
+    totalPool: string;
+    outcomeTotals: string[];
+    impostorIndex: number;
+  } | null;
+  userBet: {
+    suspectIndex: number;
+    amount: string;
+    claimed: boolean;
+  } | null;
+}
+
+export async function fetchBets(gameId: string, address?: string): Promise<Bet[]> {
   const query = address ? `?address=${address}` : "";
-  return request<Bet[]>(`/games/${gameId}/bets${query}`);
+  const res = await request<BetsResponse>(`/games/${gameId}/bets${query}`);
+
+  // Convert server response to Bet[] for the frontend
+  if (!res.userBet) return [];
+
+  return [
+    {
+      id: `${gameId}-${address}`,
+      marketId: gameId,
+      userId: address ?? "",
+      userAddress: (address ?? "0x0") as `0x${string}`,
+      outcomeId: String(res.userBet.suspectIndex),
+      amount: BigInt(Math.floor(parseFloat(res.userBet.amount) * 1e18)),
+      potentialPayout: 0n,
+      status: res.userBet.claimed ? BetStatus.CLAIMED : BetStatus.OPEN,
+      txHash: null,
+      createdAt: Date.now(),
+      claimedAt: res.userBet.claimed ? Date.now() : null,
+    } satisfies Bet,
+  ];
 }
 
 // ─── Lobby ───────────────────────────────────────────

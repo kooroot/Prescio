@@ -1,9 +1,9 @@
 /** Contract addresses — updated after deployment */
 export const CONTRACT_ADDRESSES = {
   /** PrescioMarket contract */
-  PRESCIO_MARKET: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  PRESCIO_MARKET: "0xdCFd12C4797428E31AbA42C9c4Ca87339c3170De" as `0x${string}`,
   /** PrescioVault contract */
-  PRESCIO_VAULT: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  PRESCIO_VAULT: "0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43" as `0x${string}`,
 } as const;
 
 /** PrescioMarket ABI — Parimutuel betting market */

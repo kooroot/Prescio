@@ -13,11 +13,13 @@ export function gameIdToBytes32(gameId: string): `0x${string}` {
 
 /** Market state enum matching the contract */
 export enum ContractMarketState {
-  NONE = 0,
-  OPEN = 1,
-  CLOSED = 2,
-  RESOLVED = 3,
+  OPEN = 0,
+  CLOSED = 1,
+  RESOLVED = 2,
 }
+
+/** No market exists when playerCount is 0 */
+const MARKET_NONE = -1;
 
 export interface MarketInfo {
   playerCount: number;

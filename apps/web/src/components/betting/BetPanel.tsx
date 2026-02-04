@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
 import { injected } from "wagmi/connectors";
+import { MONAD_TESTNET_CHAIN_ID, MONAD_TESTNET_RPC } from "@prescio/common";
 import { formatEther, parseEther } from "viem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,37 @@ function marketStateLabel(state: ContractMarketState) {
 }
 
 export function BetPanel({ gameId, players, phase }: BetPanelProps) {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const { connect } = useConnect();
+  const isWrongChain = isConnected && chainId !== MONAD_TESTNET_CHAIN_ID;
+
+  const switchToMonad = async () => {
+    const provider = (window as any).ethereum;
+    if (!provider) return;
+    const chainIdHex = `0x${MONAD_TESTNET_CHAIN_ID.toString(16)}`;
+    const chainParams = {
+      chainId: chainIdHex,
+      chainName: "Monad Testnet",
+      nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+      rpcUrls: [MONAD_TESTNET_RPC],
+      blockExplorerUrls: ["https://testnet.monadexplorer.com"],
+    };
+    try {
+      // Try removing old chain config first (resets RPC)
+      await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] });
+      try {
+        await provider.request({ method: "wallet_removeEthereumChain", params: [{ chainId: chainIdHex }] });
+      } catch (_) { /* ignore if not supported */ }
+      await provider.request({ method: "wallet_addEthereumChain", params: [chainParams] });
+    } catch (err: any) {
+      // Fallback: just try add (which switches if exists)
+      try {
+        await provider.request({ method: "wallet_addEthereumChain", params: [chainParams] });
+      } catch (_) {
+        await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });
+      }
+    }
+  };
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [betAmount, setBetAmount] = useState(MIN_BET);
 
@@ -53,12 +83,13 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const { placeBet, isPending, isConfirming, isSuccess, error, reset } = usePlaceBet();
 
   // Derived state
-  const marketState = marketInfo?.state ?? ContractMarketState.NONE;
+  const hasMarket = marketInfo != null && marketInfo.playerCount > 0;
+  const marketState = hasMarket ? marketInfo.state : null;
   const totalPool = marketInfo?.totalPool ?? 0n;
   const outcomeTotals = marketInfo?.outcomeTotals ?? [];
-  const isOpen = marketState === ContractMarketState.OPEN;
-  const isResolved = marketState === ContractMarketState.RESOLVED;
-  const stateLabel = marketStateLabel(marketState);
+  const isOpen = hasMarket && marketState === ContractMarketState.OPEN;
+  const isResolved = hasMarket && marketState === ContractMarketState.RESOLVED;
+  const stateLabel = hasMarket ? marketStateLabel(marketState!) : { text: "No Market", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
 
   // Reset on success
   useEffect(() => {
@@ -86,7 +117,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
     return payout;
   }, [selectedIndex, betAmount, outcomeTotals, totalPool]);
 
-  const canBet = isOpen && isConnected && selectedIndex !== null && parseFloat(betAmount) >= 0.1;
+  const canBet = isOpen && isConnected && !isWrongChain && selectedIndex !== null && parseFloat(betAmount) >= 0.1;
 
   const handlePlaceBet = () => {
     if (!canBet || selectedIndex === null) return;
@@ -111,7 +142,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
 
       <CardContent className="flex flex-col gap-4">
         {/* ─── No Market Yet ─── */}
-        {marketState === ContractMarketState.NONE && (
+        {!hasMarket && (
           <div className="text-center py-4">
             <span className="text-2xl">🎰</span>
             <p className="mt-2 text-sm text-gray-500">
@@ -121,7 +152,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
         )}
 
         {/* ─── Odds Display ─── */}
-        {marketState !== ContractMarketState.NONE && (
+        {hasMarket && (
           <OddsDisplay
             players={players}
             outcomeTotals={outcomeTotals}
@@ -166,6 +197,13 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 Connect Wallet to Bet
+              </Button>
+            ) : isWrongChain ? (
+              <Button
+                onClick={switchToMonad}
+                className="w-full bg-yellow-600 hover:bg-yellow-700"
+              >
+                ⚠️ Switch to Monad Testnet
               </Button>
             ) : (
               <div className="flex flex-col gap-3">

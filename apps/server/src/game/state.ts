@@ -37,9 +37,9 @@ export function deleteGame(gameId: string): boolean {
   return true;
 }
 
-/** Get all active games (in LOBBY phase, for listing) */
+/** Get all active games (excludes finished games) */
 export function getActiveGames(): GameState[] {
-  return Array.from(games.values());
+  return Array.from(games.values()).filter((g) => !g.winner);
 }
 
 /** Get count of active games */

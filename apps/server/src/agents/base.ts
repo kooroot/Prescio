@@ -1,34 +1,34 @@
 /**
  * BaseAgent — LLM interface for AI game agents
  *
- * Uses Anthropic Claude API for generating messages, votes, and kill decisions.
+ * Uses Google Gemini API for generating messages, votes, and kill decisions.
  */
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { GameState, ChatMessage, Player } from "@prescio/common";
 import type { PersonalityProfile } from "./personalities/index.js";
 import { getLanguageInstruction, getSystemMessages, type GameLanguage, DEFAULT_LANGUAGE } from "./i18n.js";
 import { config } from "../config.js";
 
 // ============================================
-// Singleton Anthropic Client
+// Singleton Gemini Client
 // ============================================
 
-let anthropicClient: Anthropic | null = null;
+let genAI: GoogleGenerativeAI | null = null;
 let clientAvailable = true;
 
-function getClient(): Anthropic | null {
+function getClient(): GoogleGenerativeAI | null {
   if (!clientAvailable) return null;
 
-  if (!anthropicClient) {
-    const apiKey = config.anthropicApiKey;
+  if (!genAI) {
+    const apiKey = config.geminiApiKey;
     if (!apiKey) {
-      console.warn("[Agent] ANTHROPIC_API_KEY not set — agents will use fallback behavior");
+      console.warn("[Agent] GEMINI_API_KEY not set — agents will use fallback behavior");
       clientAvailable = false;
       return null;
     }
-    anthropicClient = new Anthropic({ apiKey });
+    genAI = new GoogleGenerativeAI(apiKey);
   }
-  return anthropicClient;
+  return genAI;
 }
 
 // ============================================
@@ -52,7 +52,6 @@ export interface AgentContext {
 
 /**
  * Build common context string from game state for LLM prompts.
- * Context is always in English for best LLM reasoning.
  */
 export function buildContextString(ctx: AgentContext): string {
   const { game, player, alivePlayers, deadPlayers, recentMessages, round } = ctx;
@@ -77,7 +76,6 @@ export function buildContextString(ctx: AgentContext): string {
           .join("\n")
       : `${msgs.noChatYet}`;
 
-  // Kill events this game (what's publicly known - bodies found)
   const publicKills = game.killEvents
     .map((ke) => {
       const victim = game.players.find((p) => p.id === ke.targetId);
@@ -124,29 +122,21 @@ export class BaseAgent {
   protected async callLLM(
     systemPrompt: string,
     userMessage: string,
-    maxTokens: number = 200,
+    _maxTokens: number = 200,
   ): Promise<string> {
     const client = getClient();
 
-    // If no API key configured, return empty for fallback behavior
     if (!client) return "";
 
     try {
-      const response = await client.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: maxTokens,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: userMessage,
-          },
-        ],
-        temperature: 0.9,
+      const model = client.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        systemInstruction: systemPrompt,
       });
 
-      const textBlock = response.content.find((c) => c.type === "text");
-      return textBlock?.text?.trim() ?? "";
+      const result = await model.generateContent(userMessage);
+      const response = result.response;
+      return response.text()?.trim() ?? "";
     } catch (err) {
       console.error("[Agent] LLM call failed:", err instanceof Error ? err.message : err);
       return "";
@@ -221,7 +211,6 @@ No explanations — just the ID or SKIP.
       return null;
     }
 
-    // Try to extract a valid player ID from the response
     const validIds = ctx.alivePlayers
       .filter((p) => p.id !== ctx.playerId)
       .map((p) => p.id);
@@ -232,14 +221,12 @@ No explanations — just the ID or SKIP.
       }
     }
 
-    // If LLM returned a nickname instead of ID, try to match
     for (const p of ctx.alivePlayers) {
       if (p.id !== ctx.playerId && result.includes(p.nickname)) {
         return p.id;
       }
     }
 
-    // Fallback: random vote among alive players (not self)
     if (validIds.length > 0) {
       return validIds[Math.floor(Math.random() * validIds.length)];
     }
@@ -249,10 +236,8 @@ No explanations — just the ID or SKIP.
 
   /**
    * Generate a kill target decision (impostor only).
-   * Override in ImpostorAgent for specific strategy.
    */
   async generateKillTarget(ctx: AgentContext): Promise<string | null> {
-    // Default: random crew member
     const crewMembers = ctx.alivePlayers.filter(
       (p) => p.id !== ctx.playerId && p.role !== "IMPOSTOR",
     );

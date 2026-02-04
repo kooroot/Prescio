@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",
+    "@google/generative-ai": "^0.24.1",
     "@prescio/common": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
+    "openai": "^6.17.0",
     "uuid": "^10.0.0",
     "viem": "^2.21.0",
     "ws": "^8.18.0"

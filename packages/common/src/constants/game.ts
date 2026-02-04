@@ -37,7 +37,8 @@ export const MIN_NICKNAME_LENGTH = 2;
 export const IMPOSTOR_COUNT_MAP: Record<number, number> = {
   5: 1,
   6: 1,
-  7: 2,
+  7: 1,
+  8: 1,
 };
 
 /** Default game settings */

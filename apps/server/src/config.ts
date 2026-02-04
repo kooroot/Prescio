@@ -19,8 +19,14 @@ export const config = {
     "http://localhost:3000",
   ],
 
-  /** Anthropic API key for AI agents */
+  /** Anthropic API key for AI agents (legacy) */
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+
+  /** OpenAI API key for AI agents */
+  openaiApiKey: process.env.OPENAI_API_KEY,
+
+  /** Gemini API key for AI agents */
+  geminiApiKey: process.env.GEMINI_API_KEY,
 
   /** Monad chain config */
   monad: {

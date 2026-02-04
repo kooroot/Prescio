@@ -190,9 +190,12 @@ export function startGame(gameId: string, requesterId: string): GameState {
     );
   }
 
-  // Determine impostor count based on player count
-  const impostorCount = getImpostorCount(game.players.length);
-  game.settings.impostorCount = impostorCount;
+  // Use settings impostor count (user override) or fall back to auto
+  const impostorCount = game.settings.impostorCount ?? getImpostorCount(game.players.length);
+  // Clamp: at least 1, at most (players - 2) so crew can still win
+  const maxImpostors = Math.max(1, Math.floor((game.players.length - 1) / 2));
+  const safeImpostorCount = Math.min(Math.max(1, impostorCount), maxImpostors);
+  game.settings.impostorCount = safeImpostorCount;
 
   // Shuffle and assign roles
   const shuffled = [...game.players].sort(() => Math.random() - 0.5);

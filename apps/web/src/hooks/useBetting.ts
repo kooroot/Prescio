@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import { useAccount, useWalletClient, useWaitForTransactionReceipt } from "wagmi";
+import { parseEther, formatEther, createPublicClient, http, encodeFunctionData } from "viem";
 import {
   CONTRACT_ADDRESSES,
   PRESCIO_MARKET_ABI,
   MONAD_TESTNET_CHAIN_ID,
+  MONAD_TESTNET_RPC,
+  monadTestnet,
 } from "@prescio/common";
 import type { Odds, Bet, ServerEvent, ServerPayloads } from "@prescio/common";
 import { fetchOdds, fetchBets } from "@/lib/api";
@@ -66,26 +68,50 @@ export function useOdds(gameId: string) {
 
 // ─── usePlaceBet ────────────────────────────────────
 
+const monadPublicClient = createPublicClient({
+  chain: monadTestnet,
+  transport: http(MONAD_TESTNET_RPC),
+});
+
 export function usePlaceBet() {
-  const { writeContract, data: txHash, isPending, error, reset } = useWriteContract();
+  const { data: walletClient } = useWalletClient();
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
   });
 
+  const reset = useCallback(() => {
+    setTxHash(undefined);
+    setError(null);
+    setIsPending(false);
+  }, []);
+
   const placeBet = useCallback(
-    (gameId: string, suspectIndex: number, amountInEther: string) => {
-      const gameIdBytes = gameIdToBytes32(gameId);
-      writeContract({
-        address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
-        abi: PRESCIO_MARKET_ABI,
-        functionName: "placeBet",
-        args: [gameIdBytes, suspectIndex],
-        value: parseEther(amountInEther),
-        chainId: MONAD_TESTNET_CHAIN_ID,
-      });
+    async (gameId: string, suspectIndex: number, amountInEther: string) => {
+      if (!walletClient) return;
+      setIsPending(true);
+      setError(null);
+      try {
+        const gameIdBytes = gameIdToBytes32(gameId);
+        const hash = await walletClient.writeContract({
+          address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+          abi: PRESCIO_MARKET_ABI,
+          functionName: "placeBet",
+          args: [gameIdBytes, suspectIndex],
+          value: parseEther(amountInEther),
+          chain: monadTestnet,
+        });
+        setTxHash(hash);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        setIsPending(false);
+      }
     },
-    [writeContract],
+    [walletClient],
   );
 
   return {
@@ -102,22 +128,41 @@ export function usePlaceBet() {
 // ─── useClaim ───────────────────────────────────────
 
 export function useClaim(gameId: string) {
-  const { writeContract, data: txHash, isPending, error, reset } = useWriteContract();
+  const { data: walletClient } = useWalletClient();
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
   });
 
-  const claim = useCallback(() => {
-    const gameIdBytes = gameIdToBytes32(gameId);
-    writeContract({
-      address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
-      abi: PRESCIO_MARKET_ABI,
-      functionName: "claim",
-      args: [gameIdBytes],
-      chainId: MONAD_TESTNET_CHAIN_ID,
-    });
-  }, [gameId, writeContract]);
+  const reset = useCallback(() => {
+    setTxHash(undefined);
+    setError(null);
+    setIsPending(false);
+  }, []);
+
+  const claim = useCallback(async () => {
+    if (!walletClient) return;
+    setIsPending(true);
+    setError(null);
+    try {
+      const gameIdBytes = gameIdToBytes32(gameId);
+      const hash = await walletClient.writeContract({
+        address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+        abi: PRESCIO_MARKET_ABI,
+        functionName: "claim",
+        args: [gameIdBytes],
+        chain: monadTestnet,
+      });
+      setTxHash(hash);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setIsPending(false);
+    }
+  }, [gameId, walletClient]);
 
   return {
     claim,

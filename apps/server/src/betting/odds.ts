@@ -92,18 +92,23 @@ async function fetchAndBroadcastOdds(gameId: string): Promise<void> {
     numerator: Math.round(o.decimal * 100),
     denominator: 100,
     impliedProbability: o.impliedProbability,
-    totalStaked: BigInt(0), // We use string representation in the event
+    totalStaked: 0n,
   }));
+
+  // Serialize with BigInt→string replacer to avoid JSON.stringify crash
+  const eventData = {
+    gameId,
+    marketId: gameId,
+    odds: oddsPayload,
+    totalPool: formatEther(market.totalPool),
+    recentBets: [],
+  };
 
   broadcastToGame(
     gameId,
-    createServerEvent("BETTING_UPDATE", {
-      gameId,
-      marketId: gameId,
-      odds: oddsPayload,
-      totalPool: formatEther(market.totalPool),
-      recentBets: [], // Could be populated from event logs
-    }),
+    createServerEvent("BETTING_UPDATE", JSON.parse(
+      JSON.stringify(eventData, (_k, v) => typeof v === "bigint" ? v.toString() : v),
+    )),
   );
 }
 

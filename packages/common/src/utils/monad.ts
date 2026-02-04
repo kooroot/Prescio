@@ -4,7 +4,7 @@ import { defineChain } from "viem";
 export const MONAD_TESTNET_CHAIN_ID = 10143;
 
 /** Monad Testnet RPC URL */
-export const MONAD_TESTNET_RPC = "https://testnet.monad.xyz";
+export const MONAD_TESTNET_RPC = "https://testnet-rpc.monad.xyz";
 
 /** Monad Testnet block explorer */
 export const MONAD_TESTNET_EXPLORER = "https://testnet.monadexplorer.com";
