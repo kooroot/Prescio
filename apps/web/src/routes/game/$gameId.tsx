@@ -4,6 +4,7 @@ import { useGame } from "@/hooks/useGame";
 import { GameBoard } from "@/components/game/GameBoard";
 import { PhaseIndicator } from "@/components/game/PhaseIndicator";
 import { PlayerList } from "@/components/game/PlayerList";
+import { BetPanel } from "@/components/betting/BetPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -104,16 +105,13 @@ export function GamePage() {
             </CardContent>
           </Card>
 
-          {/* Betting panel placeholder */}
-          {game.phase !== Phase.LOBBY && game.phase !== Phase.RESULT && (
-            <Card className="border-gray-800 bg-gray-900/40 border-dashed">
-              <CardContent className="py-8 text-center">
-                <span className="text-3xl">🎰</span>
-                <p className="mt-2 text-sm text-gray-500">
-                  Betting panel coming soon
-                </p>
-              </CardContent>
-            </Card>
+          {/* Betting panel */}
+          {game.phase !== Phase.LOBBY && (
+            <BetPanel
+              gameId={gameId}
+              players={game.players}
+              phase={game.phase}
+            />
           )}
         </div>
       </div>
@@ -159,14 +157,22 @@ export function GamePage() {
           </TabsContent>
 
           <TabsContent value="bet" className="mt-3">
-            <Card className="border-gray-800 bg-gray-900/40 border-dashed">
-              <CardContent className="py-12 text-center">
-                <span className="text-4xl">🎰</span>
-                <p className="mt-3 text-sm text-gray-500">
-                  Betting panel coming soon
-                </p>
-              </CardContent>
-            </Card>
+            {game.phase !== Phase.LOBBY ? (
+              <BetPanel
+                gameId={gameId}
+                players={game.players}
+                phase={game.phase}
+              />
+            ) : (
+              <Card className="border-gray-800 bg-gray-900/40 border-dashed">
+                <CardContent className="py-12 text-center">
+                  <span className="text-4xl">🎰</span>
+                  <p className="mt-3 text-sm text-gray-500">
+                    Betting opens when game starts
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
