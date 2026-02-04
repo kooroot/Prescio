@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { v4 as uuidv4 } from "uuid";
@@ -29,6 +28,8 @@ import {
   RoundError,
   VoteError,
 } from "./game/index.js";
+import { apiRouter } from "./api/routes.js";
+import { requestLogger, corsMiddleware, errorHandler } from "./api/middleware.js";
 
 // ============================================
 // Express App
@@ -36,8 +37,10 @@ import {
 
 const app = express();
 
-app.use(cors({ origin: config.corsOrigins }));
+// Global middleware
+app.use(corsMiddleware(config.corsOrigins));
 app.use(express.json());
+app.use(requestLogger());
 
 // Health check
 app.get("/health", (_req, res) => {
@@ -48,21 +51,16 @@ app.get("/health", (_req, res) => {
   });
 });
 
-// API routes
-app.get("/api/games", (_req, res) => {
-  const games = getActiveGames().map((g) => ({
-    id: g.id,
-    code: g.code,
-    playerCount: g.players.length,
-    maxPlayers: g.settings.maxPlayers,
-    phase: g.phase,
-  }));
-  res.json({ games });
-});
+// REST API routes
+app.use("/api", apiRouter);
 
+// Legacy market endpoint
 app.get("/api/markets", (_req, res) => {
   res.json({ markets: [] });
 });
+
+// Error handler (must be after routes)
+app.use(errorHandler);
 
 // ============================================
 // HTTP Server
