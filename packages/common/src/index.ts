@@ -7,6 +7,7 @@ export type {
   KillEvent,
   GameState,
   GameSettings,
+  GameLanguage,
   LobbyInfo,
 } from "./types/game.js";
 

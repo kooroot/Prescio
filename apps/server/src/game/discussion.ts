@@ -83,7 +83,7 @@ export function addSystemMessage(
   const chatMsg: ChatMessage = {
     id: uuidv4(),
     playerId: "SYSTEM",
-    playerNickname: "시스템",
+    playerNickname: "System",
     content,
     timestamp: Date.now(),
     phase: game.phase,

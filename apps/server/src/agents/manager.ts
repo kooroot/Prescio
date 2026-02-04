@@ -15,6 +15,7 @@ import {
   pickPersonalities,
   type PersonalityProfile,
 } from "./personalities/index.js";
+import { getSystemMessages, normalizeLanguage, type GameLanguage } from "./i18n.js";
 
 // ============================================
 // Types
@@ -89,7 +90,7 @@ export class AgentManager {
       });
 
       console.log(
-        `[AgentManager] ${player.nickname} → ${role} / 성격: ${personality.nameKo}`,
+        `[AgentManager] ${player.nickname} → ${role} / personality: ${personality.name}`,
       );
     }
 
@@ -119,6 +120,7 @@ export class AgentManager {
     const alivePlayers = game.players.filter((p) => p.isAlive);
     const deadPlayers = game.players.filter((p) => !p.isAlive);
     const recentMessages = getRecentMessages(game.id, 30);
+    const language = normalizeLanguage(game.settings.language);
 
     const ctx: AgentContext = {
       game,
@@ -129,6 +131,7 @@ export class AgentManager {
       deadPlayers,
       recentMessages,
       round: game.round,
+      language,
     };
 
     // Add teammate info for impostors
@@ -161,13 +164,15 @@ export class AgentManager {
     if (bots.length === 0) return;
 
     // Add system message about dead bodies if it's after a night
+    const lang = normalizeLanguage(game.settings.language);
+    const sysMessages = getSystemMessages(lang);
     const nightKills = game.killEvents.filter((ke) => ke.round === game.round);
     for (const kill of nightKills) {
       const victim = game.players.find((p) => p.id === kill.targetId);
       if (victim) {
         const { message: sysMsg } = addSystemMessage(
           gameId,
-          `💀 ${victim.nickname}의 시체가 발견되었습니다!`,
+          sysMessages.bodyFound(victim.nickname),
         );
         this.onChatMessage?.(gameId, sysMsg);
         await this.delay(500);

@@ -30,4 +30,7 @@ export const config = {
     market: process.env.PRESCIO_MARKET_ADDRESS as `0x${string}` | undefined,
     vault: process.env.PRESCIO_VAULT_ADDRESS as `0x${string}` | undefined,
   },
+
+  /** Default game language (en, ko, ja, zh) */
+  gameLanguage: (process.env.GAME_LANGUAGE ?? "en") as "en" | "ko" | "ja" | "zh",
 } as const;

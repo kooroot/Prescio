@@ -49,6 +49,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   voteTime: VOTE_TIME,
   nightTime: NIGHT_TIME,
   anonymousVoting: false,
+  language: "en",
 };
 
 /** Generate a random game code */

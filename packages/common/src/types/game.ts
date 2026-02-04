@@ -70,6 +70,9 @@ export interface GameState {
   settings: GameSettings;
 }
 
+/** Supported game languages */
+export type GameLanguage = "en" | "ko" | "ja" | "zh";
+
 /** Configurable game settings */
 export interface GameSettings {
   maxPlayers: number;
@@ -79,6 +82,8 @@ export interface GameSettings {
   voteTime: number;
   nightTime: number;
   anonymousVoting: boolean;
+  /** Language for in-game chat and system messages (default: "en") */
+  language: GameLanguage;
 }
 
 /** Lobby info (public, no roles exposed) */

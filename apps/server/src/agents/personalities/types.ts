@@ -15,6 +15,8 @@ export interface PersonalityStyleGuide {
 
 export interface PersonalityProfile {
   id: string;
+  name: string;
+  /** @deprecated Use `name` instead */
   nameKo: string;
   systemPromptModifier: string;
   styleGuide: PersonalityStyleGuide;
