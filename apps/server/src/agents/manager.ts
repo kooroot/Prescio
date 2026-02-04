@@ -8,7 +8,7 @@ import { getGame, updateGame } from "../game/state.js";
 import { addMessage, addSystemMessage, getRecentMessages } from "../game/discussion.js";
 import { castVote } from "../game/vote.js";
 import { executeKill } from "../game/round.js";
-import { movePlayer } from "../game/map-manager.js";
+import { movePlayer, completeTask } from "../game/map-manager.js";
 import { ImpostorAgent } from "./impostor.js";
 import { CrewAgent } from "./crew.js";
 import { BaseAgent, type AgentContext } from "./base.js";
@@ -400,6 +400,23 @@ export class AgentManager {
           if (dist < bestDist) { bestDist = dist; bestNext = adj; }
         }
         movePlayer(game.map, bot.playerId, bestNext);
+      }
+
+      // Complete tasks if crew is in a task room
+      if (bot.role === Role.CREW && game.map) {
+        const currentRoom = game.map.locations[bot.playerId]?.room;
+        const tasks = game.map.tasks[bot.playerId] ?? [];
+        for (const task of tasks) {
+          if (!task.completed && (task.room === currentRoom || task.room2 === currentRoom)) {
+            const result = completeTask(game.map, bot.playerId, task.id, false);
+            if (result.success) {
+              console.log(
+                `[AgentManager] ${player.nickname} completed task "${result.taskName}" in ${currentRoom} (${game.map.completedTasks}/${game.map.totalTasks})`,
+              );
+            }
+            break; // 1 task per scatter
+          }
+        }
       }
     }
 
