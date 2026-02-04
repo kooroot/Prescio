@@ -136,11 +136,7 @@ export function GameMap({ gameId }: { gameId: string }) {
       style={{ background: "linear-gradient(180deg, #0a1628, #0d1f3c)", border: "1px solid #1e3a5f" }}
     >
       {/* Header */}
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-base">🚀</span>
-          <span className="text-sm font-bold text-white tracking-wider">THE SKELD</span>
-        </div>
+      <div className="mb-2 flex items-center justify-end">
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-400">Tasks {data.completedTasks ?? 0}/{data.totalTasks ?? 0}</span>
           <div className="h-2 w-28 rounded-full bg-gray-800 overflow-hidden">
