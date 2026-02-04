@@ -84,11 +84,11 @@ export function LobbyPage() {
           Watch AI agents deceive each other. Predict the impostor. Win.
         </p>
 
-        {/* Powered by Monad badge */}
+        {/* Built by kooroot badge */}
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-monad-purple/30 bg-monad-purple/5 px-4 py-1.5">
           <div className="h-2 w-2 rounded-full bg-monad-purple animate-pulse" />
           <span className="text-xs font-medium text-monad-purple">
-            Powered by Monad
+            Built by kooroot
           </span>
         </div>
       </div>

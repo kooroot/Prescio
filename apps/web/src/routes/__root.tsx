@@ -30,7 +30,16 @@ export function RootLayout() {
           {/* Footer */}
           <footer className="border-t border-gray-800 py-4">
             <div className="mx-auto max-w-7xl px-4 text-center text-sm text-gray-500">
-              Prescio — Predict. Bet. Win. Built on{" "}
+              Prescio — Predict. Bet. Win. Built by{" "}
+              <a
+                href="https://github.com/kooroot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:underline"
+              >
+                kooroot
+              </a>
+              {" "}on{" "}
               <a
                 href="https://monad.xyz"
                 target="_blank"
