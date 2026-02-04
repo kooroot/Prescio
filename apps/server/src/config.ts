@@ -31,6 +31,9 @@ export const config = {
     vault: process.env.PRESCIO_VAULT_ADDRESS as `0x${string}` | undefined,
   },
 
+  /** Server wallet private key (owner of PrescioMarket contract) */
+  serverPrivateKey: process.env.SERVER_PRIVATE_KEY as `0x${string}` | undefined,
+
   /** Default game language (en, ko, ja, zh) */
   gameLanguage: (process.env.GAME_LANGUAGE ?? "en") as "en" | "ko" | "ja" | "zh",
 } as const;

@@ -25,6 +25,7 @@ import {
   broadcastToPlayers,
   type ConnectedClient,
 } from "./ws/broadcast.js";
+import { initOnChain, isOnChainEnabled, stopAllPolling } from "./betting/index.js";
 
 // ============================================
 // Express App
@@ -200,6 +201,12 @@ gameEngine.on("engineError", (gameId, error) => {
 });
 
 // ============================================
+// Initialize On-Chain Betting
+// ============================================
+
+const bettingEnabled = initOnChain();
+
+// ============================================
 // Start Server
 // ============================================
 
@@ -211,6 +218,23 @@ server.listen(config.port, () => {
 ║  HTTP:  http://localhost:${config.port}            ║
 ║  WS:    ws://localhost:${config.port}              ║
 ║  ENV:   ${config.nodeEnv.padEnd(30)}  ║
+║  Betting: ${(bettingEnabled ? "ENABLED ✓" : "DISABLED ✗").padEnd(28)}  ║
 ╚══════════════════════════════════════════╝
   `);
+});
+
+// ============================================
+// Graceful Shutdown
+// ============================================
+
+process.on("SIGTERM", () => {
+  console.log("[Server] SIGTERM received — shutting down...");
+  stopAllPolling();
+  server.close();
+});
+
+process.on("SIGINT", () => {
+  console.log("[Server] SIGINT received — shutting down...");
+  stopAllPolling();
+  server.close();
 });

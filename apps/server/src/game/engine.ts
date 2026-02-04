@@ -21,6 +21,14 @@ import { getGame, updateGame, deleteGame } from "./state.js";
 import { executeNightAuto, checkGameOver } from "./round.js";
 import { startVote, tallyVotes, allVotesCast, type VoteResult } from "./vote.js";
 import { agentManager } from "../agents/manager.js";
+import {
+  handleGameStart as bettingGameStart,
+  handleBettingClose,
+  handleGameEnd as bettingGameEnd,
+  cleanupMarket,
+  isOnChainEnabled,
+} from "../betting/index.js";
+import { startOddsPolling, stopOddsPolling } from "../betting/odds.js";
 
 // ============================================
 // Event Types
@@ -87,6 +95,21 @@ export class GameEngine extends EventEmitter {
 
     this.emit("phaseChange", gameId, Phase.NIGHT, game.round);
     this.schedulePhase(gameId, Phase.NIGHT);
+
+    // Create on-chain betting market (async, non-blocking)
+    if (isOnChainEnabled()) {
+      const playerCount = game.players.length;
+      bettingGameStart(gameId, playerCount)
+        .then((ok) => {
+          if (ok) {
+            startOddsPolling(gameId);
+            console.log(`[Engine] Betting market created for game ${gameId}`);
+          }
+        })
+        .catch((err) => {
+          console.error(`[Engine] Failed to create betting market:`, err instanceof Error ? err.message : err);
+        });
+    }
   }
 
   /**
@@ -225,6 +248,14 @@ export class GameEngine extends EventEmitter {
   // ---- VOTE ----
 
   private enterVote(game: GameState): void {
+    // Close betting market before vote starts (async, non-blocking)
+    if (isOnChainEnabled()) {
+      handleBettingClose(game.id).catch((err) => {
+        console.error(`[Engine] Failed to close betting market:`, err instanceof Error ? err.message : err);
+      });
+      stopOddsPolling(game.id);
+    }
+
     startVote(game.id);
     // game.phase is set by startVote
     const updatedGame = getGame(game.id);
@@ -299,6 +330,30 @@ export class GameEngine extends EventEmitter {
     updateGame(game);
     this.emit("gameOver", game.id, winner, game);
     agentManager.cleanup(game.id);
+
+    // Resolve betting market (async, non-blocking)
+    if (isOnChainEnabled()) {
+      stopOddsPolling(game.id);
+
+      // Find the impostor index
+      const impostorPlayer = game.players.find((p) => p.role === Role.IMPOSTOR);
+      if (impostorPlayer) {
+        const impostorIndex = game.players.indexOf(impostorPlayer);
+        bettingGameEnd(game.id, impostorIndex)
+          .then((ok) => {
+            if (ok) {
+              console.log(`[Engine] Betting market resolved for game ${game.id}`);
+            }
+          })
+          .catch((err) => {
+            console.error(`[Engine] Failed to resolve betting market:`, err instanceof Error ? err.message : err);
+          })
+          .finally(() => {
+            // Clean up cache after a delay to allow final queries
+            setTimeout(() => cleanupMarket(game.id), 60_000);
+          });
+      }
+    }
   }
 
   // ============================================

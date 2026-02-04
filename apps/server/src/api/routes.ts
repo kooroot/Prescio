@@ -16,6 +16,15 @@ import {
 } from "../game/index.js";
 import { agentManager } from "../agents/manager.js";
 import { asyncHandler } from "./middleware.js";
+import {
+  getMarketInfo,
+  getOdds,
+  getUserBets,
+  isBettingEnabled,
+  isOnChainEnabled,
+} from "../betting/index.js";
+import { formatOdds } from "../betting/odds.js";
+import { formatEther, type Address } from "viem";
 
 // ============================================
 // Bot Name Pool
@@ -276,24 +285,119 @@ apiRouter.post(
 );
 
 // ------------------------------------------
-// GET /api/games/:id/bets — Betting status (placeholder)
+// GET /api/games/:id/bets — On-chain betting status
 // ------------------------------------------
 apiRouter.get(
   "/games/:id/bets",
   asyncHandler(async (req, res) => {
-    const game = getGame(String(req.params.id));
+    const gameId = String(req.params.id);
+    const game = getGame(gameId);
     if (!game) {
       res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
       return;
     }
 
-    // Placeholder — will be implemented with blockchain integration
+    if (!isOnChainEnabled()) {
+      res.json({
+        gameId: game.id,
+        phase: game.phase,
+        bettingEnabled: false,
+        market: null,
+        totalPool: "0",
+        message: "On-chain betting not configured",
+      });
+      return;
+    }
+
+    const market = await getMarketInfo(gameId);
+    const userAddress = req.query.address as string | undefined;
+    let userBet = null;
+
+    if (userAddress && market) {
+      userBet = await getUserBets(gameId, userAddress as Address);
+    }
+
     res.json({
       gameId: game.id,
       phase: game.phase,
-      markets: [],
-      totalPool: "0",
-      message: "Betting system coming soon",
+      bettingEnabled: isBettingEnabled(gameId),
+      market: market
+        ? {
+            state: market.state,
+            playerCount: market.playerCount,
+            totalPool: formatEther(market.totalPool),
+            outcomeTotals: market.outcomeTotals.map((t) => formatEther(t)),
+            impostorIndex: market.impostorIndex,
+          }
+        : null,
+      userBet: userBet
+        ? {
+            suspectIndex: userBet.suspectIndex,
+            amount: formatEther(userBet.amount),
+            claimed: userBet.claimed,
+          }
+        : null,
+    });
+  })
+);
+
+// ------------------------------------------
+// GET /api/games/:id/odds — Current betting odds
+// ------------------------------------------
+apiRouter.get(
+  "/games/:id/odds",
+  asyncHandler(async (req, res) => {
+    const gameId = String(req.params.id);
+    const game = getGame(gameId);
+    if (!game) {
+      res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
+      return;
+    }
+
+    if (!isOnChainEnabled()) {
+      res.json({
+        gameId: game.id,
+        bettingEnabled: false,
+        odds: [],
+        message: "On-chain betting not configured",
+      });
+      return;
+    }
+
+    const market = await getMarketInfo(gameId);
+    const rawOdds = await getOdds(gameId);
+
+    if (!market || !rawOdds) {
+      res.json({
+        gameId: game.id,
+        bettingEnabled: false,
+        odds: [],
+        totalPool: "0",
+      });
+      return;
+    }
+
+    const formatted = formatOdds(rawOdds, market.outcomeTotals, market.totalPool);
+
+    // Map odds to player names
+    const oddsWithPlayers = formatted.map((o) => {
+      const player = game.players[o.playerIndex];
+      return {
+        playerIndex: o.playerIndex,
+        playerNickname: player?.nickname ?? `Player ${o.playerIndex}`,
+        playerId: player?.id ?? null,
+        decimal: o.decimal,
+        impliedProbability: o.impliedProbability,
+        totalStaked: o.totalStaked,
+      };
+    });
+
+    res.json({
+      gameId: game.id,
+      bettingEnabled: isBettingEnabled(gameId),
+      state: market.state,
+      totalPool: formatEther(market.totalPool),
+      odds: oddsWithPlayers,
     });
   })
 );
