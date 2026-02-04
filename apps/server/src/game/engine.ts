@@ -55,6 +55,15 @@ export class GameEngine extends EventEmitter {
   /** Active phase timers: gameId → timer handle */
   private timers = new Map<string, ReturnType<typeof setTimeout>>();
 
+  /** Phase start timestamps: gameId → epoch ms */
+  private phaseStartTimes = new Map<string, number>();
+
+  /** Discussion abort controllers: gameId → AbortController */
+  private discussionAborts = new Map<string, AbortController>();
+
+  /** Guard against double-processing: gameId → processing phase */
+  private processing = new Set<string>();
+
   constructor() {
     super();
   }
@@ -113,11 +122,14 @@ export class GameEngine extends EventEmitter {
   }
 
   /**
-   * Transition to the next phase.
+   * Transition to the next phase with guard against double-processing.
    */
   private transitionTo(gameId: string, nextPhase: Phase): void {
     const game = getGame(gameId);
     if (!game) return;
+
+    // Guard: don't transition if game is over
+    if (game.winner) return;
 
     this.clearTimer(gameId);
 
@@ -160,12 +172,20 @@ export class GameEngine extends EventEmitter {
    * Let AI agents choose kill targets, then check win condition, then move to REPORT.
    */
   private processNight(gameId: string): void {
+    const game = getGame(gameId);
+    if (!game || game.phase !== Phase.NIGHT) return;
+
+    // Guard against double-processing
+    const lockKey = `night:${gameId}`;
+    if (this.processing.has(lockKey)) return;
+    this.processing.add(lockKey);
+
     // Use agent manager for AI-driven kills, fallback to auto
     agentManager
       .runNightAction(gameId)
       .then((agentKills) => {
-        const game = getGame(gameId);
-        if (!game) return;
+        const currentGame = getGame(gameId);
+        if (!currentGame || currentGame.phase !== Phase.NIGHT) return;
 
         // If agents didn't kill anyone, fallback to auto
         if (agentKills.length === 0) {
@@ -187,7 +207,7 @@ export class GameEngine extends EventEmitter {
           const kills = agentKills.map((k) => ({
             killerId: k.killerId,
             targetId: k.targetId,
-            round: game.round,
+            round: currentGame.round,
             timestamp: Date.now(),
           }));
           this.emit("nightKills", gameId, kills);
@@ -219,6 +239,9 @@ export class GameEngine extends EventEmitter {
         } catch (innerErr) {
           this.emit("engineError", gameId, innerErr instanceof Error ? innerErr : new Error(String(innerErr)));
         }
+      })
+      .finally(() => {
+        this.processing.delete(lockKey);
       });
   }
 
@@ -237,17 +260,47 @@ export class GameEngine extends EventEmitter {
     game.phase = Phase.DISCUSSION;
     updateGame(game);
     this.emit("phaseChange", game.id, Phase.DISCUSSION, game.round);
+
+    // Cancel any previous discussion abort controller
+    this.abortDiscussion(game.id);
+
+    // Create new abort controller for this discussion
+    const abortController = new AbortController();
+    this.discussionAborts.set(game.id, abortController);
+
+    // Start agent discussion AND timer concurrently
+    // Discussion timer is the hard deadline
     this.schedulePhase(game.id, Phase.DISCUSSION);
 
-    // Trigger AI discussion (runs async, doesn't block phase timer)
-    agentManager.runDiscussion(game.id).catch((err) => {
-      console.error(`[Engine] Agent discussion error:`, err instanceof Error ? err.message : err);
-    });
+    // Trigger AI discussion with abort signal
+    agentManager
+      .runDiscussion(game.id, abortController.signal)
+      .catch((err) => {
+        if (err instanceof Error && err.name === "AbortError") {
+          console.log(`[Engine] Discussion aborted for game ${game.id} (timer expired)`);
+          return;
+        }
+        console.error(`[Engine] Agent discussion error:`, err instanceof Error ? err.message : err);
+      });
+  }
+
+  /**
+   * Abort ongoing discussion for a game.
+   */
+  private abortDiscussion(gameId: string): void {
+    const controller = this.discussionAborts.get(gameId);
+    if (controller) {
+      controller.abort();
+      this.discussionAborts.delete(gameId);
+    }
   }
 
   // ---- VOTE ----
 
   private enterVote(game: GameState): void {
+    // Abort any ongoing discussion
+    this.abortDiscussion(game.id);
+
     // Close betting market before vote starts (async, non-blocking)
     if (isOnChainEnabled()) {
       handleBettingClose(game.id).catch((err) => {
@@ -280,20 +333,30 @@ export class GameEngine extends EventEmitter {
    * Tally votes and move to RESULT.
    */
   processVote(gameId: string): void {
+    const game = getGame(gameId);
+    if (!game || game.phase !== Phase.VOTE) return;
+
+    // Guard against double-processing
+    const lockKey = `vote:${gameId}`;
+    if (this.processing.has(lockKey)) return;
+    this.processing.add(lockKey);
+
     try {
-      const { game, result } = tallyVotes(gameId);
+      const { game: updatedGame, result } = tallyVotes(gameId);
       this.emit("voteResult", gameId, result);
 
       // Check win condition after elimination
-      const winner = checkGameOver(game);
+      const winner = checkGameOver(updatedGame);
       if (winner) {
-        this.endGame(game, winner);
+        this.endGame(updatedGame, winner);
         return;
       }
 
       this.transitionTo(gameId, Phase.RESULT);
     } catch (err) {
       this.emit("engineError", gameId, err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      this.processing.delete(lockKey);
     }
   }
 
@@ -311,7 +374,10 @@ export class GameEngine extends EventEmitter {
    */
   private processResult(gameId: string): void {
     const game = getGame(gameId);
-    if (!game) return;
+    if (!game || game.phase !== Phase.RESULT) return;
+
+    // Don't start a new round if game is already over
+    if (game.winner) return;
 
     game.round += 1;
     game.votes = []; // Clear votes for next round
@@ -325,6 +391,7 @@ export class GameEngine extends EventEmitter {
 
   private endGame(game: GameState, winner: Role): void {
     this.clearTimer(game.id);
+    this.abortDiscussion(game.id);
     game.phase = Phase.RESULT;
     game.winner = winner;
     updateGame(game);
@@ -369,6 +436,9 @@ export class GameEngine extends EventEmitter {
     const duration = this.getPhaseDuration(gameId, phase);
     if (duration <= 0) return;
 
+    // Track phase start time for accurate time-remaining calculations
+    this.phaseStartTimes.set(gameId, Date.now());
+
     const timer = setTimeout(() => {
       this.onPhaseTimeout(gameId, phase);
     }, duration * 1000);
@@ -377,6 +447,10 @@ export class GameEngine extends EventEmitter {
   }
 
   private onPhaseTimeout(gameId: string, phase: Phase): void {
+    // Verify game is still in the expected phase (guard against stale timers)
+    const game = getGame(gameId);
+    if (!game || game.phase !== phase) return;
+
     switch (phase) {
       case Phase.NIGHT:
         this.processNight(gameId);
@@ -385,6 +459,7 @@ export class GameEngine extends EventEmitter {
         this.transitionTo(gameId, Phase.DISCUSSION);
         break;
       case Phase.DISCUSSION:
+        this.abortDiscussion(gameId);
         this.transitionTo(gameId, Phase.VOTE);
         break;
       case Phase.VOTE:
@@ -448,18 +523,25 @@ export class GameEngine extends EventEmitter {
    */
   destroyGame(gameId: string): void {
     this.clearTimer(gameId);
+    this.abortDiscussion(gameId);
+    this.processing.delete(`night:${gameId}`);
+    this.processing.delete(`vote:${gameId}`);
     deleteGame(gameId);
   }
 
   /**
-   * Get remaining time for current phase timer (approximate).
+   * Get remaining time for current phase timer.
    */
   getTimeRemaining(gameId: string): number {
     const game = getGame(gameId);
     if (!game) return 0;
-    // We don't store start time, so return full duration as approximation.
-    // In production, track phase start times for precision.
-    return this.getPhaseDuration(gameId, game.phase);
+
+    const startTime = this.phaseStartTimes.get(gameId);
+    if (!startTime) return this.getPhaseDuration(gameId, game.phase);
+
+    const totalDuration = this.getPhaseDuration(gameId, game.phase);
+    const elapsed = (Date.now() - startTime) / 1000;
+    return Math.max(0, Math.round(totalDuration - elapsed));
   }
 }
 

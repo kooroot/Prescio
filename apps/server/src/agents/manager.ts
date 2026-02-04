@@ -3,7 +3,7 @@
  *
  * Assigns personalities, coordinates discussion/voting/night actions.
  */
-import { Role, type GameState, type Player, type ChatMessage } from "@prescio/common";
+import { Role, Phase, type GameState, type Player, type ChatMessage } from "@prescio/common";
 import { getGame, updateGame } from "../game/state.js";
 import { addMessage, addSystemMessage, getRecentMessages } from "../game/discussion.js";
 import { castVote } from "../game/vote.js";
@@ -150,9 +150,10 @@ export class AgentManager {
 
   /**
    * Run discussion: bots take turns speaking for 2-3 rounds.
-   * Returns when all bots have spoken.
+   * Respects abort signal to stop early when phase timer expires.
+   * Returns when all bots have spoken or signal is aborted.
    */
-  async runDiscussion(gameId: string): Promise<void> {
+  async runDiscussion(gameId: string, signal?: AbortSignal): Promise<void> {
     const game = getGame(gameId);
     if (!game) return;
 
@@ -168,6 +169,7 @@ export class AgentManager {
     const sysMessages = getSystemMessages(lang);
     const nightKills = game.killEvents.filter((ke) => ke.round === game.round);
     for (const kill of nightKills) {
+      if (signal?.aborted) return;
       const victim = game.players.find((p) => p.id === kill.targetId);
       if (victim) {
         const { message: sysMsg } = addSystemMessage(
@@ -183,13 +185,25 @@ export class AgentManager {
     const discussionRounds = Math.min(2 + Math.floor(Math.random() * 2), 3);
 
     for (let round = 0; round < discussionRounds; round++) {
+      // Check abort signal before each discussion round
+      if (signal?.aborted) {
+        console.log(`[AgentManager] Discussion aborted for game ${gameId} (round ${round})`);
+        return;
+      }
+
       // Shuffle speaking order each round
       const shuffled = [...bots].sort(() => Math.random() - 0.5);
 
       for (const bot of shuffled) {
+        // Check abort signal before each agent speaks
+        if (signal?.aborted) {
+          console.log(`[AgentManager] Discussion aborted for game ${gameId} during speaking`);
+          return;
+        }
+
         // Re-fetch game state for fresh context
         const currentGame = getGame(gameId);
-        if (!currentGame || currentGame.phase !== "DISCUSSION") return;
+        if (!currentGame || currentGame.phase !== Phase.DISCUSSION) return;
 
         const player = currentGame.players.find((p) => p.id === bot.playerId);
         if (!player?.isAlive) continue;
@@ -198,7 +212,14 @@ export class AgentManager {
           const ctx = this.buildContext(currentGame, bot);
           const content = await bot.agent.generateMessage(ctx);
 
+          // Check abort AFTER LLM call — don't post if aborted
+          if (signal?.aborted) return;
+
           if (content && content.trim()) {
+            // Verify we're still in discussion phase before posting
+            const gameNow = getGame(gameId);
+            if (!gameNow || gameNow.phase !== Phase.DISCUSSION) return;
+
             const { message: chatMsg } = addMessage(gameId, bot.playerId, content);
             this.onChatMessage?.(gameId, chatMsg);
           }
@@ -207,6 +228,18 @@ export class AgentManager {
             `[AgentManager] Failed to generate message for ${player.nickname}:`,
             err instanceof Error ? err.message : err,
           );
+          // Fallback: generate a simple filler message
+          try {
+            const gameNow = getGame(gameId);
+            if (gameNow && gameNow.phase === Phase.DISCUSSION && !signal?.aborted) {
+              const fallbackMessages = ["Hmm...", "I'm not sure.", "Let me think about this.", "Interesting..."];
+              const fallback = fallbackMessages[Math.floor(Math.random() * fallbackMessages.length)];
+              const { message: chatMsg } = addMessage(gameId, bot.playerId, fallback);
+              this.onChatMessage?.(gameId, chatMsg);
+            }
+          } catch {
+            // ignore fallback errors
+          }
         }
 
         // Delay between messages for natural feel (1.5-3s)
@@ -243,14 +276,22 @@ export class AgentManager {
 
     for (const bot of shuffled) {
       const currentGame = getGame(gameId);
-      if (!currentGame || currentGame.phase !== "VOTE") return;
+      if (!currentGame || currentGame.phase !== Phase.VOTE) return;
 
       const player = currentGame.players.find((p) => p.id === bot.playerId);
       if (!player?.isAlive) continue;
 
+      // Check if this bot already voted (guard against double-run)
+      const alreadyVoted = currentGame.votes.some((v) => v.voterId === bot.playerId);
+      if (alreadyVoted) continue;
+
       try {
         const ctx = this.buildContext(currentGame, bot);
         const targetId = await bot.agent.generateVote(ctx);
+
+        // Re-check phase before casting
+        const gameNow = getGame(gameId);
+        if (!gameNow || gameNow.phase !== Phase.VOTE) return;
 
         castVote(gameId, bot.playerId, targetId);
         this.onVoteCast?.(gameId, bot.playerId);
@@ -266,9 +307,22 @@ export class AgentManager {
           `[AgentManager] Failed to vote for ${player.nickname}:`,
           err instanceof Error ? err.message : err,
         );
-        // Fallback: skip vote
+        // Fallback: random vote among alive players (not self) or skip
         try {
-          castVote(gameId, bot.playerId, null);
+          const gameNow = getGame(gameId);
+          if (!gameNow || gameNow.phase !== Phase.VOTE) return;
+
+          const candidates = gameNow.players.filter(
+            (p) => p.isAlive && p.id !== bot.playerId,
+          );
+          const fallbackTarget = candidates.length > 0
+            ? candidates[Math.floor(Math.random() * candidates.length)].id
+            : null;
+          castVote(gameId, bot.playerId, fallbackTarget);
+          this.onVoteCast?.(gameId, bot.playerId);
+          console.log(
+            `[AgentManager] ${player.nickname} fallback vote for ${fallbackTarget ?? "SKIP"}`,
+          );
         } catch {
           // Already voted or game state changed
         }
@@ -303,11 +357,15 @@ export class AgentManager {
 
     for (const bot of impostorBots) {
       const currentGame = getGame(gameId);
-      if (!currentGame || currentGame.phase !== "NIGHT") break;
+      if (!currentGame || currentGame.phase !== Phase.NIGHT) break;
 
       try {
         const ctx = this.buildContext(currentGame, bot);
         let targetId = await bot.agent.generateKillTarget(ctx);
+
+        // Re-check phase after LLM call
+        const gameNow = getGame(gameId);
+        if (!gameNow || gameNow.phase !== Phase.NIGHT) break;
 
         // Don't kill same target twice
         if (targetId && killedThisNight.has(targetId)) {
@@ -337,6 +395,26 @@ export class AgentManager {
           `[AgentManager] Failed night action:`,
           err instanceof Error ? err.message : err,
         );
+        // Fallback: random kill
+        try {
+          const gameNow = getGame(gameId);
+          if (!gameNow || gameNow.phase !== Phase.NIGHT) break;
+
+          const crewTargets = gameNow.players.filter(
+            (p) => p.isAlive && p.role === Role.CREW && !killedThisNight.has(p.id),
+          );
+          if (crewTargets.length > 0) {
+            const randomTarget = crewTargets[Math.floor(Math.random() * crewTargets.length)];
+            executeKill(gameId, bot.playerId, randomTarget.id);
+            killedThisNight.add(randomTarget.id);
+            kills.push({ killerId: bot.playerId, targetId: randomTarget.id });
+            console.log(
+              `[AgentManager] ${gameNow.players.find((p) => p.id === bot.playerId)?.nickname} fallback killed ${randomTarget.nickname}`,
+            );
+          }
+        } catch {
+          // Kill failed — continue
+        }
       }
     }
 

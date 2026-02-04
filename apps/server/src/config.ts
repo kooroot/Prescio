@@ -19,6 +19,9 @@ export const config = {
     "http://localhost:3000",
   ],
 
+  /** Anthropic API key for AI agents */
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+
   /** Monad chain config */
   monad: {
     rpcUrl: process.env.MONAD_RPC_URL ?? "https://testnet.monad.xyz",

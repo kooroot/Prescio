@@ -7,18 +7,24 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { GameState, ChatMessage, Player } from "@prescio/common";
 import type { PersonalityProfile } from "./personalities/index.js";
 import { getLanguageInstruction, getSystemMessages, type GameLanguage, DEFAULT_LANGUAGE } from "./i18n.js";
+import { config } from "../config.js";
 
 // ============================================
 // Singleton Anthropic Client
 // ============================================
 
 let anthropicClient: Anthropic | null = null;
+let clientAvailable = true;
 
-function getClient(): Anthropic {
+function getClient(): Anthropic | null {
+  if (!clientAvailable) return null;
+
   if (!anthropicClient) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = config.anthropicApiKey;
     if (!apiKey) {
-      throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+      console.warn("[Agent] ANTHROPIC_API_KEY not set — agents will use fallback behavior");
+      clientAvailable = false;
+      return null;
     }
     anthropicClient = new Anthropic({ apiKey });
   }
@@ -113,6 +119,7 @@ export class BaseAgent {
 
   /**
    * Call the LLM with a system prompt and user message.
+   * Returns empty string on failure (caller handles fallback).
    */
   protected async callLLM(
     systemPrompt: string,
@@ -120,6 +127,9 @@ export class BaseAgent {
     maxTokens: number = 200,
   ): Promise<string> {
     const client = getClient();
+
+    // If no API key configured, return empty for fallback behavior
+    if (!client) return "";
 
     try {
       const response = await client.messages.create({
@@ -165,7 +175,18 @@ ${langInstruction}
 `.trim();
 
     const result = await this.callLLM(fullSystemPrompt, userMessage, 150);
-    return result || "...";
+    if (result) return result;
+
+    // Fallback messages when LLM is unavailable
+    const fallbacks = [
+      "Hmm, I'm not sure what to think right now.",
+      "Let me think about this for a moment...",
+      "Does anyone have any evidence?",
+      "I was just minding my own business.",
+      "This is getting suspicious...",
+      "I don't know who to trust anymore.",
+    ];
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   }
 
   /**

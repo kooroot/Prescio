@@ -206,10 +206,11 @@ apiRouter.get(
     const players = game.players.map((p) => ({
       id: p.id,
       nickname: p.nickname,
+      address: p.address,
       isAlive: p.isAlive,
       isConnected: p.isConnected,
       avatar: p.avatar,
-      ...(game.winner ? { role: p.role } : {}),
+      role: game.winner ? p.role : null,
     }));
 
     res.json({
@@ -222,6 +223,14 @@ apiRouter.get(
       playerCount: game.players.length,
       alivePlayers: game.alivePlayers,
       eliminatedPlayers: game.eliminatedPlayers,
+      votes: game.votes,
+      chatMessages: game.chatMessages,
+      killEvents: game.killEvents.map((ke) => ({
+        killerId: "", // Don't expose killer to spectators
+        targetId: ke.targetId,
+        round: ke.round,
+        timestamp: ke.timestamp,
+      })),
       winner: game.winner,
       settings: game.settings,
       createdAt: game.createdAt,
