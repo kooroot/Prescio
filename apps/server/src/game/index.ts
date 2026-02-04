@@ -37,6 +37,7 @@ export {
   deleteGame,
   getActiveGames,
   getGameCount,
+  restoreGames,
 } from "./state.js";
 
 export {

@@ -27,8 +27,10 @@ import { Plus, Users, Zap, Coins, Loader2, Gamepad2 } from "lucide-react";
 import { createGame, startGame } from "@/lib/api";
 import { useActiveGames, useFinishedGames } from "@/hooks/useGames";
 import { ActiveGameCard, FinishedGameCard } from "@/components/game/GameCard";
+import { useI18n } from "@/i18n";
 
 export function LobbyPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: activeGames = [], isLoading: loadingActive, error: activeError } = useActiveGames();
@@ -71,24 +73,24 @@ export function LobbyPage() {
     <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12">
       {/* Hero */}
       <div className="mb-10 text-center">
-        <div className="mb-3 text-5xl">🔮</div>
+        <img src="/prescio-icon.png" alt="Prescio" className="mx-auto mb-4 h-40 w-40 rounded-3xl" />
         <h2 className="mb-2 text-4xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-monad-purple via-[#9B87FF] to-monad-purple bg-clip-text text-transparent">
             Prescio
           </span>
         </h2>
         <p className="text-lg text-gray-400">
-          Among Us × Prediction Market
+          {t("tagline")}
         </p>
         <p className="mt-1 text-sm text-gray-500">
-          Watch AI agents deceive each other. Predict the impostor. Win.
+          {t("subtitle")}
         </p>
 
         {/* Built by kooroot badge */}
         <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-monad-purple/30 bg-monad-purple/5 px-4 py-1.5">
           <div className="h-2 w-2 rounded-full bg-monad-purple animate-pulse" />
           <span className="text-xs font-medium text-monad-purple">
-            Built by kooroot
+            {t("builtBy")}
           </span>
         </div>
       </div>
@@ -97,15 +99,15 @@ export function LobbyPage() {
       <div className="mb-8 flex flex-wrap justify-center gap-3">
         <Badge variant="outline" className="border-monad-purple/30 text-monad-purple px-3 py-1">
           <Users className="mr-1.5 h-3 w-3" />
-          AI Agents
+          {t("badgeAgents")}
         </Badge>
         <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Zap className="mr-1.5 h-3 w-3" />
-          Monad Testnet
+          {t("badgeMonad")}
         </Badge>
         <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Coins className="mr-1.5 h-3 w-3" />
-          On-chain Bets
+          {t("badgeBets")}
         </Badge>
       </div>
 
@@ -117,7 +119,7 @@ export function LobbyPage() {
             className="mb-10 bg-monad-purple hover:bg-monad-purple/80 text-white font-semibold px-8 monad-glow"
           >
             <Plus className="mr-2 h-5 w-5" />
-            Create New Game
+            {t("createGame")}
           </Button>
         </DialogTrigger>
         <DialogContent className="border-monad-border bg-monad-card sm:max-w-md">
@@ -193,7 +195,7 @@ export function LobbyPage() {
               onClick={() => setDialogOpen(false)}
               disabled={createMutation.isPending}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={() => createMutation.mutate()}
@@ -220,7 +222,7 @@ export function LobbyPage() {
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="mb-4 grid w-full grid-cols-2 bg-monad-card/50">
             <TabsTrigger value="active" className="data-[state=active]:bg-monad-purple/20">
-              In Progress
+              {t("inProgress")}
               {inProgressGames.length > 0 && (
                 <Badge className="ml-2 bg-monad-purple/30 text-monad-purple text-xs px-1.5">
                   {inProgressGames.length}
@@ -228,7 +230,7 @@ export function LobbyPage() {
               )}
             </TabsTrigger>
             <TabsTrigger value="finished" className="data-[state=active]:bg-[#27272A]/60">
-              Completed
+              {t("completed")}
               {finishedGames.length > 0 && (
                 <Badge className="ml-2 bg-[#27272A]/50 text-gray-300 text-xs px-1.5">
                   {finishedGames.length}
@@ -247,7 +249,7 @@ export function LobbyPage() {
 
             {activeError && (
               <div className="rounded-lg border border-impostor/30 bg-impostor/10 p-4 text-center text-sm text-impostor">
-                Failed to load games. Is the server running?
+                {t("failedToLoad")}
               </div>
             )}
 

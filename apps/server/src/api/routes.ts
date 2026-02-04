@@ -61,28 +61,30 @@ function botAddress(index: number): `0x${string}` {
 }
 
 // ============================================
-// Finished Games Store (in-memory)
+// Finished Games Store (persisted to disk)
 // ============================================
+import { loadFinishedGames, appendFinishedGame, type FinishedGameRecord } from "../game/persistence.js";
 
-const finishedGames: Array<{
-  id: string;
-  code: string;
-  winner: string | null;
-  rounds: number;
-  playerCount: number;
-  finishedAt: number;
-}> = [];
+const finishedGames: FinishedGameRecord[] = loadFinishedGames();
+console.log(`[Persistence] Loaded ${finishedGames.length} finished games from disk`);
 
 // Listen for game-over events to archive
 gameEngine.on("gameOver", (gameId, winner, game) => {
-  finishedGames.push({
+  const record: FinishedGameRecord = {
     id: game.id,
     code: game.code,
     winner: winner.toString(),
     rounds: game.round,
     playerCount: game.players.length,
+    players: game.players.map((p: any) => ({
+      nickname: p.nickname,
+      role: p.role ?? null,
+      isAlive: p.isAlive,
+    })),
     finishedAt: Date.now(),
-  });
+  };
+  finishedGames.push(record);
+  appendFinishedGame(record);
 });
 
 // ============================================

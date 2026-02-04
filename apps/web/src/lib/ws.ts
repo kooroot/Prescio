@@ -3,7 +3,8 @@ import { parseEvent, serializeEvent } from "@prescio/common";
 
 type EventHandler = (event: ServerEvent) => void;
 
-const WS_BASE = import.meta.env.VITE_WS_URL ?? `ws://${window.location.host}/ws`;
+const WS_BASE = import.meta.env.VITE_WS_URL ??
+  `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`;
 const RECONNECT_DELAY_MS = 2000;
 const MAX_RECONNECT_DELAY_MS = 30000;
 const PING_INTERVAL_MS = 25000;

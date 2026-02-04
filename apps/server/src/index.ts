@@ -12,6 +12,7 @@ import {
 import {
   gameEngine,
   getGame,
+  restoreGames,
 } from "./game/index.js";
 import { agentManager } from "./agents/manager.js";
 import { apiRouter } from "./api/routes.js";
@@ -26,6 +27,7 @@ import {
   type ConnectedClient,
 } from "./ws/broadcast.js";
 import { initOnChain, isOnChainEnabled, stopAllPolling } from "./betting/index.js";
+import { startOrchestrator, stopOrchestrator } from "./orchestrator.js";
 
 // ============================================
 // Express App
@@ -204,6 +206,11 @@ gameEngine.on("engineError", (gameId, error) => {
 // Initialize On-Chain Betting
 // ============================================
 
+// ============================================
+// Restore Persisted State
+// ============================================
+restoreGames();
+
 const bettingEnabled = initOnChain();
 
 // ============================================
@@ -221,6 +228,9 @@ server.listen(config.port, () => {
 ║  Betting: ${(bettingEnabled ? "ENABLED ✓" : "DISABLED ✗").padEnd(28)}  ║
 ╚══════════════════════════════════════════╝
   `);
+
+  // Start built-in orchestrator
+  startOrchestrator();
 });
 
 // ============================================
@@ -229,12 +239,14 @@ server.listen(config.port, () => {
 
 process.on("SIGTERM", () => {
   console.log("[Server] SIGTERM received — shutting down...");
+  stopOrchestrator();
   stopAllPolling();
   server.close();
 });
 
 process.on("SIGINT", () => {
   console.log("[Server] SIGINT received — shutting down...");
+  stopOrchestrator();
   stopAllPolling();
   server.close();
 });

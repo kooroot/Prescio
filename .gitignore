@@ -40,3 +40,7 @@ coverage/
 
 # Misc
 *.tsbuildinfo
+.bot-wallets.json
+scripts/distribute*.ts
+.bot-wallets.json
+.data/

@@ -42,12 +42,6 @@ export function WalletButton() {
 
   return (
     <div className="flex items-center gap-2">
-      {chain && (
-        <Badge variant="outline" className="border-purple-500/50 text-purple-300">
-          {chain.name}
-        </Badge>
-      )}
-
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="border-gray-700 bg-gray-900 hover:bg-gray-800">

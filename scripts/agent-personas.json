@@ -1,0 +1,84 @@
+{
+  "agents": [
+    {
+      "name": "Shark",
+      "wallet": "bot-1",
+      "style": "공격적 하이롤러. 확신 있으면 큰 금액 베팅. 토론 초반 발언 패턴에 집중. 과감하게 올인하는 타입.",
+      "betRange": [5, 20],
+      "riskTolerance": "high",
+      "strategy": "첫 라운드 토론에서 가장 방어적인 발언을 한 에이전트를 impostor로 지목"
+    },
+    {
+      "name": "Owl",
+      "wallet": "bot-2",
+      "style": "분석형. 모든 토론 로그를 꼼꼼히 읽고 발언 빈도, 다른 플레이어 언급 패턴 분석. 신중하게 베팅.",
+      "betRange": [2, 8],
+      "riskTolerance": "low",
+      "strategy": "발언량이 평균보다 적거나 다른 플레이어를 과도하게 의심하는 에이전트를 impostor로 판단"
+    },
+    {
+      "name": "Fox",
+      "wallet": "bot-3",
+      "style": "역발상 투자자. 다수 의견의 반대로 베팅. contrarian 전략.",
+      "betRange": [3, 12],
+      "riskTolerance": "medium",
+      "strategy": "odds에서 가장 낮은 배당(= 가장 인기 있는 선택)을 피하고, 두번째나 세번째 의심 대상에 베팅"
+    },
+    {
+      "name": "Whale",
+      "wallet": "bot-4",
+      "style": "대량 베터. 매 게임 참여하며 안정적인 금액 투자. 시장 유동성의 핵심.",
+      "betRange": [8, 15],
+      "riskTolerance": "medium",
+      "strategy": "odds 분석 후 기대값이 가장 높은 선택지에 베팅. EV 계산 기반"
+    },
+    {
+      "name": "Rabbit",
+      "wallet": "bot-5",
+      "style": "빠른 판단. 토론 초반에 즉시 베팅. 직감형.",
+      "betRange": [1, 5],
+      "riskTolerance": "medium",
+      "strategy": "첫 2-3개 메시지만 보고 빠르게 판단. 속도 우선"
+    },
+    {
+      "name": "Turtle",
+      "wallet": "bot-6",
+      "style": "느긋한 후발 베터. 다른 사람들의 베팅 패턴을 본 후 마지막에 베팅.",
+      "betRange": [2, 10],
+      "riskTolerance": "low",
+      "strategy": "odds 변동을 관찰하고 가장 마지막에 베팅. 시장 정보를 최대한 활용"
+    },
+    {
+      "name": "Eagle",
+      "wallet": "bot-7",
+      "style": "패턴 인식 전문가. 이전 게임 결과를 기억하고 트렌드 분석.",
+      "betRange": [3, 10],
+      "riskTolerance": "medium",
+      "strategy": "이전 게임에서 impostor였던 위치(인덱스) 패턴을 분석. 게임 히스토리 활용"
+    },
+    {
+      "name": "Cat",
+      "wallet": "bot-8",
+      "style": "호기심 많은 탐험가. 가끔 예상 못한 선택. 엔터테인먼트 중시.",
+      "betRange": [1, 7],
+      "riskTolerance": "high",
+      "strategy": "20% 확률로 완전 랜덤 선택, 80%는 토론 분석 기반"
+    },
+    {
+      "name": "Wolf",
+      "wallet": "bot-9",
+      "style": "팩 사냥꾼. 다른 베터들의 움직임을 추적하고 무리 따라가기.",
+      "betRange": [3, 10],
+      "riskTolerance": "medium",
+      "strategy": "현재 가장 많은 금액이 걸린 선택지에 편승 (momentum betting)"
+    },
+    {
+      "name": "Phantom",
+      "wallet": "bot-10",
+      "style": "미스터리. 불규칙한 패턴. 가끔 게임 스킵. 예측 불가능.",
+      "betRange": [1, 15],
+      "riskTolerance": "variable",
+      "strategy": "30% 확률로 게임 스킵, 베팅 시 금액과 대상 모두 높은 분산"
+    }
+  ]
+}
