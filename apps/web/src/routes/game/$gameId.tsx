@@ -77,7 +77,9 @@ export function GamePage() {
 
       {/* ─── Map (if active) ─────────────────── */}
       {game.phase !== "LOBBY" && game.phase !== "RESULT" && (
-        <GameMap gameId={game.id} />
+        <div className="mb-3">
+          <GameMap gameId={game.id} />
+        </div>
       )}
 
       {/* ─── Desktop: 2-column layout ─────────────────── */}
