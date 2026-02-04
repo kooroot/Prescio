@@ -257,40 +257,78 @@ export function GameMap({ gameId }: { gameId: string }) {
                 {roomName}
               </text>
 
-              {/* Player dots inside room */}
+              {/* Player pills via foreignObject */}
               {hasPlayers && (() => {
-                const dotR = 6;
-                const gap = 16;
-                const cols = Math.min(players.length, 4);
-                const rows = Math.ceil(players.length / cols);
-                const totalW = cols * gap;
-                const totalH = rows * gap;
-                const startX = room.cx - totalW / 2 + gap / 2;
-                const startY = room.cy - totalH / 2 + 10;
+                // Show max 3 pills, then "+N"
+                const maxShow = 3;
+                const visible = players.slice(0, maxShow);
+                const extra = players.length - maxShow;
 
-                return players.map((p, i) => {
-                  const col = i % cols;
-                  const row = Math.floor(i / cols);
-                  const dx = startX + col * gap;
-                  const dy = startY + row * gap;
-
-                  return (
-                    <g key={i}>
-                      <circle
-                        cx={dx}
-                        cy={dy}
-                        r={dotR}
-                        fill={p.isAlive ? p.color : "#374151"}
-                        stroke={p.isAlive ? "#fff" : "#555"}
-                        strokeWidth={1.5}
-                        opacity={p.isAlive ? 1 : 0.5}
-                      />
-                      {!p.isAlive && (
-                        <text x={dx} y={dy + 3} textAnchor="middle" fill="#ef4444" fontSize="8" fontWeight="bold">✕</text>
+                return (
+                  <foreignObject
+                    x={room.cx - room.w / 2 + 4}
+                    y={room.cy - room.h / 2 + 22}
+                    width={room.w - 8}
+                    height={room.h - 10}
+                    style={{ overflow: "visible" }}
+                  >
+                    <div
+                      xmlns="http://www.w3.org/1999/xhtml"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "2px",
+                        justifyContent: "center",
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      {visible.map((p, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            padding: "1px 5px",
+                            borderRadius: "9999px",
+                            fontSize: "9px",
+                            fontWeight: 600,
+                            lineHeight: "14px",
+                            backgroundColor: p.isAlive ? p.color + "30" : "#1f2937",
+                            border: `1.5px solid ${p.isAlive ? p.color : "#374151"}`,
+                            color: p.isAlive ? "#fff" : "#6b7280",
+                            textDecoration: p.isAlive ? "none" : "line-through",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "5px",
+                              height: "5px",
+                              borderRadius: "50%",
+                              backgroundColor: p.isAlive ? p.color : "#4b5563",
+                              flexShrink: 0,
+                            }}
+                          />
+                          {p.nickname}
+                        </span>
+                      ))}
+                      {extra > 0 && (
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            fontWeight: 700,
+                            color: "#a78bfa",
+                            lineHeight: "14px",
+                            padding: "1px 4px",
+                          }}
+                        >
+                          +{extra}
+                        </span>
                       )}
-                    </g>
-                  );
-                });
+                    </div>
+                  </foreignObject>
+                );
               })()}
 
               {/* Count badge — inside top-right corner */}
@@ -307,33 +345,8 @@ export function GameMap({ gameId }: { gameId: string }) {
         })}
       </svg>
 
-      {/* Player color legend */}
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 justify-center">
-        {locations.map((loc, i) => {
-          const color = colorMap[loc.playerId] ?? "#888";
-          return (
-            <span
-              key={loc.playerId}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium"
-              style={{ color: loc.isAlive ? "#e2e8f0" : "#6b7280" }}
-            >
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
-                style={{
-                  backgroundColor: loc.isAlive ? color : "#4b5563",
-                  border: `1.5px solid ${loc.isAlive ? color : "#555"}`,
-                }}
-              />
-              <span style={{ textDecoration: loc.isAlive ? "none" : "line-through" }}>
-                {loc.nickname.replace("Agent-", "")}
-              </span>
-            </span>
-          );
-        })}
-      </div>
-
       {/* Vent info */}
-      <div className="mt-1 text-[10px] text-gray-600 text-center">
+      <div className="mt-2 text-[10px] text-gray-600 text-center">
         🔴 {ventLabel}
       </div>
     </div>
