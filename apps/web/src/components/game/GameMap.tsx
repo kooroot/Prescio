@@ -46,20 +46,20 @@ interface RoomDef {
 }
 
 const ROOMS: RoomDef[] = [
-  { id: Room.UPPER_ENGINE,   names: { ko: "상부 엔진", en: "Upper Eng", ja: "上エンジン", zh: "上引擎" },      left: 3,  top: 5,   w: 14, h: 18, shape: "rect" },
-  { id: Room.MEDBAY,         names: { ko: "의무실", en: "MedBay", ja: "医務室", zh: "医疗室" },                 left: 22, top: 12,  w: 13, h: 16, shape: "rect" },
-  { id: Room.CAFETERIA,      names: { ko: "식당", en: "Cafeteria", ja: "カフェテリア", zh: "餐厅" },            left: 37, top: 2,   w: 18, h: 22, shape: "oct" },
-  { id: Room.WEAPONS,        names: { ko: "무기고", en: "Weapons", ja: "武器庫", zh: "武器室" },                left: 62, top: 2,   w: 13, h: 16, shape: "hex" },
-  { id: Room.NAVIGATION,     names: { ko: "항해실", en: "Navigation", ja: "ナビ", zh: "导航室" },               left: 82, top: 22,  w: 15, h: 18, shape: "hex" },
-  { id: Room.O2,             names: { ko: "산소공급실", en: "O2", ja: "O2", zh: "氧气室" },                     left: 57, top: 25,  w: 14, h: 16, shape: "rect" },
-  { id: Room.REACTOR,        names: { ko: "원자로", en: "Reactor", ja: "原子炉", zh: "反应堆" },                left: 0,  top: 36,  w: 14, h: 20, shape: "rect" },
-  { id: Room.SECURITY,       names: { ko: "보안실", en: "Security", ja: "セキュリティ", zh: "监控室" },          left: 18, top: 38,  w: 12, h: 14, shape: "rect" },
-  { id: Room.ADMIN,          names: { ko: "관리실", en: "Admin", ja: "アドミン", zh: "管理室" },                 left: 48, top: 38,  w: 14, h: 16, shape: "rect" },
-  { id: Room.LOWER_ENGINE,   names: { ko: "하부 엔진", en: "Lower Eng", ja: "下エンジン", zh: "下引擎" },        left: 3,  top: 64,  w: 14, h: 18, shape: "rect" },
-  { id: Room.ELECTRICAL,     names: { ko: "전기실", en: "Electrical", ja: "電気室", zh: "电气室" },              left: 22, top: 60,  w: 14, h: 18, shape: "rect" },
-  { id: Room.STORAGE,        names: { ko: "창고", en: "Storage", ja: "倉庫", zh: "仓库" },                      left: 38, top: 58,  w: 18, h: 22, shape: "rect" },
-  { id: Room.COMMUNICATIONS, names: { ko: "통신실", en: "Comms", ja: "通信室", zh: "通讯室" },                  left: 58, top: 70,  w: 13, h: 14, shape: "rect" },
-  { id: Room.SHIELDS,        names: { ko: "보호막", en: "Shields", ja: "シールド", zh: "护盾" },                 left: 76, top: 58,  w: 14, h: 18, shape: "rect" },
+  { id: Room.UPPER_ENGINE,   names: { ko: "상부 엔진", en: "Upper Eng", ja: "上エンジン", zh: "上引擎" },      left: 2,  top: 2,   w: 14, h: 16, shape: "rect" },
+  { id: Room.MEDBAY,         names: { ko: "의무실", en: "MedBay", ja: "医務室", zh: "医疗室" },                 left: 20, top: 8,   w: 14, h: 14, shape: "rect" },
+  { id: Room.CAFETERIA,      names: { ko: "식당", en: "Cafeteria", ja: "カフェテリア", zh: "餐厅" },            left: 36, top: 0,   w: 18, h: 20, shape: "oct" },
+  { id: Room.WEAPONS,        names: { ko: "무기고", en: "Weapons", ja: "武器庫", zh: "武器室" },                left: 62, top: 0,   w: 14, h: 14, shape: "hex" },
+  { id: Room.NAVIGATION,     names: { ko: "항해실", en: "Navigation", ja: "ナビ", zh: "导航室" },               left: 82, top: 18,  w: 16, h: 16, shape: "hex" },
+  { id: Room.O2,             names: { ko: "산소공급실", en: "O2", ja: "O2", zh: "氧气室" },                     left: 56, top: 18,  w: 15, h: 14, shape: "rect" },
+  { id: Room.REACTOR,        names: { ko: "원자로", en: "Reactor", ja: "原子炉", zh: "反应堆" },                left: 0,  top: 30,  w: 14, h: 18, shape: "rect" },
+  { id: Room.SECURITY,       names: { ko: "보안실", en: "Security", ja: "セキュリティ", zh: "监控室" },          left: 18, top: 32,  w: 13, h: 13, shape: "rect" },
+  { id: Room.ADMIN,          names: { ko: "관리실", en: "Admin", ja: "アドミン", zh: "管理室" },                 left: 46, top: 36,  w: 15, h: 14, shape: "rect" },
+  { id: Room.LOWER_ENGINE,   names: { ko: "하부 엔진", en: "Lower Eng", ja: "下エンジン", zh: "下引擎" },        left: 2,  top: 58,  w: 14, h: 16, shape: "rect" },
+  { id: Room.ELECTRICAL,     names: { ko: "전기실", en: "Electrical", ja: "電気室", zh: "电气室" },              left: 20, top: 55,  w: 15, h: 16, shape: "rect" },
+  { id: Room.STORAGE,        names: { ko: "창고", en: "Storage", ja: "倉庫", zh: "仓库" },                      left: 37, top: 54,  w: 18, h: 20, shape: "rect" },
+  { id: Room.COMMUNICATIONS, names: { ko: "통신실", en: "Comms", ja: "通信室", zh: "通讯室" },                  left: 57, top: 64,  w: 14, h: 13, shape: "rect" },
+  { id: Room.SHIELDS,        names: { ko: "보호막", en: "Shields", ja: "シールド", zh: "护盾" },                 left: 76, top: 54,  w: 15, h: 16, shape: "rect" },
 ];
 
 // Connections for SVG lines
@@ -150,11 +150,11 @@ export function GameMap({ gameId }: { gameId: string }) {
       </div>
 
       {/* Map container */}
-      <div className="relative" style={{ paddingBottom: "55%" /* aspect ratio */ }}>
-        {/* SVG background: connections */}
+      <div className="relative" style={{ paddingBottom: "50%" /* aspect ratio ~2:1 */ }}>
+        {/* SVG background: connections — viewBox matches % coordinate space */}
         <svg
           className="absolute inset-0 w-full h-full"
-          viewBox="0 0 100 55"
+          viewBox="0 0 100 100"
           preserveAspectRatio="none"
           style={{ zIndex: 0 }}
         >
@@ -163,7 +163,7 @@ export function GameMap({ gameId }: { gameId: string }) {
             const [x2, y2] = getRoomCenter(b);
             return (
               <line key={`c-${i}`} x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke="#1a2744" strokeWidth={0.8} strokeLinecap="round" />
+                stroke="#1a2744" strokeWidth={1.2} strokeLinecap="round" />
             );
           })}
           {VENTS.map(([a, b], i) => {
@@ -171,7 +171,7 @@ export function GameMap({ gameId }: { gameId: string }) {
             const [x2, y2] = getRoomCenter(b);
             return (
               <line key={`v-${i}`} x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke="#dc2626" strokeWidth={0.3} strokeDasharray="1,1.5" opacity={0.3} />
+                stroke="#dc2626" strokeWidth={0.5} strokeDasharray="1.5,2" opacity={0.3} />
             );
           })}
         </svg>
