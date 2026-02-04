@@ -5,6 +5,7 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { PhaseIndicator } from "@/components/game/PhaseIndicator";
 import { PlayerList } from "@/components/game/PlayerList";
 import { BetPanel } from "@/components/betting/BetPanel";
+import { GameMap } from "@/components/game/GameMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,11 @@ export function GamePage() {
           round={game.round}
         />
       </div>
+
+      {/* ─── Map (if active) ─────────────────── */}
+      {game.phase !== "LOBBY" && game.phase !== "RESULT" && (
+        <GameMap gameId={game.id} />
+      )}
 
       {/* ─── Desktop: 2-column layout ─────────────────── */}
       <div className="hidden lg:grid lg:grid-cols-[1fr_320px] lg:gap-4">
