@@ -150,7 +150,7 @@ export function GameMap({ gameId }: { gameId: string }) {
       </div>
 
       {/* Map container */}
-      <div className="relative" style={{ paddingBottom: "42%" }}>
+      <div className="relative" style={{ paddingBottom: "36%" }}>
         {/* SVG background: connections — viewBox matches % coordinate space */}
         <svg
           className="absolute inset-0 w-full h-full"
