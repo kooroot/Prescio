@@ -9,12 +9,12 @@ interface ChatLogProps {
 
 // Stable color palette for player avatars
 const AVATAR_COLORS = [
-  "bg-red-600",
-  "bg-blue-600",
-  "bg-green-600",
+  "bg-impostor",
+  "bg-crew",
+  "bg-alive",
   "bg-yellow-600",
-  "bg-purple-600",
-  "bg-pink-600",
+  "bg-monad-purple",
+  "bg-[#9B87FF]",
   "bg-cyan-600",
   "bg-orange-600",
   "bg-lime-600",
@@ -75,7 +75,7 @@ export function ChatLog({ messages }: ChatLogProps) {
 function SystemMessage({ message }: { message: ChatMessage }) {
   return (
     <div className="flex justify-center py-1.5">
-      <span className="rounded-full bg-gray-800/80 px-4 py-1 text-xs text-gray-400 italic">
+      <span className="rounded-full bg-monad-card/80 px-4 py-1 text-xs text-gray-400 italic">
         {message.content}
       </span>
     </div>

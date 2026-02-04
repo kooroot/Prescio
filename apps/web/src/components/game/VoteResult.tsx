@@ -24,7 +24,7 @@ export function VoteResult({
   const sorted = Object.entries(votes).sort(([, a], [, b]) => b - a);
 
   return (
-    <Card className="border-gray-800 bg-gray-900/60">
+    <Card className="border-monad-border bg-monad-card/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-base text-gray-200 flex items-center gap-2">
           🗳️ Vote Result
@@ -47,7 +47,7 @@ export function VoteResult({
                 >
                   {name}
                   {isEliminated && (
-                    <Badge className="ml-2 bg-red-600/30 text-red-400 text-[10px]" variant="outline">
+                    <Badge className="ml-2 bg-impostor/20 text-impostor text-[10px]" variant="outline">
                       EJECTED
                     </Badge>
                   )}
@@ -56,10 +56,10 @@ export function VoteResult({
                   {count} vote{count !== 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-gray-800 overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-monad-border overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${
-                    isEliminated ? "bg-red-500" : "bg-blue-500"
+                    isEliminated ? "bg-impostor" : "bg-monad-purple"
                   }`}
                   style={{ width: `${pct}%` }}
                 />
@@ -83,7 +83,7 @@ export function VoteResult({
               return (
                 <p
                   className={`text-sm font-medium ${
-                    wasImpostor ? "text-red-400" : "text-blue-400"
+                    wasImpostor ? "text-impostor" : "text-crew"
                   }`}
                 >
                   {eliminated.nickname} was{" "}

@@ -16,37 +16,37 @@ const PHASE_CONFIG: Record<
     icon: "🏠",
     label: "Lobby",
     color: "text-gray-300",
-    bg: "bg-gray-700/50",
+    bg: "bg-[#27272A]/50",
   },
   [Phase.NIGHT]: {
     icon: "🌙",
     label: "Night",
-    color: "text-purple-300",
-    bg: "bg-purple-900/50",
+    color: "text-[#9B87FF]",
+    bg: "bg-monad-purple/10",
   },
   [Phase.REPORT]: {
     icon: "⚠️",
     label: "Report",
-    color: "text-red-300",
-    bg: "bg-red-900/50",
+    color: "text-impostor",
+    bg: "bg-impostor/10",
   },
   [Phase.DISCUSSION]: {
     icon: "💬",
     label: "Discussion",
-    color: "text-blue-300",
-    bg: "bg-blue-900/50",
+    color: "text-crew",
+    bg: "bg-crew/10",
   },
   [Phase.VOTE]: {
     icon: "🗳️",
     label: "Voting",
     color: "text-orange-300",
-    bg: "bg-orange-900/50",
+    bg: "bg-orange-900/30",
   },
   [Phase.RESULT]: {
     icon: "📊",
     label: "Result",
-    color: "text-emerald-300",
-    bg: "bg-emerald-900/50",
+    color: "text-alive",
+    bg: "bg-alive/10",
   },
 };
 
@@ -91,8 +91,8 @@ export function PhaseIndicator({ phase, timeRemaining, round }: PhaseIndicatorPr
         <Badge
           className={`font-mono text-lg px-3 py-1 ${
             isUrgent
-              ? "bg-red-600 text-white animate-pulse"
-              : "bg-gray-800 text-gray-200"
+              ? "bg-impostor text-white animate-pulse"
+              : "bg-monad-card text-gray-200"
           }`}
         >
           {timerStr}

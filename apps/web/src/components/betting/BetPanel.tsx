@@ -31,7 +31,7 @@ function marketStateLabel(state: ContractMarketState) {
     case ContractMarketState.CLOSED:
       return { text: "Betting Closed", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" };
     case ContractMarketState.RESOLVED:
-      return { text: "Resolved", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" };
+      return { text: "Resolved", color: "bg-monad-purple/20 text-monad-purple border-monad-purple/30" };
     default:
       return { text: "No Market", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
   }
@@ -97,7 +97,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const alivePlayers = players.filter((p) => p.isAlive);
 
   return (
-    <Card className="border-gray-800 bg-gray-900/40">
+    <Card className="border-monad-border bg-monad-card/40">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -162,7 +162,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
             {!isConnected ? (
               <Button
                 onClick={() => connect({ connector: injected() })}
-                className="w-full bg-purple-600 hover:bg-purple-500"
+                className="w-full bg-monad-purple hover:bg-monad-purple/80"
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 Connect Wallet to Bet
@@ -173,7 +173,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
                 {selectedIndex !== null && (
                   <div className="text-xs text-gray-400 text-center">
                     Betting on{" "}
-                    <span className="text-purple-400 font-medium">
+                    <span className="text-monad-purple font-medium">
                       {players[selectedIndex]?.nickname ?? `#${selectedIndex}`}
                     </span>{" "}
                     as impostor
@@ -189,7 +189,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
                       step={BET_STEP}
                       value={betAmount}
                       onChange={(e) => setBetAmount(e.target.value)}
-                      className="pr-12 bg-gray-800/50 border-gray-700 text-gray-200"
+                      className="pr-12 bg-monad-card/50 border-monad-border text-gray-200"
                       placeholder="0.1"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
@@ -199,7 +199,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
                   <Button
                     onClick={handlePlaceBet}
                     disabled={!canBet || isPending || isConfirming}
-                    className="bg-purple-600 hover:bg-purple-500 min-w-[100px]"
+                    className="bg-monad-purple hover:bg-monad-purple/80 min-w-[100px]"
                   >
                     {isPending || isConfirming ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -215,7 +215,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
                 {estimatedPayout !== null && selectedIndex !== null && (
                   <div className="flex items-center justify-between rounded-lg bg-gray-800/30 px-3 py-2">
                     <span className="text-xs text-gray-500">Est. payout</span>
-                    <span className="text-sm font-mono font-bold text-green-400">
+                    <span className="text-sm font-mono font-bold text-alive">
                       {parseFloat(formatEther(estimatedPayout)).toFixed(3)} MON
                     </span>
                   </div>

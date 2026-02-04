@@ -43,12 +43,19 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        prescio: {
-          purple: "#8B5CF6",
-          pink: "#EC4899",
-          orange: "#F97316",
-          neon: "#A855F7",
+        // Monad brand
+        monad: {
+          purple: "#6E54FF",
+          dark: "#0E100F",
+          card: "#18181B",
+          border: "#27272A",
         },
+        // Game colors
+        impostor: "#FF4444",
+        crew: "#4488FF",
+        night: "#1a1a2e",
+        alive: "#22c55e",
+        dead: "#666666",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

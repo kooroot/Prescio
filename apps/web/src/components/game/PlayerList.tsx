@@ -80,8 +80,8 @@ export function PlayerList({
             key={player.id}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
               dead
-                ? "opacity-50 bg-gray-900/30"
-                : "bg-gray-800/30 hover:bg-gray-800/50"
+                ? "opacity-50 bg-monad-dark/30"
+                : "bg-monad-card/30 hover:bg-monad-card/50"
             }`}
           >
             <Avatar className={`h-8 w-8 ${dead ? "grayscale" : color}`}>
@@ -107,8 +107,8 @@ export function PlayerList({
                   <Badge
                     className={`text-[10px] px-1.5 py-0 ${
                       player.role === Role.IMPOSTOR
-                        ? "bg-red-600/30 text-red-400 border-red-500/30"
-                        : "bg-blue-600/30 text-blue-400 border-blue-500/30"
+                        ? "bg-impostor/20 text-impostor border-impostor/30"
+                        : "bg-crew/20 text-crew border-crew/30"
                     }`}
                     variant="outline"
                   >

@@ -73,7 +73,9 @@ export function LobbyPage() {
       <div className="mb-10 text-center">
         <div className="mb-3 text-5xl">🔮</div>
         <h2 className="mb-2 text-4xl font-bold tracking-tight">
-          <span className="gradient-text">Prescio</span>
+          <span className="bg-gradient-to-r from-monad-purple via-[#9B87FF] to-monad-purple bg-clip-text text-transparent">
+            Prescio
+          </span>
         </h2>
         <p className="text-lg text-gray-400">
           Among Us × Prediction Market
@@ -81,19 +83,27 @@ export function LobbyPage() {
         <p className="mt-1 text-sm text-gray-500">
           Watch AI agents deceive each other. Predict the impostor. Win.
         </p>
+
+        {/* Powered by Monad badge */}
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-monad-purple/30 bg-monad-purple/5 px-4 py-1.5">
+          <div className="h-2 w-2 rounded-full bg-monad-purple animate-pulse" />
+          <span className="text-xs font-medium text-monad-purple">
+            Powered by Monad
+          </span>
+        </div>
       </div>
 
       {/* Feature badges */}
       <div className="mb-8 flex flex-wrap justify-center gap-3">
-        <Badge variant="outline" className="border-purple-500/30 text-purple-300 px-3 py-1">
+        <Badge variant="outline" className="border-monad-purple/30 text-monad-purple px-3 py-1">
           <Users className="mr-1.5 h-3 w-3" />
           AI Agents
         </Badge>
-        <Badge variant="outline" className="border-pink-500/30 text-pink-300 px-3 py-1">
+        <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Zap className="mr-1.5 h-3 w-3" />
           Monad Testnet
         </Badge>
-        <Badge variant="outline" className="border-orange-500/30 text-orange-300 px-3 py-1">
+        <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Coins className="mr-1.5 h-3 w-3" />
           On-chain Bets
         </Badge>
@@ -104,16 +114,16 @@ export function LobbyPage() {
         <DialogTrigger asChild>
           <Button
             size="lg"
-            className="mb-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold px-8"
+            className="mb-10 bg-monad-purple hover:bg-monad-purple/80 text-white font-semibold px-8 monad-glow"
           >
             <Plus className="mr-2 h-5 w-5" />
             Create New Game
           </Button>
         </DialogTrigger>
-        <DialogContent className="border-gray-800 bg-gray-900 sm:max-w-md">
+        <DialogContent className="border-monad-border bg-monad-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5 text-purple-400" />
+              <Gamepad2 className="h-5 w-5 text-monad-purple" />
               New Game
             </DialogTitle>
             <DialogDescription>
@@ -126,10 +136,10 @@ export function LobbyPage() {
             <div className="grid gap-2">
               <Label htmlFor="botCount">Number of Bots</Label>
               <Select value={botCount} onValueChange={setBotCount}>
-                <SelectTrigger id="botCount" className="border-gray-700 bg-gray-800">
+                <SelectTrigger id="botCount" className="border-monad-border bg-monad-dark">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-gray-700 bg-gray-800">
+                <SelectContent className="border-monad-border bg-monad-card">
                   <SelectItem value="5">5 Bots</SelectItem>
                   <SelectItem value="6">6 Bots</SelectItem>
                   <SelectItem value="7">7 Bots</SelectItem>
@@ -142,10 +152,10 @@ export function LobbyPage() {
             <div className="grid gap-2">
               <Label htmlFor="impostorCount">Impostors</Label>
               <Select value={impostorCount} onValueChange={setImpostorCount}>
-                <SelectTrigger id="impostorCount" className="border-gray-700 bg-gray-800">
+                <SelectTrigger id="impostorCount" className="border-monad-border bg-monad-dark">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-gray-700 bg-gray-800">
+                <SelectContent className="border-monad-border bg-monad-card">
                   <SelectItem value="1">1 Impostor</SelectItem>
                   <SelectItem value="2">2 Impostors</SelectItem>
                 </SelectContent>
@@ -156,10 +166,10 @@ export function LobbyPage() {
             <div className="grid gap-2">
               <Label htmlFor="language">Language</Label>
               <Select value={language} onValueChange={(v) => setLanguage(v as GameLanguage)}>
-                <SelectTrigger id="language" className="border-gray-700 bg-gray-800">
+                <SelectTrigger id="language" className="border-monad-border bg-monad-dark">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="border-gray-700 bg-gray-800">
+                <SelectContent className="border-monad-border bg-monad-card">
                   <SelectItem value="en">🇺🇸 English</SelectItem>
                   <SelectItem value="ko">🇰🇷 한국어</SelectItem>
                   <SelectItem value="ja">🇯🇵 日本語</SelectItem>
@@ -170,7 +180,7 @@ export function LobbyPage() {
           </div>
 
           {createMutation.error && (
-            <p className="text-sm text-red-400">
+            <p className="text-sm text-impostor">
               {createMutation.error instanceof Error
                 ? createMutation.error.message
                 : "Failed to create game"}
@@ -188,7 +198,7 @@ export function LobbyPage() {
             <Button
               onClick={() => createMutation.mutate()}
               disabled={createMutation.isPending}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white"
+              className="bg-monad-purple hover:bg-monad-purple/80 text-white"
             >
               {createMutation.isPending ? (
                 <>
@@ -208,19 +218,19 @@ export function LobbyPage() {
       {/* Games Tabs */}
       <div className="w-full">
         <Tabs defaultValue="active" className="w-full">
-          <TabsList className="mb-4 grid w-full grid-cols-2 bg-gray-800/50">
-            <TabsTrigger value="active" className="data-[state=active]:bg-purple-600/20">
+          <TabsList className="mb-4 grid w-full grid-cols-2 bg-monad-card/50">
+            <TabsTrigger value="active" className="data-[state=active]:bg-monad-purple/20">
               In Progress
               {inProgressGames.length > 0 && (
-                <Badge className="ml-2 bg-purple-600/30 text-purple-300 text-xs px-1.5">
+                <Badge className="ml-2 bg-monad-purple/30 text-monad-purple text-xs px-1.5">
                   {inProgressGames.length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="finished" className="data-[state=active]:bg-gray-600/20">
+            <TabsTrigger value="finished" className="data-[state=active]:bg-[#27272A]/60">
               Completed
               {finishedGames.length > 0 && (
-                <Badge className="ml-2 bg-gray-600/30 text-gray-300 text-xs px-1.5">
+                <Badge className="ml-2 bg-[#27272A]/50 text-gray-300 text-xs px-1.5">
                   {finishedGames.length}
                 </Badge>
               )}
@@ -231,18 +241,18 @@ export function LobbyPage() {
           <TabsContent value="active" className="space-y-3">
             {loadingActive && (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-monad-purple" />
               </div>
             )}
 
             {activeError && (
-              <div className="rounded-lg border border-red-800 bg-red-900/20 p-4 text-center text-sm text-red-400">
+              <div className="rounded-lg border border-impostor/30 bg-impostor/10 p-4 text-center text-sm text-impostor">
                 Failed to load games. Is the server running?
               </div>
             )}
 
             {!loadingActive && !activeError && activeGames.length === 0 && (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-gray-800 bg-gray-900/30 py-16">
+              <div className="flex flex-col items-center justify-center rounded-lg border border-monad-border bg-monad-card/30 py-16">
                 <div className="mb-3 text-4xl">🎮</div>
                 <p className="text-gray-400 font-medium">No active games</p>
                 <p className="mt-1 text-sm text-gray-500">
@@ -287,7 +297,7 @@ export function LobbyPage() {
             )}
 
             {!loadingFinished && finishedGames.length === 0 && (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-gray-800 bg-gray-900/30 py-16">
+              <div className="flex flex-col items-center justify-center rounded-lg border border-monad-border bg-monad-card/30 py-16">
                 <div className="mb-3 text-4xl">📜</div>
                 <p className="text-gray-400 font-medium">No completed games yet</p>
                 <p className="mt-1 text-sm text-gray-500">

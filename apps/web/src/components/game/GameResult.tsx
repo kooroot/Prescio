@@ -24,15 +24,15 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
       <Card
         className={`border-2 ${
           isImpostorWin
-            ? "border-red-500/50 bg-red-950/30"
-            : "border-blue-500/50 bg-blue-950/30"
+            ? "border-impostor/50 bg-impostor/10"
+            : "border-crew/50 bg-crew/10"
         }`}
       >
         <CardContent className="py-8 text-center">
           <div className="text-5xl mb-3">{isImpostorWin ? "🔪" : "🛡️"}</div>
           <h2
             className={`text-3xl font-black uppercase tracking-wider ${
-              isImpostorWin ? "text-red-400" : "text-blue-400"
+              isImpostorWin ? "text-impostor" : "text-crew"
             }`}
           >
             {isImpostorWin ? "Impostor Wins!" : "Crew Wins!"}
@@ -44,7 +44,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
       </Card>
 
       {/* All player roles */}
-      <Card className="border-gray-800 bg-gray-900/60">
+      <Card className="border-monad-border bg-monad-card/60">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm text-gray-400 uppercase tracking-wider">
             Player Roles Revealed
@@ -55,7 +55,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
             {players.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between rounded-md px-3 py-2 bg-gray-800/40"
+                className="flex items-center justify-between rounded-md px-3 py-2 bg-monad-dark/40"
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -72,8 +72,8 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
                 <Badge
                   className={`text-xs ${
                     player.role === Role.IMPOSTOR
-                      ? "bg-red-600/30 text-red-400 border-red-500/40"
-                      : "bg-blue-600/30 text-blue-400 border-blue-500/40"
+                      ? "bg-impostor/20 text-impostor border-impostor/40"
+                      : "bg-crew/20 text-crew border-crew/40"
                   }`}
                   variant="outline"
                 >
@@ -87,7 +87,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
 
       {/* Kill timeline */}
       {killEvents.length > 0 && (
-        <Card className="border-gray-800 bg-gray-900/60">
+        <Card className="border-monad-border bg-monad-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-gray-400 uppercase tracking-wider">
               Kill Log
@@ -101,7 +101,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
                 return (
                   <div
                     key={idx}
-                    className="flex items-center gap-3 text-sm rounded-md px-3 py-1.5 bg-gray-800/30"
+                    className="flex items-center gap-3 text-sm rounded-md px-3 py-1.5 bg-monad-dark/30"
                   >
                     <Badge className="bg-gray-700 text-gray-400 text-[10px] px-1.5">
                       R{event.round}
@@ -109,7 +109,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
                     <span className="text-gray-500">
                       {killer ? (
                         <>
-                          <span className="text-red-400">{killer.nickname}</span>
+                          <span className="text-impostor">{killer.nickname}</span>
                           {" killed "}
                           <span className="text-gray-300">{target?.nickname ?? "Unknown"}</span>
                         </>
@@ -133,7 +133,7 @@ export function GameResult({ winner, players, killEvents, rounds }: GameResultPr
         <Button
           size="lg"
           onClick={() => navigate({ to: "/" })}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8"
+          className="bg-monad-purple hover:bg-monad-purple/80 text-white font-semibold px-8"
         >
           Back to Lobby
         </Button>

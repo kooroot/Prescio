@@ -20,7 +20,7 @@ function statusBadge(status: BetStatus) {
     case BetStatus.RESOLVED_LOSS:
       return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px]" variant="outline">Lost</Badge>;
     case BetStatus.CLAIMED:
-      return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px]" variant="outline">Claimed</Badge>;
+      return <Badge className="bg-monad-purple/20 text-monad-purple border-monad-purple/30 text-[10px]" variant="outline">Claimed</Badge>;
     case BetStatus.CANCELLED:
       return <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-[10px]" variant="outline">Cancelled</Badge>;
     default:
@@ -58,7 +58,7 @@ export function BetHistory({ bets, players, isConnected }: BetHistoryProps) {
         return (
           <div
             key={bet.id}
-            className="flex items-center justify-between rounded-lg bg-gray-800/30 px-3 py-2"
+            className="flex items-center justify-between rounded-lg bg-monad-card/30 px-3 py-2"
           >
             <div className="flex flex-col gap-0.5">
               <span className="text-sm text-gray-200">

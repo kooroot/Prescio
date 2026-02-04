@@ -18,8 +18,8 @@ function OddsBar({ player, percentage, staked, isSelected, highlight, onClick }:
       className={`
         w-full text-left rounded-lg p-2.5 transition-all duration-300 border
         ${isSelected
-          ? "border-purple-500 bg-purple-500/10"
-          : "border-transparent hover:border-gray-700 bg-gray-800/30 hover:bg-gray-800/50"
+          ? "border-monad-purple bg-monad-purple/10"
+          : "border-transparent hover:border-monad-border bg-monad-card/30 hover:bg-monad-card/50"
         }
         ${highlight ? "ring-1 ring-yellow-400/50" : ""}
         ${!player.isAlive ? "opacity-40 pointer-events-none" : "cursor-pointer"}
@@ -48,16 +48,16 @@ function OddsBar({ player, percentage, staked, isSelected, highlight, onClick }:
       </div>
 
       {/* Bar */}
-      <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-monad-border/50 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ease-out ${
             isSelected
-              ? "bg-purple-500"
+              ? "bg-monad-purple"
               : percentage > 30
-                ? "bg-red-500/70"
+                ? "bg-impostor/70"
                 : percentage > 15
-                  ? "bg-yellow-500/70"
-                  : "bg-green-500/70"
+                  ? "bg-monad-purple/60"
+                  : "bg-alive/70"
           }`}
           style={{ width: `${Math.max(percentage, 2)}%` }}
         />
@@ -118,7 +118,7 @@ export function OddsDisplay({
         <span className="text-xs text-gray-500 uppercase tracking-wider">
           Odds
         </span>
-        <span className="text-xs font-mono text-purple-400">
+        <span className="text-xs font-mono text-monad-purple">
           Pool: {parseFloat(formatEther(totalPool)).toFixed(2)} MON
         </span>
       </div>

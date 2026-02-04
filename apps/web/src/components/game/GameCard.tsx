@@ -13,12 +13,12 @@ import type { GameListItem, HistoryGame } from "@/lib/api";
 // ─── Phase badge colors ──────────────────────────────
 
 const PHASE_COLORS: Record<string, string> = {
-  [Phase.LOBBY]: "bg-gray-600 text-gray-100",
-  [Phase.NIGHT]: "bg-indigo-600 text-indigo-100",
-  [Phase.REPORT]: "bg-red-600 text-red-100",
-  [Phase.DISCUSSION]: "bg-yellow-600 text-yellow-100",
+  [Phase.LOBBY]: "bg-[#27272A] text-gray-200",
+  [Phase.NIGHT]: "bg-monad-purple/80 text-white",
+  [Phase.REPORT]: "bg-impostor/80 text-white",
+  [Phase.DISCUSSION]: "bg-crew/80 text-white",
   [Phase.VOTE]: "bg-orange-600 text-orange-100",
-  [Phase.RESULT]: "bg-emerald-600 text-emerald-100",
+  [Phase.RESULT]: "bg-alive/80 text-white",
 };
 
 const PHASE_LABELS: Record<string, string> = {
@@ -47,19 +47,19 @@ export function ActiveGameCard({ game, onWatch }: ActiveGameCardProps) {
   const phaseLabel = PHASE_LABELS[game.phase] ?? game.phase;
 
   return (
-    <Card className="border-gray-800 bg-gray-900/50 hover:border-gray-700 transition-colors">
+    <Card className="border-monad-border bg-monad-card/50 hover:border-monad-purple/30 transition-colors">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <Hash className="h-4 w-4 text-gray-500" />
-            <span className="font-mono text-purple-300">{game.code}</span>
+            <span className="font-mono text-monad-purple">{game.code}</span>
           </CardTitle>
           <div className="flex items-center gap-2">
             {live && (
-              <span className="flex items-center gap-1.5 text-xs text-red-400">
+              <span className="flex items-center gap-1.5 text-xs text-monad-purple">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-monad-purple opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-monad-purple" />
                 </span>
                 LIVE
               </span>
@@ -88,7 +88,7 @@ export function ActiveGameCard({ game, onWatch }: ActiveGameCardProps) {
             size="sm"
             variant="outline"
             onClick={() => onWatch(game.id)}
-            className="border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:text-purple-200"
+            className="border-monad-purple/30 text-monad-purple hover:bg-monad-purple/10 hover:text-[#9B87FF]"
           >
             <Eye className="mr-1.5 h-3.5 w-3.5" />
             Watch
@@ -108,12 +108,12 @@ interface FinishedGameCardProps {
 
 export function FinishedGameCard({ game, onWatch }: FinishedGameCardProps) {
   const winnerLabel = game.winner === "CREW" ? "Crew Won" : game.winner === "IMPOSTOR" ? "Impostor Won" : "Draw";
-  const winnerColor = game.winner === "CREW" ? "bg-emerald-600/20 text-emerald-300" : game.winner === "IMPOSTOR" ? "bg-red-600/20 text-red-300" : "bg-gray-600/20 text-gray-300";
+  const winnerColor = game.winner === "CREW" ? "bg-crew/20 text-crew" : game.winner === "IMPOSTOR" ? "bg-impostor/20 text-impostor" : "bg-gray-600/20 text-gray-300";
 
   const timeAgo = getTimeAgo(game.finishedAt);
 
   return (
-    <Card className="border-gray-800 bg-gray-900/30 opacity-80 hover:opacity-100 transition-opacity">
+    <Card className="border-monad-border bg-monad-card/30 opacity-80 hover:opacity-100 transition-opacity">
       <CardContent className="py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -4,25 +4,26 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 263 70% 50%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 330 81% 60%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 70% 50%;
+    /* Monad Brand — Dark + Purple */
+    --background: 150 7% 5.9%;        /* #0E100F */
+    --foreground: 0 0% 100%;           /* #FFFFFF */
+    --card: 240 10% 9.6%;              /* #18181B */
+    --card-foreground: 0 0% 100%;
+    --popover: 240 10% 9.6%;           /* #18181B */
+    --popover-foreground: 0 0% 100%;
+    --primary: 249 100% 66%;           /* #6E54FF */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 14%;           /* ~#222228 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 4% 16%;              /* ~#272729 */
+    --muted-foreground: 240 5% 55%;
+    --accent: 249 100% 66% / 0.10;    /* Monad purple 10% */
+    --accent-foreground: 249 100% 76%;
+    --destructive: 0 72% 51%;         /* #E53E3E */
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 16%;             /* #27272A */
+    --input: 240 6% 16%;              /* #27272A */
+    --ring: 249 100% 66%;             /* #6E54FF */
     --radius: 0.75rem;
   }
 
@@ -38,14 +39,18 @@
 
 @layer utilities {
   .gradient-text {
-    @apply bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[#6E54FF] via-[#9B87FF] to-[#6E54FF] bg-clip-text text-transparent;
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-r from-purple-600 to-pink-600;
+    @apply bg-gradient-to-r from-[#6E54FF] to-[#8B6FFF];
   }
 
   .glass {
-    @apply bg-gray-900/50 backdrop-blur-sm border border-gray-800;
+    @apply bg-[#18181B]/60 backdrop-blur-sm border border-[#27272A];
+  }
+
+  .monad-glow {
+    box-shadow: 0 0 40px rgba(110, 84, 255, 0.15);
   }
 }

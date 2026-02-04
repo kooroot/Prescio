@@ -28,7 +28,7 @@ export function GamePage() {
     return (
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-monad-purple" />
           <p className="text-gray-400 text-sm">Loading game...</p>
         </div>
       </div>
@@ -56,12 +56,12 @@ export function GamePage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-gray-400">
             <Hash className="h-4 w-4" />
-            <span className="font-mono text-lg text-purple-400 font-bold">
+            <span className="font-mono text-lg text-monad-purple font-bold">
               {game.code}
             </span>
           </div>
           {spectatorCount > 0 && (
-            <Badge className="bg-gray-800 text-gray-400 border-gray-700" variant="outline">
+            <Badge className="bg-monad-card text-gray-400 border-monad-border" variant="outline">
               <Eye className="mr-1 h-3 w-3" />
               {spectatorCount}
             </Badge>
@@ -77,7 +77,7 @@ export function GamePage() {
       {/* ─── Desktop: 2-column layout ─────────────────── */}
       <div className="hidden lg:grid lg:grid-cols-[1fr_320px] lg:gap-4">
         {/* Left: Game board + Chat */}
-        <Card className="border-gray-800 bg-gray-900/40 overflow-hidden">
+        <Card className="border-monad-border bg-monad-card/40 overflow-hidden">
           <CardContent className="p-0 h-[calc(100vh-180px)]">
             <GameBoard
               game={game}
@@ -88,7 +88,7 @@ export function GamePage() {
 
         {/* Right: Players + (future) Betting */}
         <div className="flex flex-col gap-4">
-          <Card className="border-gray-800 bg-gray-900/40">
+          <Card className="border-monad-border bg-monad-card/40">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
                 👥 Players
@@ -119,7 +119,7 @@ export function GamePage() {
       {/* ─── Mobile: Tabs layout ──────────────────────── */}
       <div className="lg:hidden">
         <Tabs value={mobileTab} onValueChange={setMobileTab}>
-          <TabsList className="w-full bg-gray-900 border border-gray-800">
+          <TabsList className="w-full bg-monad-card border border-monad-border">
             <TabsTrigger value="game" className="flex-1 text-xs">
               🎮 Game
             </TabsTrigger>
@@ -132,7 +132,7 @@ export function GamePage() {
           </TabsList>
 
           <TabsContent value="game" className="mt-3">
-            <Card className="border-gray-800 bg-gray-900/40 overflow-hidden">
+            <Card className="border-monad-border bg-monad-card/40 overflow-hidden">
               <CardContent className="p-0 h-[calc(100vh-280px)]">
                 <GameBoard
                   game={game}
@@ -143,7 +143,7 @@ export function GamePage() {
           </TabsContent>
 
           <TabsContent value="players" className="mt-3">
-            <Card className="border-gray-800 bg-gray-900/40">
+            <Card className="border-monad-border bg-monad-card/40">
               <CardContent className="pt-4">
                 <PlayerList
                   players={game.players}
@@ -164,7 +164,7 @@ export function GamePage() {
                 phase={game.phase}
               />
             ) : (
-              <Card className="border-gray-800 bg-gray-900/40 border-dashed">
+              <Card className="border-monad-border bg-monad-card/40 border-dashed">
                 <CardContent className="py-12 text-center">
                   <span className="text-4xl">🎰</span>
                   <p className="mt-3 text-sm text-gray-500">

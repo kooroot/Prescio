@@ -94,7 +94,7 @@ function LobbyView({ code, playerCount }: { code: string; playerCount: number })
       <div className="text-6xl">🎮</div>
       <h2 className="text-2xl font-bold text-gray-200">Waiting for Game</h2>
       <p className="text-gray-400">
-        Game <span className="font-mono text-purple-400">{code}</span> is in the lobby.
+        Game <span className="font-mono text-monad-purple">{code}</span> is in the lobby.
       </p>
       <p className="text-sm text-gray-500">{playerCount} players joined</p>
     </div>
@@ -103,15 +103,15 @@ function LobbyView({ code, playerCount }: { code: string; playerCount: number })
 
 function NightView({ round }: { round: number }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-indigo-950/50 to-gray-950/50 rounded-lg">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-night/80 to-monad-dark/50 rounded-lg">
       <div className="text-7xl animate-pulse">🌙</div>
-      <h2 className="text-2xl font-bold text-purple-300">Night has fallen...</h2>
+      <h2 className="text-2xl font-bold text-[#9B87FF]">Night has fallen...</h2>
       <p className="text-gray-500 text-sm">Round {round} — The impostor is on the move</p>
       <div className="flex gap-1 mt-2">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse"
+            className="h-1.5 w-1.5 rounded-full bg-monad-purple animate-pulse"
             style={{ animationDelay: `${i * 300}ms` }}
           />
         ))}
@@ -122,9 +122,9 @@ function NightView({ round }: { round: number }) {
 
 function ReportView() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-red-950/40 to-gray-950/50 rounded-lg">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-b from-impostor/10 to-monad-dark/50 rounded-lg">
       <div className="text-7xl animate-bounce">⚠️</div>
-      <h2 className="text-3xl font-black text-red-400 uppercase tracking-wider">
+      <h2 className="text-3xl font-black text-impostor uppercase tracking-wider">
         Body Reported!
       </h2>
       <p className="text-gray-400 text-sm">Emergency meeting called</p>
