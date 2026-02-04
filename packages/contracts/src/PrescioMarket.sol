@@ -1,189 +1,223 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 /**
  * @title PrescioMarket
- * @notice Prediction market for Prescio game events on Monad
- * @dev Players can bet on game outcomes (winner, eliminations, etc.)
+ * @notice Parimutuel prediction market for Prescio impostor-detection game on Monad
+ * @dev Players bet on who the impostor is. Pool is split proportionally among winners.
  */
-contract PrescioMarket {
+contract PrescioMarket is Ownable, ReentrancyGuard {
     // ============================================
     // Types
     // ============================================
 
+    enum MarketState {
+        OPEN,
+        CLOSED,
+        RESOLVED
+    }
+
     struct MarketInfo {
-        bytes32 gameId;
-        string question;
-        uint8 outcomeCount;
+        uint8 playerCount;
+        uint8 impostorIndex; // set on resolve
+        MarketState state;
         uint256 totalPool;
-        bool resolved;
-        uint8 winningOutcome;
-        address creator;
+        uint256 protocolFee; // fee amount deducted on resolve
     }
 
     struct UserBet {
-        uint8 outcomeIndex;
+        uint8 suspectIndex;
         uint256 amount;
         bool claimed;
     }
 
     // ============================================
+    // Constants
+    // ============================================
+
+    uint256 public constant MIN_BET = 0.001 ether;
+    uint256 public constant MAX_FEE_RATE = 1000; // 10% max
+
+    // ============================================
     // State
     // ============================================
 
-    address public owner;
-    uint256 public nextMarketId;
-    uint256 public platformFeeRate; // basis points (e.g., 250 = 2.5%)
+    address public vault;
+    uint256 public feeRate; // basis points, e.g. 200 = 2%
 
-    mapping(uint256 => MarketInfo) public markets;
-    mapping(uint256 => mapping(uint8 => uint256)) public outcomePools; // marketId => outcomeIndex => total staked
-    mapping(uint256 => mapping(address => UserBet)) public userBets; // marketId => user => bet
+    mapping(bytes32 => MarketInfo) public markets;
+    mapping(bytes32 => mapping(uint8 => uint256)) public outcomePools; // gameId => suspectIndex => total
+    mapping(bytes32 => mapping(address => UserBet)) public userBets;
 
     // ============================================
     // Events
     // ============================================
 
-    event MarketCreated(uint256 indexed marketId, bytes32 indexed gameId, string question);
-    event BetPlaced(uint256 indexed marketId, address indexed user, uint8 outcomeIndex, uint256 amount);
-    event MarketResolved(uint256 indexed marketId, uint8 winningOutcome);
-    event Claimed(uint256 indexed marketId, address indexed user, uint256 amount);
+    event MarketCreated(bytes32 indexed gameId, uint8 playerCount);
+    event BetPlaced(bytes32 indexed gameId, address indexed user, uint8 suspectIndex, uint256 amount);
+    event MarketClosed(bytes32 indexed gameId);
+    event MarketResolved(bytes32 indexed gameId, uint8 impostorIndex, uint256 totalPool, uint256 fee);
+    event Claimed(bytes32 indexed gameId, address indexed user, uint256 payout);
+    event FeeRateUpdated(uint256 newFeeRate);
+    event VaultUpdated(address newVault);
 
     // ============================================
     // Errors
     // ============================================
 
-    error Unauthorized();
+    error MarketAlreadyExists();
     error MarketNotFound();
-    error MarketAlreadyResolved();
+    error MarketNotOpen();
+    error MarketNotClosed();
     error MarketNotResolved();
-    error InvalidOutcome();
+    error InvalidPlayerCount();
+    error InvalidSuspectIndex();
     error BetTooSmall();
     error AlreadyBet();
     error NothingToClaim();
     error AlreadyClaimed();
     error TransferFailed();
-
-    // ============================================
-    // Modifiers
-    // ============================================
-
-    modifier onlyOwner() {
-        if (msg.sender != owner) revert Unauthorized();
-        _;
-    }
+    error InvalidFeeRate();
 
     // ============================================
     // Constructor
     // ============================================
 
-    constructor(uint256 _feeRate) {
-        owner = msg.sender;
-        platformFeeRate = _feeRate;
-        nextMarketId = 1;
+    constructor(uint256 _feeRate, address _vault) Ownable(msg.sender) {
+        if (_feeRate > MAX_FEE_RATE) revert InvalidFeeRate();
+        feeRate = _feeRate;
+        vault = _vault;
     }
 
     // ============================================
-    // Core Functions
+    // Owner Functions
     // ============================================
 
     /**
-     * @notice Create a new prediction market
-     * @param gameId The game identifier
-     * @param question The market question
-     * @param outcomeCount Number of possible outcomes
-     * @return marketId The ID of the created market
+     * @notice Create a market for a game
+     * @param gameId Unique game identifier
+     * @param playerCount Number of players (suspects) in the game
      */
-    function createMarket(
-        bytes32 gameId,
-        string calldata question,
-        uint8 outcomeCount
-    ) external onlyOwner returns (uint256 marketId) {
-        if (outcomeCount < 2) revert InvalidOutcome();
+    function createMarket(bytes32 gameId, uint8 playerCount) external onlyOwner {
+        if (playerCount < 2) revert InvalidPlayerCount();
+        if (markets[gameId].playerCount != 0) revert MarketAlreadyExists();
 
-        marketId = nextMarketId++;
-
-        markets[marketId] = MarketInfo({
-            gameId: gameId,
-            question: question,
-            outcomeCount: outcomeCount,
+        markets[gameId] = MarketInfo({
+            playerCount: playerCount,
+            impostorIndex: 0,
+            state: MarketState.OPEN,
             totalPool: 0,
-            resolved: false,
-            winningOutcome: 0,
-            creator: msg.sender
+            protocolFee: 0
         });
 
-        emit MarketCreated(marketId, gameId, question);
+        emit MarketCreated(gameId, playerCount);
     }
 
     /**
-     * @notice Place a bet on a market outcome
-     * @param marketId The market to bet on
-     * @param outcomeIndex The outcome to bet on (0-indexed)
+     * @notice Close betting for a market (called when discussion phase ends)
      */
-    function placeBet(uint256 marketId, uint8 outcomeIndex) external payable {
-        MarketInfo storage market = markets[marketId];
-        if (market.creator == address(0)) revert MarketNotFound();
-        if (market.resolved) revert MarketAlreadyResolved();
-        if (outcomeIndex >= market.outcomeCount) revert InvalidOutcome();
-        if (msg.value == 0) revert BetTooSmall();
-        if (userBets[marketId][msg.sender].amount > 0) revert AlreadyBet();
+    function closeMarket(bytes32 gameId) external onlyOwner {
+        MarketInfo storage market = markets[gameId];
+        if (market.playerCount == 0) revert MarketNotFound();
+        if (market.state != MarketState.OPEN) revert MarketNotOpen();
 
-        userBets[marketId][msg.sender] = UserBet({
-            outcomeIndex: outcomeIndex,
+        market.state = MarketState.CLOSED;
+        emit MarketClosed(gameId);
+    }
+
+    /**
+     * @notice Resolve market with the actual impostor
+     * @param gameId Game identifier
+     * @param impostorIndex Index of the impostor player
+     */
+    function resolve(bytes32 gameId, uint8 impostorIndex) external onlyOwner {
+        MarketInfo storage market = markets[gameId];
+        if (market.playerCount == 0) revert MarketNotFound();
+        if (market.state != MarketState.CLOSED) revert MarketNotClosed();
+        if (impostorIndex >= market.playerCount) revert InvalidSuspectIndex();
+
+        market.state = MarketState.RESOLVED;
+        market.impostorIndex = impostorIndex;
+
+        // Calculate and store fee
+        uint256 fee = (market.totalPool * feeRate) / 10000;
+        market.protocolFee = fee;
+
+        // Transfer fee to vault
+        if (fee > 0 && vault != address(0)) {
+            (bool success,) = payable(vault).call{value: fee}("");
+            if (!success) revert TransferFailed();
+        }
+
+        emit MarketResolved(gameId, impostorIndex, market.totalPool, fee);
+    }
+
+    function setFeeRate(uint256 _feeRate) external onlyOwner {
+        if (_feeRate > MAX_FEE_RATE) revert InvalidFeeRate();
+        feeRate = _feeRate;
+        emit FeeRateUpdated(_feeRate);
+    }
+
+    function setVault(address _vault) external onlyOwner {
+        vault = _vault;
+        emit VaultUpdated(_vault);
+    }
+
+    // ============================================
+    // User Functions
+    // ============================================
+
+    /**
+     * @notice Place a bet on who the impostor is
+     * @param gameId Game identifier
+     * @param suspectIndex Index of the suspected impostor
+     */
+    function placeBet(bytes32 gameId, uint8 suspectIndex) external payable nonReentrant {
+        MarketInfo storage market = markets[gameId];
+        if (market.playerCount == 0) revert MarketNotFound();
+        if (market.state != MarketState.OPEN) revert MarketNotOpen();
+        if (suspectIndex >= market.playerCount) revert InvalidSuspectIndex();
+        if (msg.value < MIN_BET) revert BetTooSmall();
+        if (userBets[gameId][msg.sender].amount > 0) revert AlreadyBet();
+
+        userBets[gameId][msg.sender] = UserBet({
+            suspectIndex: suspectIndex,
             amount: msg.value,
             claimed: false
         });
 
-        outcomePools[marketId][outcomeIndex] += msg.value;
+        outcomePools[gameId][suspectIndex] += msg.value;
         market.totalPool += msg.value;
 
-        emit BetPlaced(marketId, msg.sender, outcomeIndex, msg.value);
-    }
-
-    /**
-     * @notice Resolve a market with the winning outcome
-     * @param marketId The market to resolve
-     * @param winningOutcome The winning outcome index
-     */
-    function resolve(uint256 marketId, uint8 winningOutcome) external onlyOwner {
-        MarketInfo storage market = markets[marketId];
-        if (market.creator == address(0)) revert MarketNotFound();
-        if (market.resolved) revert MarketAlreadyResolved();
-        if (winningOutcome >= market.outcomeCount) revert InvalidOutcome();
-
-        market.resolved = true;
-        market.winningOutcome = winningOutcome;
-
-        emit MarketResolved(marketId, winningOutcome);
+        emit BetPlaced(gameId, msg.sender, suspectIndex, msg.value);
     }
 
     /**
      * @notice Claim winnings from a resolved market
-     * @param marketId The market to claim from
+     * @param gameId Game identifier
      */
-    function claim(uint256 marketId) external {
-        MarketInfo storage market = markets[marketId];
-        if (!market.resolved) revert MarketNotResolved();
+    function claim(bytes32 gameId) external nonReentrant {
+        MarketInfo storage market = markets[gameId];
+        if (market.state != MarketState.RESOLVED) revert MarketNotResolved();
 
-        UserBet storage bet = userBets[marketId][msg.sender];
+        UserBet storage bet = userBets[gameId][msg.sender];
         if (bet.amount == 0) revert NothingToClaim();
         if (bet.claimed) revert AlreadyClaimed();
-        if (bet.outcomeIndex != market.winningOutcome) revert NothingToClaim();
+        if (bet.suspectIndex != market.impostorIndex) revert NothingToClaim();
 
         bet.claimed = true;
 
-        uint256 winningPool = outcomePools[marketId][market.winningOutcome];
-        if (winningPool == 0) revert NothingToClaim();
-
-        // Calculate payout: user's share of total pool proportional to their bet in the winning pool
-        uint256 fee = (market.totalPool * platformFeeRate) / 10000;
-        uint256 distributable = market.totalPool - fee;
+        uint256 winningPool = outcomePools[gameId][market.impostorIndex];
+        uint256 distributable = market.totalPool - market.protocolFee;
         uint256 payout = (distributable * bet.amount) / winningPool;
 
-        (bool success, ) = payable(msg.sender).call{ value: payout }("");
+        (bool success,) = payable(msg.sender).call{value: payout}("");
         if (!success) revert TransferFailed();
 
-        emit Claimed(marketId, msg.sender, payout);
+        emit Claimed(gameId, msg.sender, payout);
     }
 
     // ============================================
@@ -191,47 +225,61 @@ contract PrescioMarket {
     // ============================================
 
     /**
-     * @notice Get market information
+     * @notice Get market info
      */
-    function getMarket(uint256 marketId) external view returns (MarketInfo memory) {
-        return markets[marketId];
-    }
-
-    /**
-     * @notice Get a user's bet on a market
-     */
-    function getUserBet(uint256 marketId, address user)
+    function getMarketInfo(bytes32 gameId)
         external
         view
-        returns (uint8 outcomeIndex, uint256 amount, bool claimed)
+        returns (
+            uint8 playerCount,
+            MarketState state,
+            uint256 totalPool,
+            uint8 impostorIndex,
+            uint256 protocolFee,
+            uint256[] memory outcomeTotals
+        )
     {
-        UserBet memory bet = userBets[marketId][user];
-        return (bet.outcomeIndex, bet.amount, bet.claimed);
+        MarketInfo storage market = markets[gameId];
+        playerCount = market.playerCount;
+        state = market.state;
+        totalPool = market.totalPool;
+        impostorIndex = market.impostorIndex;
+        protocolFee = market.protocolFee;
+
+        outcomeTotals = new uint256[](playerCount);
+        for (uint8 i = 0; i < playerCount; i++) {
+            outcomeTotals[i] = outcomePools[gameId][i];
+        }
     }
 
     /**
-     * @notice Get the total staked on a specific outcome
+     * @notice Get a user's bet for a game
      */
-    function getOutcomePool(uint256 marketId, uint8 outcomeIndex) external view returns (uint256) {
-        return outcomePools[marketId][outcomeIndex];
+    function getUserBets(bytes32 gameId, address user)
+        external
+        view
+        returns (uint8 suspectIndex, uint256 amount, bool claimed)
+    {
+        UserBet storage bet = userBets[gameId][user];
+        return (bet.suspectIndex, bet.amount, bet.claimed);
     }
 
-    // ============================================
-    // Admin Functions
-    // ============================================
+    /**
+     * @notice Get current odds for each outcome (returns multiplied by 10000 for precision)
+     * @dev Returns 0 for outcomes with no bets. Odds = totalPool / outcomePool (x10000)
+     */
+    function getOdds(bytes32 gameId) external view returns (uint256[] memory odds) {
+        MarketInfo storage market = markets[gameId];
+        odds = new uint256[](market.playerCount);
 
-    function setFeeRate(uint256 _feeRate) external onlyOwner {
-        platformFeeRate = _feeRate;
+        if (market.totalPool == 0) return odds;
+
+        uint256 distributable = market.totalPool - ((market.totalPool * feeRate) / 10000);
+        for (uint8 i = 0; i < market.playerCount; i++) {
+            uint256 pool = outcomePools[gameId][i];
+            if (pool > 0) {
+                odds[i] = (distributable * 10000) / pool;
+            }
+        }
     }
-
-    function withdrawFees() external onlyOwner {
-        (bool success, ) = payable(owner).call{ value: address(this).balance }("");
-        if (!success) revert TransferFailed();
-    }
-
-    function transferOwnership(address newOwner) external onlyOwner {
-        owner = newOwner;
-    }
-
-    receive() external payable {}
 }

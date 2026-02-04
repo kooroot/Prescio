@@ -1,115 +1,73 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 /**
  * @title PrescioVault
- * @notice Vault for managing user deposits and withdrawals on Monad
- * @dev Users deposit MON to participate in prediction markets
+ * @notice Collects protocol fees from PrescioMarket
+ * @dev Owner can withdraw accumulated fees
  */
-contract PrescioVault {
-    // ============================================
-    // State
-    // ============================================
-
-    address public owner;
-    address public marketContract;
-    mapping(address => uint256) public balances;
-    uint256 public totalDeposits;
-
+contract PrescioVault is Ownable, ReentrancyGuard {
     // ============================================
     // Events
     // ============================================
 
-    event Deposited(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event MarketContractUpdated(address indexed newMarketContract);
+    event FeesReceived(uint256 amount);
+    event FeesWithdrawn(address indexed to, uint256 amount);
 
     // ============================================
     // Errors
     // ============================================
 
-    error Unauthorized();
-    error InsufficientBalance();
-    error ZeroAmount();
     error TransferFailed();
-
-    // ============================================
-    // Modifiers
-    // ============================================
-
-    modifier onlyOwner() {
-        if (msg.sender != owner) revert Unauthorized();
-        _;
-    }
+    error NoFees();
 
     // ============================================
     // Constructor
     // ============================================
 
-    constructor() {
-        owner = msg.sender;
-    }
+    constructor() Ownable(msg.sender) {}
 
     // ============================================
     // Core Functions
     // ============================================
 
     /**
-     * @notice Deposit MON into the vault
+     * @notice Withdraw all accumulated fees
      */
-    function deposit() external payable {
-        if (msg.value == 0) revert ZeroAmount();
+    function withdrawFees() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert NoFees();
 
-        balances[msg.sender] += msg.value;
-        totalDeposits += msg.value;
-
-        emit Deposited(msg.sender, msg.value);
-    }
-
-    /**
-     * @notice Withdraw MON from the vault
-     * @param amount Amount to withdraw in wei
-     */
-    function withdraw(uint256 amount) external {
-        if (amount == 0) revert ZeroAmount();
-        if (balances[msg.sender] < amount) revert InsufficientBalance();
-
-        balances[msg.sender] -= amount;
-        totalDeposits -= amount;
-
-        (bool success, ) = payable(msg.sender).call{ value: amount }("");
+        (bool success,) = payable(owner()).call{value: balance}("");
         if (!success) revert TransferFailed();
 
-        emit Withdrawn(msg.sender, amount);
+        emit FeesWithdrawn(owner(), balance);
     }
-
-    // ============================================
-    // View Functions
-    // ============================================
 
     /**
-     * @notice Get the balance of an account
+     * @notice Withdraw fees to a specific address
      */
-    function balanceOf(address account) external view returns (uint256) {
-        return balances[account];
+    function withdrawFeesTo(address to) external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert NoFees();
+
+        (bool success,) = payable(to).call{value: balance}("");
+        if (!success) revert TransferFailed();
+
+        emit FeesWithdrawn(to, balance);
     }
 
-    // ============================================
-    // Admin Functions
-    // ============================================
-
-    function setMarketContract(address _marketContract) external onlyOwner {
-        marketContract = _marketContract;
-        emit MarketContractUpdated(_marketContract);
-    }
-
-    function transferOwnership(address newOwner) external onlyOwner {
-        owner = newOwner;
+    /**
+     * @notice Get current fee balance
+     */
+    function feeBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 
     receive() external payable {
-        balances[msg.sender] += msg.value;
-        totalDeposits += msg.value;
-        emit Deposited(msg.sender, msg.value);
+        emit FeesReceived(msg.value);
     }
 }

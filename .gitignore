@@ -28,6 +28,7 @@ Thumbs.db
 packages/contracts/cache/
 packages/contracts/out/
 packages/contracts/broadcast/
+packages/contracts/lib/
 
 # Logs
 *.log
