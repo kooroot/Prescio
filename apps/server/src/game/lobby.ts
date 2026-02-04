@@ -13,6 +13,7 @@ import {
   type Player,
 } from "@prescio/common";
 import { getGame, getGameByCode, updateGame } from "./state.js";
+import { initializeMap } from "./map-manager.js";
 
 // ============================================
 // Errors
@@ -204,6 +205,9 @@ export function startGame(gameId: string, requesterId: string): GameState {
   for (const player of game.players) {
     player.role = impostorIds.has(player.id) ? Role.IMPOSTOR : Role.CREW;
   }
+
+  // Initialize map
+  game.map = initializeMap(game);
 
   // Transition to NIGHT phase
   game.phase = Phase.NIGHT;

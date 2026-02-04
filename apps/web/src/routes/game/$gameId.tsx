@@ -5,6 +5,7 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { PhaseIndicator } from "@/components/game/PhaseIndicator";
 import { PlayerList } from "@/components/game/PlayerList";
 import { BetPanel } from "@/components/betting/BetPanel";
+import { GameMap } from "@/components/game/GameMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,13 @@ export function GamePage() {
         />
       </div>
 
+      {/* ─── Map (if active) ─────────────────── */}
+      {game.phase !== "LOBBY" && game.phase !== "RESULT" && (
+        <div className="mb-3">
+          <GameMap gameId={game.id} />
+        </div>
+      )}
+
       {/* ─── Desktop: 2-column layout ─────────────────── */}
       <div className="hidden lg:grid lg:grid-cols-[1fr_320px] lg:gap-4">
         {/* Left: Game board + Chat */}
@@ -86,8 +94,17 @@ export function GamePage() {
           </CardContent>
         </Card>
 
-        {/* Right: Players + (future) Betting */}
+        {/* Right: Betting + Players */}
         <div className="flex flex-col gap-4">
+          {/* Betting panel */}
+          {game.phase !== Phase.LOBBY && (
+            <BetPanel
+              gameId={gameId}
+              players={game.players}
+              phase={game.phase}
+            />
+          )}
+
           <Card className="border-monad-border bg-monad-card/40">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -104,15 +121,6 @@ export function GamePage() {
               />
             </CardContent>
           </Card>
-
-          {/* Betting panel */}
-          {game.phase !== Phase.LOBBY && (
-            <BetPanel
-              gameId={gameId}
-              players={game.players}
-              phase={game.phase}
-            />
-          )}
         </div>
       </div>
 

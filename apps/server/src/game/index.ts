@@ -47,3 +47,15 @@ export {
   getRecentMessages,
   DiscussionError,
 } from "./discussion.js";
+
+export {
+  initializeMap,
+  movePlayer,
+  ventPlayer,
+  completeTask,
+  canKillInRange,
+  getPlayersInRoom,
+  getPlayerRoom,
+  getRoomPopulation,
+} from "./map-manager.js";
+export type { MoveResult, TaskResult } from "./map-manager.js";

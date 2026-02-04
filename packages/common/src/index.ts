@@ -33,6 +33,23 @@ export {
   serializeEvent,
 } from "./types/events.js";
 
+// Map
+export { Room } from "./types/map.js";
+export type {
+  RoomInfo,
+  PlayerLocation,
+  TaskAssignment,
+  MapState,
+} from "./types/map.js";
+export {
+  THE_SKELD,
+  getPath,
+  getDistance,
+  isAdjacent,
+  canVent,
+  getVentTargets,
+} from "./types/map.js";
+
 // Constants
 export {
   MIN_PLAYERS,
