@@ -70,6 +70,20 @@ export const translations = {
     loading: "Loading...",
     error: "Something went wrong",
     connected: "Connected",
+
+    // Auto-bet
+    autoBet: "Auto-Bet",
+    selectStrategy: "Select Strategy",
+    maxBetPerRound: "Max Bet per Round",
+    enableAutoBet: "Enable Auto-Bet",
+    joinThisGame: "Join This Game",
+    leaveGame: "Leave Game",
+    updateSettings: "Update Settings",
+    disable: "Disable",
+    stats: "Stats",
+    active: "Active",
+    standby: "Standby",
+    autoBetAvailable: "Auto-bet available during game",
   },
 
   ko: {
@@ -133,6 +147,19 @@ export const translations = {
     loading: "로딩 중...",
     error: "오류가 발생했습니다",
     connected: "연결됨",
+
+    autoBet: "자동 베팅",
+    selectStrategy: "전략 선택",
+    maxBetPerRound: "라운드당 최대 베팅",
+    enableAutoBet: "자동 베팅 활성화",
+    joinThisGame: "이 게임 참여",
+    leaveGame: "게임에서 나가기",
+    updateSettings: "설정 업데이트",
+    disable: "비활성화",
+    stats: "통계",
+    active: "활성",
+    standby: "대기",
+    autoBetAvailable: "게임 중 자동 베팅 가능",
   },
 
   ja: {
@@ -196,6 +223,19 @@ export const translations = {
     loading: "読み込み中...",
     error: "エラーが発生しました",
     connected: "接続済み",
+
+    autoBet: "自動ベット",
+    selectStrategy: "戦略を選択",
+    maxBetPerRound: "ラウンドごとの最大ベット",
+    enableAutoBet: "自動ベットを有効化",
+    joinThisGame: "このゲームに参加",
+    leaveGame: "ゲームを離れる",
+    updateSettings: "設定を更新",
+    disable: "無効化",
+    stats: "統計",
+    active: "アクティブ",
+    standby: "スタンバイ",
+    autoBetAvailable: "ゲーム中に自動ベット可能",
   },
 
   zh: {
@@ -259,6 +299,19 @@ export const translations = {
     loading: "加载中...",
     error: "出现错误",
     connected: "已连接",
+
+    autoBet: "自动投注",
+    selectStrategy: "选择策略",
+    maxBetPerRound: "每轮最大投注",
+    enableAutoBet: "启用自动投注",
+    joinThisGame: "加入此游戏",
+    leaveGame: "离开游戏",
+    updateSettings: "更新设置",
+    disable: "禁用",
+    stats: "统计",
+    active: "活跃",
+    standby: "待命",
+    autoBetAvailable: "游戏期间可使用自动投注",
   },
 } as const;
 
