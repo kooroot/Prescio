@@ -61,28 +61,90 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 
 ---
 
-## 📈 Phase 2: Growth & Token Utility (Q2 2026)
+## 📈 Phase 2: Advanced Market Mechanics (Q2 2026)
 
-**Goal**: 토큰 유틸리티 확장, 스테이킹 런칭, 사용자 성장
+**Goal**: ERC-1155 기반 마켓 재설계, CCA 도입, 정보 가치 기반 가격 모델
+
+### 🧠 Core Innovation: Dynamic Information-Value Markets
+
+기존 예측 마켓의 고질적 문제인 "후발주자 유리함"을 해결하는 새로운 마켓 구조:
+
+```
+P(t, d) = (P_base × (1 + i)^n) + P_auction(d)
+
+Where:
+  P_base    = 게임 시작 시 초기 가격
+  i         = 정보 가치 승수 (라운드마다 증가)
+  n         = 현재 라운드
+  P_auction = CCA 수요 기반 가산금
+```
+
+### 🎯 Phase 2A: ERC-1155 Migration (Apr 2026)
+
+| Feature | Description |
+|---------|-------------|
+| **Outcome NFTs** | 각 에이전트별 Token ID 발행 (ID 1001 = Agent-Alpha 임포스터 지분) |
+| **Batch Operations** | 한 tx로 여러 에이전트 지분 거래 — 가스 효율 극대화 |
+| **Dead Agent Handling** | 사망 에이전트 지분 민팅 영구 중단 + 홀더에게 Voucher 발행 |
+| **Portfolio Trading** | 다수 아웃컴에 분산 베팅 가능 |
+
+### 🎯 Phase 2B: CCA Implementation (May 2026)
+
+**Continuous Clearing Auction** — Monad의 1초 블록을 활용한 MEV 방어 메커니즘:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Block N (1 second)                              │
+│  ┌─────────────────────────────────────────┐    │
+│  │ User A: 0.5 MON @ 1.1s                  │    │
+│  │ User B: 1.0 MON @ 1.5s                  │──▶ 동일 청산 가격
+│  │ User C: 0.3 MON @ 1.9s                  │    │
+│  └─────────────────────────────────────────┘    │
+│  같은 블록 내 모든 베팅 = 동일 가격              │
+│  선행 매매(Front-running) 원천 차단             │
+└─────────────────────────────────────────────────┘
+```
+
+| Phase | CCA State | 지분 가격 | 로직 |
+|-------|-----------|-----------|------|
+| NIGHT | PAUSED | 동결 | 임포스터 행동, 유저 모름 |
+| REPORT | SETTLE | 동결 | 사망자 확정, 해당 ID 민팅 중단 |
+| DISCUSSION | ACTIVE | 상승 구간 | 60초간 실시간 CCA 가동 |
+| VOTE | CLOSED | 최종가 | 마켓 잠금, 정산 대기 |
+
+### 🎯 Phase 2C: Information Premium (Jun 2026)
+
+- **라운드별 가격 상승**: Round 1 < Round 2 < Round 3 (정보량 반영)
+- **페이즈별 프리미엄**: NIGHT (할인) → DISCUSSION (프리미엄)
+- **AI 의심 지수 연동**: 에이전트 대화 분석 → 실시간 가격 곡선 반영 (선택)
+
+### 🎯 Phase 2D: Insurance & Retention (Jun 2026)
+
+**죽은 에이전트 지분 처리:**
+
+| 옵션 | 설명 |
+|------|------|
+| **Voucher 발행** | 다음 라운드/게임에서 사용 가능한 할인권 |
+| **Insurance Payout** | 소액 $MON 환급 (예: 베팅액의 10%) |
+| **Re-allocation** | 자동으로 다른 생존 에이전트에 재배분 |
 
 ### Milestones
 
 | Milestone | Target Date | Description |
 |-----------|------------|-------------|
-| **Security Audit** | Apr 2026 | PrescioMarket + PrescioVault 스마트 컨트랙트 감사 |
-| **Staking Launch** | Apr 2026 | $PRESCIO 스테이킹 프로그램 시작, 수수료 분배 |
-| **Premium Features** | May 2026 | Auto-bet 고급 기능, 스테이커 전용 |
-| **Mobile Responsive** | Jun 2026 | 모바일 최적화 UI |
-| **Partnerships** | Q2 2026 | Monad 생태계 프로젝트 협력 |
+| **Security Audit** | Apr 2026 | ERC-1155 + CCA 컨트랙트 감사 |
+| **ERC-1155 Deploy** | Apr 2026 | 새 마켓 컨트랙트 메인넷 배포 |
+| **CCA Engine** | May 2026 | 1초 단위 배치 청산 로직 구현 |
+| **Info Premium** | Jun 2026 | 라운드/페이즈별 동적 가격 |
+| **Dead Agent Insurance** | Jun 2026 | Voucher 시스템 런칭 |
 
-### Key Features
+### 추가 Features
 
 - [ ] $PRESCIO 토큰 스테이킹 & 수수료 분배
 - [ ] 프리미엄 구독 (Auto-bet 고급 전략)
 - [ ] 에이전트 성적 리더보드 (온체인)
 - [ ] 사용자 프로필 & 베팅 히스토리
 - [ ] 수수료 자동 분배 시스템
-- [ ] Advanced betting markets (multi-outcome, conditional)
 
 ### 📊 Phase 2 Metrics Target
 
@@ -90,6 +152,7 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 - Daily betting volume: 10,000+ MON
 - Total games played: 10,000+
 - $PRESCIO stakers: 500+
+- MEV attacks prevented: 100% (via CCA)
 
 ---
 

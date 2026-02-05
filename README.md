@@ -92,10 +92,78 @@ Prescio/
 
 | Contract | Description |
 |----------|-------------|
-| `PrescioMarket.sol` | Parimutuel prediction market. Spectators bet on which player is the impostor. Pool split proportionally among winners minus 2% fee. Min bet: 0.1 MON. |
+| `PrescioMarket.sol` | Parimutuel prediction market. Spectators bet on which player is the impostor. Pool split proportionally among winners minus 5% fee. Min bet: 0.1 MON. |
 | `PrescioVault.sol` | Protocol fee collector. Receives fees from resolved markets. Owner-withdrawable. |
 
-Both contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard`. Server wallet is the market operator (creates/closes/resolves markets).
+Both contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard` + UUPS upgradeable pattern. Server wallet is the market operator (creates/closes/resolves markets).
+
+---
+
+## 🔮 V2 Vision: Dynamic Information-Value Markets
+
+> *Solving prediction market's "late-information advantage" with ERC-1155 + CCA*
+
+### The Problem
+
+Traditional prediction markets have a fundamental flaw: users who wait longer have more information, making early bettors inherently disadvantaged. In a social deduction game where information reveals gradually (deaths, discussions, votes), this creates unfair dynamics.
+
+### The Solution: Information Premium Pricing
+
+V2 introduces a **Dynamic Information-Value Minting** model where share prices increase as game phases progress:
+
+```
+P(t, d) = (P_base × (1 + i)^n) + P_auction(d)
+
+Where:
+  P_base    = Initial price at game start
+  i         = Information multiplier (increases per round)
+  n         = Current round number
+  P_auction = Demand-based CCA premium
+```
+
+### Key V2 Features
+
+| Feature | Description |
+|---------|-------------|
+| **ERC-1155 Outcome Shares** | Each agent becomes a tradeable token ID. Batch operations for gas efficiency. |
+| **Continuous Clearing Auction (CCA)** | All bets within a Monad block (~1s) clear at the same price. MEV-resistant. |
+| **Dead Agent Insurance** | When your pick dies, receive vouchers for future rounds instead of total loss. |
+| **Phase-Gated Pricing** | NIGHT (cheap) → DISCUSSION (expensive) → VOTE (locked). Information = premium. |
+
+### CCA + Monad Synergy
+
+Monad's 10,000+ TPS and 1-second blocks enable real-time CCA that's impossible on Ethereum:
+
+```
+┌─────────────────────────────────────────────────┐
+│  Block N (1 second)                              │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Bet A: 0.5 MON on Agent-Alpha           │    │
+│  │ Bet B: 1.0 MON on Agent-Bravo           │──▶ Same clearing price
+│  │ Bet C: 0.3 MON on Agent-Alpha           │    │
+│  └─────────────────────────────────────────┘    │
+│  All bets in same block = same price            │
+│  No front-running, no MEV extraction            │
+└─────────────────────────────────────────────────┘
+```
+
+### V2 Phase Timeline
+
+| Phase | CCA State | Price Floor | Logic |
+|-------|-----------|-------------|-------|
+| NIGHT | PAUSED | Frozen | Impostor acts secretly |
+| REPORT | SETTLE | Frozen | Dead agent shares disabled |
+| DISCUSSION | ACTIVE | Rising | 60s live CCA auction |
+| VOTE | CLOSED | Final | Market locked for resolution |
+
+### Why This Matters
+
+1. **Fair Early Entry** — Early bettors get discount for taking info risk
+2. **MEV Protection** — Batch clearing prevents sandwich attacks
+3. **Retention** — Dead-agent vouchers keep users engaged
+4. **Capital Efficiency** — ERC-1155 enables portfolio trading in single tx
+
+*V2 development begins post-hackathon. See [ROADMAP.md](docs/ROADMAP.md) for timeline.*
 
 ## Running Locally
 
