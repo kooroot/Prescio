@@ -41,6 +41,15 @@ export type {
   TaskAssignment,
   MapState,
 } from "./types/map.js";
+
+// Auto-Bet
+export { STRATEGY_DESCRIPTIONS } from "./types/auto-bet.js";
+export type {
+  AutoBetStrategyType,
+  AutoBetConfig,
+  AutoBetStatus,
+  StrategyDecision,
+} from "./types/auto-bet.js";
 export {
   THE_SKELD,
   getPath,
