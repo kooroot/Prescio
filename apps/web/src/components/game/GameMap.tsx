@@ -185,7 +185,7 @@ export function GameMap({ gameId }: { gameId: string }) {
               style={{
                 left: `${room.left}%`,
                 top: `${room.top}%`,
-                minWidth: `${room.w}%`,
+                width: `${room.w}%`,
                 minHeight: `${room.h}%`,
                 zIndex: hasPlayers ? 10 : 1,
                 background: hasPlayers
@@ -218,7 +218,7 @@ export function GameMap({ gameId }: { gameId: string }) {
 
               {/* Player pills */}
               {hasPlayers && (
-                <div className="flex flex-wrap gap-0.5">
+                <div className="flex flex-wrap gap-0.5 max-w-full overflow-hidden">
                   {players.map((p, i) => (
                     <span
                       key={i}

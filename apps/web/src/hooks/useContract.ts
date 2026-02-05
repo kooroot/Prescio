@@ -28,7 +28,6 @@ export interface MarketInfo {
   totalPoolFormatted: string;
   impostorIndex: number;
   protocolFee: bigint;
-  outcomeTotals: readonly bigint[];
 }
 
 /**
@@ -57,7 +56,6 @@ export function useMarketInfo(gameId: string | undefined) {
         totalPoolFormatted: formatEther(data[2]),
         impostorIndex: data[3],
         protocolFee: data[4],
-        outcomeTotals: data[5],
       }
     : undefined;
 

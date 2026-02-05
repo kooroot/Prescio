@@ -86,7 +86,9 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const hasMarket = marketInfo != null && marketInfo.playerCount > 0;
   const marketState = hasMarket ? marketInfo.state : null;
   const totalPool = marketInfo?.totalPool ?? 0n;
-  const outcomeTotals = marketInfo?.outcomeTotals ?? [];
+  // Get outcome totals from odds API (oddsMap contains totalStaked per player)
+  const odds = oddsMap[gameId] ?? [];
+  const outcomeTotals = odds.map((o) => o.totalStaked);
   const isOpen = hasMarket && marketState === ContractMarketState.OPEN;
   const isResolved = hasMarket && marketState === ContractMarketState.RESOLVED;
   const stateLabel = hasMarket ? marketStateLabel(marketState!) : { text: "No Market", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
