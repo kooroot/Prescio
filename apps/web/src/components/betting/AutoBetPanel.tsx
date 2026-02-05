@@ -14,7 +14,24 @@ import {
   type AutoBetStatus,
 } from "@prescio/common";
 import { useI18n } from "../../i18n/context";
-import { api } from "../../lib/api";
+
+const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
+
+async function apiGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
+
+async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return res.json();
+}
 
 interface AutoBetPanelProps {
   gameId: string;
@@ -23,7 +40,7 @@ interface AutoBetPanelProps {
 
 export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
   const { address, isConnected } = useAccount();
-  const { t, language } = useI18n();
+  const { t, lang } = useI18n();
 
   const [status, setStatus] = useState<AutoBetStatus | null>(null);
   const [strategy, setStrategy] = useState<AutoBetStrategyType>("balanced");
@@ -38,7 +55,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
 
     const fetchStatus = async () => {
       try {
-        const res = await api.get<AutoBetStatus>(`/auto-bet/status?address=${address}`);
+        const res = await apiGet<AutoBetStatus>(`/auto-bet/status?address=${address}`);
         setStatus(res);
         if (res.config) {
           setStrategy(res.config.strategy);
@@ -62,7 +79,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
 
     try {
       const maxBetWei = parseEther(maxBet).toString();
-      const res = await api.post<{ success: boolean; config: AutoBetConfig }>("/auto-bet/configure", {
+      const res = await apiPost<{ success: boolean; config: AutoBetConfig }>("/auto-bet/configure", {
         address,
         strategy,
         maxBetPerRound: maxBetWei,
@@ -86,7 +103,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
     setError(null);
 
     try {
-      await api.post("/auto-bet/join", { address, gameId });
+      await apiPost("/auto-bet/join", { address, gameId });
       setIsJoined(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to join");
@@ -100,7 +117,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
     setIsLoading(true);
 
     try {
-      await api.post("/auto-bet/leave", { address, gameId });
+      await apiPost("/auto-bet/leave", { address, gameId });
       setIsJoined(false);
     } catch (err) {
       console.error("Failed to leave:", err);
@@ -114,7 +131,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
     setIsLoading(true);
 
     try {
-      await api.post("/auto-bet/disable", { address });
+      await apiPost("/auto-bet/disable", { address });
       setStatus((prev) => prev ? { ...prev, config: prev.config ? { ...prev.config, enabled: false } : null } : null);
       setIsJoined(false);
       onStatusChange?.(false);
@@ -150,7 +167,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
       {/* Strategy Selection */}
       <div className="space-y-3 mb-4">
         <label className="block text-sm text-slate-400">
-          {language === "ko" ? "전략 선택" : "Select Strategy"}
+          {lang === "ko" ? "전략 선택" : "Select Strategy"}
         </label>
         <div className="grid grid-cols-1 gap-2">
           {(Object.keys(STRATEGY_DESCRIPTIONS) as AutoBetStrategyType[]).map((key) => {
@@ -169,7 +186,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
                 <div className="flex items-center gap-2 mb-1">
                   <span>{desc.icon}</span>
                   <span className="font-medium text-white">
-                    {language === "ko" ? desc.nameKo : desc.name}
+                    {lang === "ko" ? desc.nameKo : desc.name}
                   </span>
                   <span className={`ml-auto text-xs px-2 py-0.5 rounded ${
                     desc.riskLevel === "low" ? "bg-green-500/20 text-green-400" :
@@ -181,7 +198,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  {language === "ko" ? desc.descriptionKo : desc.description}
+                  {lang === "ko" ? desc.descriptionKo : desc.description}
                 </p>
               </button>
             );
@@ -192,7 +209,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
       {/* Max Bet Input */}
       <div className="mb-4">
         <label className="block text-sm text-slate-400 mb-2">
-          {language === "ko" ? "라운드당 최대 베팅" : "Max Bet per Round"}
+          {lang === "ko" ? "라운드당 최대 베팅" : "Max Bet per Round"}
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -222,7 +239,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
             disabled={isLoading}
             className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors"
           >
-            {isLoading ? "..." : language === "ko" ? "자동 베팅 활성화" : "Enable Auto-Bet"}
+            {isLoading ? "..." : lang === "ko" ? "자동 베팅 활성화" : "Enable Auto-Bet"}
           </button>
         ) : (
           <>
@@ -232,7 +249,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
                 disabled={isLoading}
                 className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white rounded-lg font-medium transition-colors"
               >
-                {isLoading ? "..." : language === "ko" ? "이 게임 참여" : "Join This Game"}
+                {isLoading ? "..." : lang === "ko" ? "이 게임 참여" : "Join This Game"}
               </button>
             ) : (
               <button
@@ -240,7 +257,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
                 disabled={isLoading}
                 className="w-full py-2 px-4 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 text-white rounded-lg font-medium transition-colors"
               >
-                {isLoading ? "..." : language === "ko" ? "게임에서 나가기" : "Leave Game"}
+                {isLoading ? "..." : lang === "ko" ? "게임에서 나가기" : "Leave Game"}
               </button>
             )}
             <button
@@ -248,14 +265,14 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
               disabled={isLoading}
               className="w-full py-2 px-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white rounded-lg font-medium transition-colors"
             >
-              {language === "ko" ? "설정 업데이트" : "Update Settings"}
+              {lang === "ko" ? "설정 업데이트" : "Update Settings"}
             </button>
             <button
               onClick={handleDisable}
               disabled={isLoading}
               className="w-full py-2 px-4 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg font-medium transition-colors"
             >
-              {language === "ko" ? "비활성화" : "Disable"}
+              {lang === "ko" ? "비활성화" : "Disable"}
             </button>
           </>
         )}
@@ -265,7 +282,7 @@ export function AutoBetPanel({ gameId, onStatusChange }: AutoBetPanelProps) {
       {status && status.totalBets > 0 && (
         <div className="mt-4 pt-4 border-t border-slate-700">
           <h4 className="text-sm font-medium text-slate-400 mb-2">
-            {language === "ko" ? "통계" : "Stats"}
+            {lang === "ko" ? "통계" : "Stats"}
           </h4>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>

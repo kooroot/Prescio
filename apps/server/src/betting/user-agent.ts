@@ -9,10 +9,16 @@ import type {
   AutoBetStatus,
   AutoBetStrategyType,
   GameState,
-  Odds,
 } from "@prescio/common";
 import { getStrategyDecision } from "./auto-strategy.js";
-import { broadcastToGame } from "../ws/broadcast.js";
+
+/** Simple odds for auto-bet strategy */
+interface SimpleOdds {
+  isImpostor: number;
+  isInnocent: number;
+}
+// Note: WebSocket events for auto-bet would need to be added to common/types/events.ts
+// For MVP, we just log decisions and execute silently
 
 // In-memory storage (can be persisted to file later)
 const userConfigs: Map<string, AutoBetConfig> = new Map();
@@ -153,7 +159,7 @@ export function leaveGameAutoBet(walletAddress: string, gameId: string): void {
 export async function processAutoBets(
   gameId: string,
   gameState: GameState,
-  odds: Record<string, Odds>,
+  odds: Record<string, SimpleOdds>,
   placeBetCallback: (walletAddress: string, targetPlayer: string, amount: string) => Promise<{ success: boolean; txHash?: string; error?: string }>
 ): Promise<void> {
   const gameUsers = activeGameUsers.get(gameId);
@@ -180,16 +186,6 @@ export async function processAutoBets(
 
       if (!decision.shouldBet || !decision.targetPlayer) {
         console.log(`[AutoBet] ${walletAddress} skipping: ${decision.reasoning}`);
-        
-        // Notify user via WebSocket
-        broadcastToGame(gameId, {
-          type: "AUTO_BET_DECISION",
-          payload: {
-            walletAddress,
-            decision,
-            executed: false,
-          },
-        });
         continue;
       }
 
@@ -208,15 +204,7 @@ export async function processAutoBets(
         stats.totalBets++;
       }
 
-      // Notify user via WebSocket
-      broadcastToGame(gameId, {
-        type: "AUTO_BET_EXECUTED",
-        payload: {
-          walletAddress,
-          decision,
-          result,
-        },
-      });
+      console.log(`[AutoBet] ${walletAddress} executed: ${result.success ? "success" : "failed"}`);
     } catch (error) {
       console.error(`[AutoBet] Error processing ${walletAddress}:`, error);
     }

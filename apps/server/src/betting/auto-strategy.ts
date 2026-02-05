@@ -9,13 +9,18 @@ import type {
   StrategyDecision,
   GameState,
   Player,
-  Odds,
 } from "@prescio/common";
 import { Phase } from "@prescio/common";
 
+/** Simple odds for auto-bet strategy */
+interface SimpleOdds {
+  isImpostor: number;
+  isInnocent: number;
+}
+
 interface StrategyContext {
   gameState: GameState;
-  odds: Record<string, Odds>;
+  odds: Record<string, SimpleOdds>;
   maxBet: bigint;
   walletBalance: bigint;
 }
@@ -30,7 +35,7 @@ export function getStrategyDecision(
   const { gameState, odds, maxBet, walletBalance } = context;
 
   // Only bet during discussion/voting phases
-  if (gameState.phase !== Phase.DISCUSSION && gameState.phase !== Phase.VOTING) {
+  if (gameState.phase !== Phase.DISCUSSION && gameState.phase !== Phase.VOTE) {
     return {
       shouldBet: false,
       targetPlayer: null,
@@ -83,7 +88,7 @@ function conservativeStrategy(
   let lowestOdds = Infinity;
 
   for (const player of alivePlayers) {
-    const playerOdds = odds[player.odometer];
+    const playerOdds = odds[player.address];
     if (playerOdds && playerOdds.isImpostor < lowestOdds) {
       lowestOdds = playerOdds.isImpostor;
       bestTarget = player;
@@ -126,7 +131,7 @@ function conservativeStrategy(
 
   return {
     shouldBet: true,
-    targetPlayer: bestTarget.odometer,
+    targetPlayer: bestTarget.address,
     betAmount: betAmount.toString(),
     confidence,
     reasoning: `Following crowd favorite ${bestTarget.nickname} (odds: ${lowestOdds.toFixed(2)})`,
@@ -147,7 +152,7 @@ function balancedStrategy(
 
   for (const player of alivePlayers) {
     let score = 0;
-    const playerOdds = odds[player.odometer];
+    const playerOdds = odds[player.address];
 
     // Factor 1: Current odds
     if (playerOdds) {
@@ -155,15 +160,15 @@ function balancedStrategy(
     }
 
     // Factor 2: Vote history - who's been voted against?
-    const votesAgainst = gameState.votes?.filter((v) => v.targetPlayerId === player.odometer).length || 0;
+    const votesAgainst = gameState.votes?.filter((v) => v.targetId === player.address).length || 0;
     score += votesAgainst * 15;
 
     // Factor 3: Chat activity (suspicious if too quiet or too defensive)
-    const messages = gameState.chatMessages?.filter((m) => m.playerId === player.odometer).length || 0;
+    const messages = gameState.chatMessages?.filter((m) => m.playerId === player.address).length || 0;
     if (messages === 0) score += 10; // Silent is suspicious
     if (messages > 5) score += 5; // Too defensive
 
-    suspicionScores.set(player.odometer, score);
+    suspicionScores.set(player.address, score);
   }
 
   // Find most suspicious
@@ -171,7 +176,7 @@ function balancedStrategy(
   let highestScore = 0;
 
   for (const player of alivePlayers) {
-    const score = suspicionScores.get(player.odometer) || 0;
+    const score = suspicionScores.get(player.address) || 0;
     if (score > highestScore) {
       highestScore = score;
       bestTarget = player;
@@ -204,7 +209,7 @@ function balancedStrategy(
 
   return {
     shouldBet: true,
-    targetPlayer: bestTarget.odometer,
+    targetPlayer: bestTarget.address,
     betAmount: betAmount.toString(),
     confidence,
     reasoning: `Pattern analysis suggests ${bestTarget.nickname} (score: ${highestScore})`,
@@ -225,7 +230,7 @@ function aggressiveStrategy(
   let highestOdds = 0;
 
   for (const player of alivePlayers) {
-    const playerOdds = odds[player.odometer];
+    const playerOdds = odds[player.address];
     if (playerOdds && playerOdds.isImpostor > highestOdds) {
       highestOdds = playerOdds.isImpostor;
       bestTarget = player;
@@ -259,7 +264,7 @@ function aggressiveStrategy(
 
   return {
     shouldBet: true,
-    targetPlayer: bestTarget.odometer,
+    targetPlayer: bestTarget.address,
     betAmount: betAmount.toString(),
     confidence,
     reasoning: `Contrarian bet on ${bestTarget.nickname} (odds: ${highestOdds.toFixed(2)}x)`,
