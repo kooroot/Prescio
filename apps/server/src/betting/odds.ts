@@ -30,8 +30,8 @@ export interface FormattedOdds {
 /** Active polling intervals by gameId */
 const pollingIntervals = new Map<string, ReturnType<typeof setInterval>>();
 
-/** Default polling interval in ms */
-const POLL_INTERVAL = 5_000; // 5 seconds
+/** Default polling interval in ms — optimized for Monad's 1-second blocks */
+const POLL_INTERVAL = 2_000; // 2 seconds
 
 /**
  * Start polling odds for a game and broadcasting updates.
