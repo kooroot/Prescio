@@ -1,6 +1,16 @@
 /**
  * Cloudflare Workers entry — reverse proxy /api/* and /ws to backend
  */
+
+// Cloudflare Workers types
+interface Fetcher {
+  fetch(request: Request): Promise<Response>;
+}
+
+interface ExportedHandler<E> {
+  fetch(request: Request, env: E): Promise<Response>;
+}
+
 export interface Env {
   API_BACKEND: string;
   ASSETS: Fetcher;

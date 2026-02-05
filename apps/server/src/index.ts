@@ -173,14 +173,16 @@ gameEngine.on("phaseChange", (gameId, phase, round) => {
     (async () => {
       try {
         const odds = await getOdds(gameId);
-        if (odds) {
-          // Convert array odds to Record<address, Odds>
+        if (odds && odds.length > 0) {
+          // Convert bigint[] odds to Record<address, SimpleOdds>
           const oddsRecord: Record<string, { isImpostor: number; isInnocent: number }> = {};
           game.players.forEach((player, index) => {
-            if (odds[index]) {
+            if (index < odds.length && odds[index]) {
+              // Convert bigint to number (assuming 18 decimals)
+              const oddsValue = Number(odds[index]) / 1e18;
               oddsRecord[player.address] = {
-                isImpostor: odds[index],
-                isInnocent: 1 / odds[index],
+                isImpostor: oddsValue > 0 ? oddsValue : 2.0, // Default to 2.0 if invalid
+                isInnocent: oddsValue > 0 ? 1 / oddsValue : 0.5,
               };
             }
           });
