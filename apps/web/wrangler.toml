@@ -9,4 +9,4 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 
 [vars]
-API_BACKEND = "https://portions-intelligence-str-skills.trycloudflare.com"
+API_BACKEND = "https://cod-believed-him-committee.trycloudflare.com"
