@@ -31,6 +31,9 @@ export default {
       const backendUrl = env.API_BACKEND + url.pathname + url.search;
       const headers = new Headers(request.headers);
       headers.set("Host", new URL(env.API_BACKEND).host);
+      // Forward original host/proto for WebSocket URL generation
+      headers.set("X-Forwarded-Host", url.host);
+      headers.set("X-Forwarded-Proto", url.protocol.replace(":", ""));
 
       const resp = await fetch(backendUrl, {
         method: request.method,

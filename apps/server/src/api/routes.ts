@@ -746,3 +746,30 @@ apiRouter.get(
     res.json({ gameId, bettors, count: bettors.length });
   })
 );
+
+// ------------------------------------------
+// GET /api/config — Runtime config (WebSocket URL, etc.)
+// ------------------------------------------
+apiRouter.get(
+  "/config",
+  asyncHandler(async (req, res) => {
+    // Use explicit WS_PUBLIC_URL if set (for production with proxies that can't handle WS)
+    const wsPublicUrl = process.env.WS_PUBLIC_URL;
+    if (wsPublicUrl) {
+      res.json({ wsUrl: wsPublicUrl });
+      return;
+    }
+    
+    // Derive WebSocket URL from request headers
+    const forwardedProto = req.headers["x-forwarded-proto"] as string | undefined;
+    const forwardedHost = req.headers["x-forwarded-host"] as string | undefined;
+    
+    const protocol = forwardedProto || (req.secure ? "https" : "http");
+    const host = forwardedHost || req.headers.host || "localhost:3001";
+    const wsProtocol = protocol === "https" ? "wss" : "ws";
+    
+    res.json({
+      wsUrl: `${wsProtocol}://${host}/ws`,
+    });
+  })
+);

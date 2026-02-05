@@ -957,6 +957,8 @@ var worker_default = {
       const backendUrl = env2.API_BACKEND + url.pathname + url.search;
       const headers = new Headers(request.headers);
       headers.set("Host", new URL(env2.API_BACKEND).host);
+      headers.set("X-Forwarded-Host", url.host);
+      headers.set("X-Forwarded-Proto", url.protocol.replace(":", ""));
       const resp = await fetch(backendUrl, {
         method: request.method,
         headers,

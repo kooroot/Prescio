@@ -3,11 +3,33 @@ import { parseEvent, serializeEvent } from "@prescio/common";
 
 type EventHandler = (event: ServerEvent) => void;
 
-const WS_BASE = import.meta.env.VITE_WS_URL ??
-  `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`;
+// Will be set dynamically from /api/config
+let WS_BASE: string | null = null;
 const RECONNECT_DELAY_MS = 2000;
 const MAX_RECONNECT_DELAY_MS = 30000;
 const PING_INTERVAL_MS = 25000;
+
+// Fetch WebSocket URL from server config
+async function getWsBase(): Promise<string> {
+  if (WS_BASE) return WS_BASE;
+  
+  try {
+    const resp = await fetch("/api/config");
+    if (resp.ok) {
+      const config = await resp.json();
+      WS_BASE = config.wsUrl as string;
+      console.log("[WS] Config loaded, wsUrl:", WS_BASE);
+      return WS_BASE;
+    }
+  } catch (err) {
+    console.warn("[WS] Failed to fetch config:", err);
+  }
+  
+  // Fallback to current host
+  const fallback = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`;
+  WS_BASE = fallback;
+  return fallback;
+}
 
 interface WsClient {
   connect(gameId: string, address?: string): void;
@@ -55,16 +77,17 @@ function createWsClient(): WsClient {
     }, delay);
   }
 
-  function connectInternal(gameId: string, address?: string) {
+  async function connectInternal(gameId: string, address?: string) {
     cleanup();
     if (ws) {
       ws.onclose = null;
       ws.close();
     }
 
+    const wsBase = await getWsBase();
     const params = new URLSearchParams({ gameId });
     if (address) params.set("address", address);
-    const url = `${WS_BASE}?${params}`;
+    const url = `${wsBase}?${params}`;
 
     console.log(`[WS] Connecting to ${url}`);
     ws = new WebSocket(url);
