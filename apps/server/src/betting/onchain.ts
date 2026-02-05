@@ -225,7 +225,22 @@ export async function getMarketInfo(gameId: string): Promise<OnChainMarketInfo |
       abi: PRESCIO_MARKET_ABI,
       functionName: "getMarketInfo",
       args: [gameIdBytes],
-    }) as [number, number, bigint, number, bigint, bigint[]];
+    }) as [number, number, bigint, number, bigint];
+
+    // V2 contract doesn't return outcomeTotals in getMarketInfo
+    // Fetch separately via getOdds which returns the pool per outcome
+    let outcomeTotals: bigint[] = [];
+    try {
+      const odds = await pub.readContract({
+        address: addr,
+        abi: PRESCIO_MARKET_ABI,
+        functionName: "getOdds",
+        args: [gameIdBytes],
+      }) as bigint[];
+      outcomeTotals = odds;
+    } catch {
+      // If getOdds fails, return empty array
+    }
 
     return {
       playerCount: result[0],
@@ -233,7 +248,7 @@ export async function getMarketInfo(gameId: string): Promise<OnChainMarketInfo |
       totalPool: result[2],
       impostorIndex: result[3],
       protocolFee: result[4],
-      outcomeTotals: result[5],
+      outcomeTotals,
     };
   } catch (err) {
     console.error(`[OnChain] getMarketInfo failed for game ${gameId}:`, err instanceof Error ? err.message : err);

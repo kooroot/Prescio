@@ -86,13 +86,13 @@ async function fetchAndBroadcastOdds(gameId: string): Promise<void> {
   const formatted = formatOdds(odds, market.outcomeTotals, market.totalPool);
 
   // Build BETTING_UPDATE event
-  const oddsPayload = formatted.map((o) => ({
+  const oddsPayload = formatted.map((o, i) => ({
     outcomeId: `player_${o.playerIndex}`,
     label: `Player ${o.playerIndex}`,
     numerator: Math.round(o.decimal * 100),
     denominator: 100,
     impliedProbability: o.impliedProbability,
-    totalStaked: 0n,
+    totalStaked: market.outcomeTotals?.[i] ?? 0n,
   }));
 
   // Serialize with BigInt→string replacer to avoid JSON.stringify crash
