@@ -138,7 +138,7 @@ export function GameMap({ gameId }: { gameId: string }) {
       {/* Header */}
       <div className="mb-2 flex items-center justify-end">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">Tasks {data.completedTasks ?? 0}/{data.totalTasks ?? 0}</span>
+          <span className="text-xs text-gray-400">Tasks {(data.completedTasks ?? 0) >= (data.totalTasks ?? 0) ? `${data.totalTasks ?? 0}+` : (data.completedTasks ?? 0)}/{data.totalTasks ?? 0}</span>
           <div className="h-2 w-28 rounded-full bg-gray-800 overflow-hidden">
             <div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${progress * 100}%` }} />
           </div>
