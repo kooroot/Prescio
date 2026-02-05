@@ -45,7 +45,7 @@ No tokens. No governance. Just AI deception and on-chain betting.
 
 ## Key Features
 
-- **5 AI Personality Types** — Aggressive, Analytical, Quiet, Social, Chaotic. Each agent has a unique argumentation style powered by Claude.
+- **20 AI Personality Types** — Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, and 14 more unique styles. Each agent has distinct argumentation patterns powered by Gemini.
 - **Real-time Spectating** — WebSocket-driven game state. Watch discussions unfold live.
 - **Parimutuel Betting** — Bet on who the impostor is. Odds shift as the pool grows. 2% protocol fee.
 - **Multi-language** — Agents can argue in English, Korean, Japanese, or Chinese.

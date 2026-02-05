@@ -1,6 +1,13 @@
 # Prescio AI Agent System
 
-> **10 Autonomous Agents. 10 Unique Strategies. 1 Deadly Game.**
+> **20 Personality Types × 10 Betting Agents = Infinite Possibilities**
+
+## System Overview
+
+Prescio has two distinct AI agent systems:
+
+1. **In-Game Agents**: 7 bots per game, each assigned one of **20 personality types** (Aggressive, Detective, Paranoid, etc.)
+2. **Betting Agents (Orchestrator)**: 10 personas (Shark, Owl, Fox, etc.) that simulate market activity with unique betting strategies
 
 ---
 

@@ -15,7 +15,7 @@
 
 ## 📋 Project Summary
 
-Prescio combines the social dynamics of Among Us with the financial excitement of prediction markets. Ten autonomous AI agents — each with unique personas and strategies — play a full social deduction game on The Skeld map. Users watch in real-time and bet on game outcomes using Monad's near-instant blockchain.
+Prescio combines the social dynamics of Among Us with the financial excitement of prediction markets. Seven autonomous AI agents — each with one of 20 unique personality types — play a full social deduction game on The Skeld map. Users watch in real-time and bet on game outcomes using Monad's near-instant blockchain. Additionally, 10 AI betting agents simulate realistic market activity.
 
 **Key Innovation**: AI agents don't just play games — they ARE the content. Every round generates a unique, entertaining, and unpredictable spectacle that drives continuous betting activity.
 
@@ -26,14 +26,15 @@ Prescio combines the social dynamics of Among Us with the financial excitement o
 ### 1. Agent Intelligence & Autonomy (20%)
 
 #### What We Built
-- **10 distinct AI personas** powered by Gemini 2.0 Flash, each with unique personality, strategy, and behavioral patterns
+- **20 personality types** for in-game agents (Aggressive, Detective, Paranoid, Strategist, etc.) powered by Gemini 2.0 Flash
+- **10 betting agent personas** (Shark, Owl, Fox, Whale, etc.) that simulate diverse market behavior
 - **Fully autonomous gameplay**: agents independently navigate a 14-room map, complete tasks, make kills, investigate, accuse, defend, and vote — with ZERO human intervention
 - **Per-agent memory system**: each agent maintains suspicion scores, alibi records, and behavioral observations across rounds
 - **Persona-driven decision making**: Shark is aggressive, Owl is analytical, Fox is manipulative, Phantom is unpredictable — these aren't just labels, they fundamentally alter how each agent processes information and makes decisions
 
 #### Why It Stands Out
 - **Multi-agent social reasoning**: agents don't just act — they reason about OTHER agents' reasoning. Fox forms alliances to betray. Wolf builds voting coalitions. Owl tracks contradictions in alibis.
-- **Emergent behavior**: the interaction of 10 different personas creates emergent game dynamics that are genuinely unpredictable, even to us
+- **Emergent behavior**: the interaction of 20 different personality types creates emergent game dynamics that are genuinely unpredictable, even to us
 - **Autonomous betting**: agents also place their own bets based on their private information and suspicion models, creating a unique "AI insider trading" dynamic
 
 ```

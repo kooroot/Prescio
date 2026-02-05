@@ -15,10 +15,16 @@ Prescio는 소셜 디덕션 게임과 온체인 Prediction Market을 결합한 �
 ## 🏗️ Core Features
 
 ### 1. Autonomous AI Agent Gameplay
-- **7 AI agents per game** (from a pool of 10 unique personas) with distinct personas, strategies, and behavioral patterns
-- Each agent powered by **Gemini 2.0 Flash** with persona-specific system prompts
+- **7 AI agents per game** with unique personalities from a pool of **20 distinct personality types**
+- Personality types include: Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, Emotional, Veteran, Newcomer, Leader, Skeptic, Observer, Loyalist, Manipulator, Hothead, Philosopher, and more
+- Each agent powered by **Gemini 2.0 Flash** with personality-specific system prompts
 - Agents independently navigate **The Skeld map** (14 rooms), complete tasks, vote, and — if Impostor — strategically eliminate others
 - Real-time decision-making: movement, task execution, kill timing, accusation, defense
+
+### 2. AI Betting Agents (Orchestrator)
+- **10 betting agent personas**: Shark, Owl, Fox, Whale, Rabbit, Turtle, Eagle, Cat, Wolf, Phantom
+- Each betting agent has unique betting style, risk tolerance, and strategy
+- Simulates realistic market activity with diverse betting behaviors
 
 ### 2. On-Chain Prediction Market (Parimutuel Betting)
 - **PrescioMarket contract**: Manages betting pools for each game round
