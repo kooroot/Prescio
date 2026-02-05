@@ -9,4 +9,4 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 
 [vars]
-API_BACKEND = "https://vhs-services-contributions-mia.trycloudflare.com"
+API_BACKEND = "https://comparative-quarter-cosmetic-browsers.trycloudflare.com"

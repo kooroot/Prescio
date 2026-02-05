@@ -28,6 +28,8 @@ import {
   handleGameEnd as bettingGameEnd,
   cleanupMarket,
   isOnChainEnabled,
+  onChainPauseBetting,
+  onChainResumeBetting,
 } from "../betting/index.js";
 import { startOddsPolling, stopOddsPolling } from "../betting/odds.js";
 
@@ -110,10 +112,12 @@ export class GameEngine extends EventEmitter {
     if (isOnChainEnabled()) {
       const playerCount = game.players.length;
       bettingGameStart(gameId, playerCount)
-        .then((ok) => {
+        .then(async (ok) => {
           if (ok) {
+            // V3: Start with betting paused (NIGHT phase)
+            await onChainPauseBetting(gameId);
             startOddsPolling(gameId);
-            console.log(`[Engine] Betting market created for game ${gameId}`);
+            console.log(`[Engine] Betting market created for game ${gameId} (paused)`);
           }
         })
         .catch((err) => {
@@ -300,6 +304,12 @@ export class GameEngine extends EventEmitter {
     // Enable betting now that death is revealed (was PAUSED during NIGHT)
     if (isOnChainEnabled()) {
       handleBettingOpen(game.id);
+      // V3: Resume betting on-chain
+      onChainResumeBetting(game.id)
+        .then((hash) => {
+          if (hash) console.log(`[Engine] Betting resumed on-chain for game ${game.id}`);
+        })
+        .catch((err) => console.error(`[Engine] resumeBetting failed:`, err));
       console.log(`[Engine] Betting OPEN for game ${game.id} (round ${game.round})`);
     }
   }
@@ -351,8 +361,14 @@ export class GameEngine extends EventEmitter {
     // Abort any ongoing discussion
     this.abortDiscussion(game.id);
 
-    // Close betting market on-chain (Round 1 only betting for V1)
+    // Pause/close betting market
     if (isOnChainEnabled()) {
+      // V3: Pause betting on-chain before vote
+      onChainPauseBetting(game.id)
+        .then((hash) => {
+          if (hash) console.log(`[Engine] Betting paused on-chain for game ${game.id}`);
+        })
+        .catch((err) => console.error(`[Engine] pauseBetting failed:`, err));
       handleBettingClose(game.id).catch((err) => {
         console.error(`[Engine] Failed to close betting market:`, err instanceof Error ? err.message : err);
       });

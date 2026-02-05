@@ -307,3 +307,87 @@ export async function getUserBets(gameId: string, userAddress: Address): Promise
     return null;
   }
 }
+
+// ============================================
+// V3: Betting Pause/Resume
+// ============================================
+
+/**
+ * Pause betting for a market.
+ */
+export async function pauseBetting(gameId: string): Promise<Hash | null> {
+  try {
+    const { pub, wallet, account, addr } = ensureReady();
+    const gameIdBytes = gameIdToBytes32(gameId);
+
+    const hash = await wallet.writeContract({
+      address: addr,
+      abi: PRESCIO_MARKET_ABI,
+      functionName: "pauseBetting",
+      args: [gameIdBytes],
+      account,
+      chain: monadTestnet,
+    });
+
+    console.log(`[OnChain] pauseBetting tx sent: ${hash} (game: ${gameId})`);
+
+    const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 30_000 });
+    console.log(`[OnChain] pauseBetting confirmed: block ${receipt.blockNumber}`);
+
+    return hash;
+  } catch (err) {
+    console.error(`[OnChain] pauseBetting failed for game ${gameId}:`, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * Resume betting for a market.
+ */
+export async function resumeBetting(gameId: string): Promise<Hash | null> {
+  try {
+    const { pub, wallet, account, addr } = ensureReady();
+    const gameIdBytes = gameIdToBytes32(gameId);
+
+    const hash = await wallet.writeContract({
+      address: addr,
+      abi: PRESCIO_MARKET_ABI,
+      functionName: "resumeBetting",
+      args: [gameIdBytes],
+      account,
+      chain: monadTestnet,
+    });
+
+    console.log(`[OnChain] resumeBetting tx sent: ${hash} (game: ${gameId})`);
+
+    const receipt = await pub.waitForTransactionReceipt({ hash, timeout: 30_000 });
+    console.log(`[OnChain] resumeBetting confirmed: block ${receipt.blockNumber}`);
+
+    return hash;
+  } catch (err) {
+    console.error(`[OnChain] resumeBetting failed for game ${gameId}:`, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * Check if betting is open for a market (V3).
+ */
+export async function isBettingOpen(gameId: string): Promise<boolean> {
+  try {
+    const { pub, addr } = ensureReady();
+    const gameIdBytes = gameIdToBytes32(gameId);
+
+    const result = await pub.readContract({
+      address: addr,
+      abi: PRESCIO_MARKET_ABI,
+      functionName: "isBettingOpen",
+      args: [gameIdBytes],
+    }) as boolean;
+
+    return result;
+  } catch (err) {
+    console.error(`[OnChain] isBettingOpen failed for game ${gameId}:`, err instanceof Error ? err.message : err);
+    return false;
+  }
+}
