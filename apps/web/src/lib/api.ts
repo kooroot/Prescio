@@ -210,6 +210,8 @@ export interface MyBetGame {
     suspectNickname: string;
     amount: string;
     claimed: boolean;
+    /** Whether the bet target was actually an impostor (only set for finished games) */
+    suspectWasImpostor?: boolean;
   };
   winner: string | null;
   finishedAt: number | null;

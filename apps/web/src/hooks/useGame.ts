@@ -13,6 +13,10 @@ interface UseGameReturn {
   chatMessages: ChatMessage[];
   spectatorCount: number;
   timeRemaining: number;
+  /** Real-time phase from WebSocket (more reliable than cached game.phase) */
+  livePhase: Phase | null;
+  /** Real-time round from WebSocket */
+  liveRound: number | null;
   send: ReturnType<typeof useWebSocket>["send"];
 }
 
@@ -25,6 +29,8 @@ export function useGame(gameId: string): UseGameReturn {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [spectatorCount, setSpectatorCount] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [livePhase, setLivePhase] = useState<Phase | null>(null);
+  const [liveRound, setLiveRound] = useState<number | null>(null);
 
   const { data: game, isLoading, error } = useQuery({
     queryKey: ["game", gameId],
@@ -45,6 +51,9 @@ export function useGame(gameId: string): UseGameReturn {
         case "GAME_STATE": {
           const payload = event.payload as ServerPayloads["GAME_STATE"];
           setTimeRemaining(payload.timeRemaining);
+          // Update live state immediately (most reliable)
+          setLivePhase(payload.phase);
+          setLiveRound(payload.round);
           // Update query cache with fresh player data
           queryClient.setQueryData<GameState>(["game", gameId], (prev) => {
             if (!prev) return prev;
@@ -67,6 +76,10 @@ export function useGame(gameId: string): UseGameReturn {
         case "PHASE_CHANGE": {
           const payload = event.payload as ServerPayloads["PHASE_CHANGE"];
           setTimeRemaining(payload.timeRemaining);
+          // Update live state immediately (most reliable)
+          setLivePhase(payload.phase);
+          setLiveRound(payload.round);
+          console.log(`[useGame] PHASE_CHANGE: ${payload.phase} round ${payload.round}`);
           queryClient.setQueryData<GameState>(["game", gameId], (prev) => {
             if (!prev) return prev;
             return { ...prev, phase: payload.phase, round: payload.round };
@@ -180,6 +193,8 @@ export function useGame(gameId: string): UseGameReturn {
     chatMessages,
     spectatorCount,
     timeRemaining,
+    livePhase,
+    liveRound,
     send,
   };
 }

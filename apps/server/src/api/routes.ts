@@ -817,6 +817,8 @@ apiRouter.get(
         const userBet = await getUserBets(finished.id, address as Address);
         if (userBet && userBet.amount > 0n) {
           const suspect = finished.players?.[userBet.suspectIndex];
+          // Check if the bet target was actually an impostor
+          const suspectWasImpostor = suspect?.role === "IMPOSTOR";
           results.push({
             gameId: finished.id,
             code: finished.code,
@@ -828,6 +830,7 @@ apiRouter.get(
               suspectNickname: suspect?.nickname ?? `Player ${userBet.suspectIndex}`,
               amount: formatEther(userBet.amount),
               claimed: userBet.claimed,
+              suspectWasImpostor,
             },
             winner: finished.winner,
             finishedAt: finished.finishedAt,

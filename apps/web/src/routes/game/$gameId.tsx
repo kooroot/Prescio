@@ -22,7 +22,13 @@ export function GamePage() {
     chatMessages,
     spectatorCount,
     timeRemaining,
+    livePhase,
+    liveRound,
   } = useGame(gameId);
+  
+  // Use live WS data if available, fallback to cached game data
+  const currentPhase = livePhase ?? game?.phase;
+  const currentRound = liveRound ?? game?.round ?? 1;
 
   const [mobileTab, setMobileTab] = useState("game");
 
@@ -70,14 +76,14 @@ export function GamePage() {
           )}
         </div>
         <PhaseIndicator
-          phase={game.phase}
+          phase={currentPhase ?? Phase.LOBBY}
           timeRemaining={timeRemaining}
-          round={game.round}
+          round={currentRound}
         />
       </div>
 
       {/* ─── Map (if active) ─────────────────── */}
-      {game.phase !== "LOBBY" && game.phase !== "RESULT" && (
+      {currentPhase !== "LOBBY" && currentPhase !== "RESULT" && (
         <div className="mb-3">
           <GameMap gameId={game.id} />
         </div>
@@ -98,11 +104,11 @@ export function GamePage() {
         {/* Right: Betting + Auto-Bet + Players */}
         <div className="flex flex-col gap-4">
           {/* Betting panel */}
-          {game.phase !== Phase.LOBBY && (
+          {currentPhase !== Phase.LOBBY && (
             <BetPanel
               gameId={gameId}
               players={game.players}
-              phase={game.phase}
+              phase={currentPhase ?? Phase.LOBBY}
             />
           )}
 
@@ -115,7 +121,7 @@ export function GamePage() {
             <CardContent>
               <PlayerList
                 players={game.players}
-                phase={game.phase}
+                phase={currentPhase ?? Phase.LOBBY}
                 winner={game.winner}
                 eliminatedPlayers={game.eliminatedPlayers}
                 killEvents={game.killEvents}
@@ -156,7 +162,7 @@ export function GamePage() {
               <CardContent className="pt-4">
                 <PlayerList
                   players={game.players}
-                  phase={game.phase}
+                  phase={currentPhase ?? Phase.LOBBY}
                   winner={game.winner}
                   eliminatedPlayers={game.eliminatedPlayers}
                   killEvents={game.killEvents}
@@ -166,11 +172,11 @@ export function GamePage() {
           </TabsContent>
 
           <TabsContent value="bet" className="mt-3">
-            {game.phase !== Phase.LOBBY ? (
+            {currentPhase !== Phase.LOBBY ? (
               <BetPanel
                 gameId={gameId}
                 players={game.players}
-                phase={game.phase}
+                phase={currentPhase ?? Phase.LOBBY}
               />
             ) : (
               <Card className="border-monad-border bg-monad-card/40 border-dashed">
