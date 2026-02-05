@@ -5,7 +5,7 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { PhaseIndicator } from "@/components/game/PhaseIndicator";
 import { PlayerList } from "@/components/game/PlayerList";
 import { BetPanel } from "@/components/betting/BetPanel";
-import { AutoBetPanel } from "@/components/betting/AutoBetPanel";
+// AutoBetPanel removed - using floating widget instead
 import { GameMap } from "@/components/game/GameMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -106,11 +106,6 @@ export function GamePage() {
             />
           )}
 
-          {/* Auto-Bet panel */}
-          {game.phase !== Phase.LOBBY && game.phase !== Phase.RESULT && (
-            <AutoBetPanel gameId={gameId} />
-          )}
-
           <Card className="border-monad-border bg-monad-card/40">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -142,9 +137,6 @@ export function GamePage() {
             </TabsTrigger>
             <TabsTrigger value="bet" className="flex-1 text-xs">
               🎰 Bet
-            </TabsTrigger>
-            <TabsTrigger value="auto" className="flex-1 text-xs">
-              🤖 Auto
             </TabsTrigger>
           </TabsList>
 
@@ -186,21 +178,6 @@ export function GamePage() {
                   <span className="text-4xl">🎰</span>
                   <p className="mt-3 text-sm text-gray-500">
                     Betting opens when game starts
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="auto" className="mt-3">
-            {game.phase !== Phase.LOBBY && game.phase !== Phase.RESULT ? (
-              <AutoBetPanel gameId={gameId} />
-            ) : (
-              <Card className="border-monad-border bg-monad-card/40 border-dashed">
-                <CardContent className="py-12 text-center">
-                  <span className="text-4xl">🤖</span>
-                  <p className="mt-3 text-sm text-gray-500">
-                    Auto-bet available during game
                   </p>
                 </CardContent>
               </Card>
