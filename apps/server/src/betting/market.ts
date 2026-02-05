@@ -13,6 +13,7 @@ import {
   createMarket as onChainCreateMarket,
   closeMarket as onChainCloseMarket,
   resolveMarket as onChainResolveMarket,
+  resumeBetting as onChainResumeBetting,
   getMarketInfo as onChainGetMarketInfo,
   getOdds as onChainGetOdds,
   getUserBets as onChainGetUserBets,
@@ -81,7 +82,7 @@ export async function handleGameStart(gameId: string, playerCount: number): Prom
         outcomeTotals: existingMarket.outcomeTotals,
         odds: new Array(existingMarket.playerCount).fill(0n),
         impostorIndex: existingMarket.state === 2 ? existingMarket.impostorIndex : null,
-        txHash: undefined,
+        txHash: null,
         createdAt: Date.now(),
         lastUpdated: Date.now(),
         bettingEnabled: false, // Will be enabled by handleBettingOpen
@@ -143,17 +144,29 @@ export function pauseBetting(gameId: string): boolean {
 /**
  * Enable betting for a market (called when REPORT phase starts).
  * The market was created during NIGHT but betting was paused.
+ * V3: Calls resumeBetting on-chain if market was closed.
  */
-export function handleBettingOpen(gameId: string): boolean {
+export async function handleBettingOpen(gameId: string): Promise<boolean> {
   const cached = marketCache.get(gameId);
   if (!cached) {
     console.log(`[BettingMarket] No market found for game ${gameId}`);
     return false;
   }
 
-  // V1 limitation: on-chain market can't reopen after VOTE closes it
-  // We use server-side bettingEnabled flag to control betting access
-  // On-chain state check removed to allow multi-round betting
+  // V3: If on-chain state is CLOSED, call resumeBetting to reopen
+  if (cached.state === "CLOSED" && isOnChainEnabled()) {
+    try {
+      const txHash = await onChainResumeBetting(gameId);
+      if (txHash) {
+        cached.state = "OPEN";
+        console.log(`[BettingMarket] resumeBetting tx: ${txHash}`);
+      }
+    } catch (err) {
+      console.error(`[BettingMarket] resumeBetting failed:`, err instanceof Error ? err.message : err);
+      // Continue anyway - server-side control as fallback
+    }
+  }
+
   cached.bettingEnabled = true;
   cached.lastUpdated = Date.now();
 

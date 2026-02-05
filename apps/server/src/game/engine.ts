@@ -29,7 +29,6 @@ import {
   cleanupMarket,
   isOnChainEnabled,
   onChainPauseBetting,
-  onChainResumeBetting,
 } from "../betting/index.js";
 import { startOddsPolling, stopOddsPolling } from "../betting/odds.js";
 
@@ -150,10 +149,10 @@ export class GameEngine extends EventEmitter {
       const playerCount = game.players.length;
       // Ensure market exists in cache
       bettingGameStart(gameId, playerCount)
-        .then((ok) => {
+        .then(async (ok) => {
           // If phase is REPORT or DISCUSSION, betting should be open
           if (game.phase === Phase.REPORT || game.phase === Phase.DISCUSSION) {
-            handleBettingOpen(gameId);
+            await handleBettingOpen(gameId);
             console.log(`[Engine] Betting resumed OPEN for game ${gameId} (phase: ${game.phase})`);
           }
           startOddsPolling(gameId);
@@ -302,15 +301,13 @@ export class GameEngine extends EventEmitter {
     this.schedulePhase(game.id, Phase.REPORT);
 
     // Enable betting now that death is revealed (was PAUSED during NIGHT)
+    // handleBettingOpen now calls resumeBetting on-chain if needed (V3)
     if (isOnChainEnabled()) {
-      handleBettingOpen(game.id);
-      // V3: Resume betting on-chain
-      onChainResumeBetting(game.id)
-        .then((hash) => {
-          if (hash) console.log(`[Engine] Betting resumed on-chain for game ${game.id}`);
+      handleBettingOpen(game.id)
+        .then((ok) => {
+          if (ok) console.log(`[Engine] Betting OPEN for game ${game.id} (round ${game.round})`);
         })
-        .catch((err) => console.error(`[Engine] resumeBetting failed:`, err));
-      console.log(`[Engine] Betting OPEN for game ${game.id} (round ${game.round})`);
+        .catch((err) => console.error(`[Engine] handleBettingOpen failed:`, err));
     }
   }
 
