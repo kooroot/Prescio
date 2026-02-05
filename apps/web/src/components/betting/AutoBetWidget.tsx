@@ -123,7 +123,7 @@ export function AutoBetWidget() {
   const isConfigured = status?.config?.enabled;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-20 right-6 z-50">
       {/* Expanded Panel */}
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-96 rounded-2xl border border-monad-border bg-monad-card shadow-2xl shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
