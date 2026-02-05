@@ -143,8 +143,8 @@ export function pauseBetting(gameId: string): boolean {
 
 /**
  * Enable betting for a market (called when REPORT phase starts).
- * The market was created during NIGHT but betting was paused.
- * V3: Calls resumeBetting on-chain if market was closed.
+ * The market was created during NIGHT but betting was paused on-chain.
+ * V3: Always calls resumeBetting to unpause (idempotent).
  */
 export async function handleBettingOpen(gameId: string): Promise<boolean> {
   const cached = marketCache.get(gameId);
@@ -153,12 +153,13 @@ export async function handleBettingOpen(gameId: string): Promise<boolean> {
     return false;
   }
 
-  // V3: If on-chain state is CLOSED, call resumeBetting to reopen
-  if (cached.state === "CLOSED" && isOnChainEnabled()) {
+  // V3: Always call resumeBetting to unpause on-chain betting
+  // (pauseBetting is called at game start / VOTE phase)
+  if (isOnChainEnabled()) {
     try {
       const txHash = await onChainResumeBetting(gameId);
       if (txHash) {
-        cached.state = "OPEN";
+        if (cached.state === "CLOSED") cached.state = "OPEN";
         console.log(`[BettingMarket] resumeBetting tx: ${txHash}`);
       }
     } catch (err) {
@@ -178,32 +179,37 @@ export async function handleBettingOpen(gameId: string): Promise<boolean> {
  * Close the betting market (no more bets accepted).
  * Called when transitioning from DISCUSSION to VOTE.
  */
+/**
+ * Pause betting for a market (called when entering VOTE phase).
+ * V3: Uses pauseBetting instead of closeMarket to allow reopening in next round.
+ * closeMarket is only called when the game actually ends.
+ */
 export async function handleBettingClose(gameId: string): Promise<boolean> {
   if (!isOnChainEnabled()) return false;
 
   const cached = marketCache.get(gameId);
-  if (!cached || cached.state !== "OPEN") {
-    console.log(`[BettingMarket] No open market to close for game ${gameId}`);
+  if (!cached) {
+    console.log(`[BettingMarket] No market to pause for game ${gameId}`);
     return false;
   }
 
+  // V3: Use pauseBetting instead of closeMarket for multi-round support
+  // closeMarket permanently closes the market; pauseBetting is reversible
   try {
-    const txHash = await onChainCloseMarket(gameId);
-    if (!txHash) {
-      console.error(`[BettingMarket] Failed to close market for game ${gameId}`);
-      return false;
+    const txHash = await import("./onchain.js").then(m => m.pauseBetting(gameId));
+    if (txHash) {
+      console.log(`[BettingMarket] pauseBetting tx: ${txHash}`);
     }
-
-    cached.state = "CLOSED";
-    cached.lastUpdated = Date.now();
-    cached.bettingEnabled = false;
-
-    console.log(`[BettingMarket] Market closed for game ${gameId}`);
-    return true;
   } catch (err) {
-    console.error(`[BettingMarket] handleBettingClose error:`, err instanceof Error ? err.message : err);
-    return false;
+    // pauseBetting may fail if already paused, that's OK
+    console.log(`[BettingMarket] pauseBetting skipped (may already be paused):`, err instanceof Error ? err.message : err);
   }
+
+  cached.bettingEnabled = false;
+  cached.lastUpdated = Date.now();
+
+  console.log(`[BettingMarket] Betting paused for game ${gameId}`);
+  return true;
 }
 
 /**
@@ -219,9 +225,18 @@ export async function handleGameEnd(gameId: string, impostorIndex: number): Prom
     return false;
   }
 
-  // If market is still OPEN (e.g., game ended before vote), close first
+  // V3: Must close market before resolving (closeMarket sets state=CLOSED)
+  // handleBettingClose now only pauses, so we call closeMarket directly here
   if (cached.state === "OPEN") {
-    await handleBettingClose(gameId);
+    try {
+      const closeTx = await onChainCloseMarket(gameId);
+      if (closeTx) {
+        cached.state = "CLOSED";
+        console.log(`[BettingMarket] closeMarket tx: ${closeTx}`);
+      }
+    } catch (err) {
+      console.error(`[BettingMarket] closeMarket failed:`, err instanceof Error ? err.message : err);
+    }
   }
 
   if (cached.state !== "CLOSED") {
