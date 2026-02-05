@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Users, Swords, Hash } from "lucide-react";
-import type { GameListItem, HistoryGame } from "@/lib/api";
+import { Eye, Users, Swords, Hash, Target, Coins, Check } from "lucide-react";
+import type { GameListItem, HistoryGame, MyBetGame } from "@/lib/api";
 
 // ─── Phase badge colors ──────────────────────────────
 
@@ -137,6 +137,107 @@ export function FinishedGameCard({ game, onWatch }: FinishedGameCardProps) {
             </Button>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── My Bet Card ─────────────────────────────────────
+
+interface MyBetCardProps {
+  bet: MyBetGame;
+  onWatch: (gameId: string) => void;
+}
+
+export function MyBetCard({ bet, onWatch }: MyBetCardProps) {
+  const isActive = bet.finishedAt === null;
+  const isWinner = bet.winner !== null && 
+    ((bet.winner === "IMPOSTOR" && bet.bet.suspectIndex >= 0) || 
+     (bet.winner === "CREW"));
+  const phaseColor = isActive 
+    ? PHASE_COLORS[bet.phase] ?? "bg-gray-600 text-gray-100"
+    : "bg-gray-600/50 text-gray-300";
+  const phaseLabel = isActive 
+    ? (PHASE_LABELS[bet.phase] ?? bet.phase)
+    : "Finished";
+
+  // Determine bet result status
+  let betStatus: "pending" | "won" | "lost" | "claimed" = "pending";
+  if (!isActive && bet.winner) {
+    betStatus = bet.bet.claimed ? "claimed" : isWinner ? "won" : "lost";
+  }
+
+  const statusColors = {
+    pending: "border-yellow-500/30 bg-yellow-500/5",
+    won: "border-alive/30 bg-alive/5",
+    lost: "border-impostor/30 bg-impostor/5",
+    claimed: "border-gray-500/30 bg-gray-500/5",
+  };
+
+  return (
+    <Card className={`${statusColors[betStatus]} hover:border-monad-purple/30 transition-colors`}>
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-sm text-gray-400">{bet.code}</span>
+            <Badge className={`${phaseColor} text-xs`}>
+              {phaseLabel}
+            </Badge>
+            {isActive && (
+              <span className="flex items-center gap-1.5 text-xs text-monad-purple">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-monad-purple opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-monad-purple" />
+                </span>
+                LIVE
+              </span>
+            )}
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onWatch(bet.gameId)}
+            className="border-monad-purple/30 text-monad-purple hover:bg-monad-purple/10"
+          >
+            <Eye className="mr-1.5 h-3.5 w-3.5" />
+            View
+          </Button>
+        </div>
+
+        {/* Bet details */}
+        <div className="mt-3 flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-1.5 text-gray-400">
+            <Target className="h-3.5 w-3.5 text-yellow-500" />
+            <span>Bet on: </span>
+            <span className="font-medium text-yellow-400">{bet.bet.suspectNickname}</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-gray-400">
+            <Coins className="h-3.5 w-3.5 text-monad-purple" />
+            <span className="font-mono text-monad-purple">{bet.bet.amount} MON</span>
+          </div>
+          {betStatus === "won" && (
+            <Badge className="bg-alive/20 text-alive text-xs">
+              🎉 Won!
+            </Badge>
+          )}
+          {betStatus === "lost" && (
+            <Badge className="bg-impostor/20 text-impostor text-xs">
+              Lost
+            </Badge>
+          )}
+          {betStatus === "claimed" && (
+            <Badge className="bg-gray-500/20 text-gray-400 text-xs flex items-center gap-1">
+              <Check className="h-3 w-3" /> Claimed
+            </Badge>
+          )}
+        </div>
+
+        {/* Time info */}
+        {bet.finishedAt && (
+          <div className="mt-2 text-xs text-gray-600">
+            {getTimeAgo(bet.finishedAt)}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
