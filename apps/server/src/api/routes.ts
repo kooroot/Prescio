@@ -211,6 +211,35 @@ apiRouter.get(
   asyncHandler(async (req, res) => {
     const game = getGame(String(req.params.id));
     if (!game) {
+      // Fallback: check finished games archive
+      const finished = finishedGames.find((g) => g.id === String(req.params.id));
+      if (finished) {
+        res.json({
+          id: finished.id,
+          code: finished.code,
+          hostId: null,
+          phase: "RESULT",
+          round: finished.rounds,
+          players: finished.players.map((p: any, i: number) => ({
+            id: `player-${i}`,
+            nickname: p.nickname,
+            address: "0x0",
+            isAlive: p.isAlive,
+            isConnected: false,
+            role: p.role,
+          })),
+          playerCount: finished.playerCount,
+          alivePlayers: finished.players.filter((p: any) => p.isAlive).map((_: any, i: number) => `player-${i}`),
+          eliminatedPlayers: finished.players.filter((p: any) => !p.isAlive).map((_: any, i: number) => `player-${i}`),
+          winner: finished.winner,
+          killEvents: [],
+          chatMessages: [],
+          settings: {},
+          createdAt: finished.finishedAt,
+          updatedAt: finished.finishedAt,
+        });
+        return;
+      }
       res.status(404).json({ error: { code: "GAME_NOT_FOUND", message: "Game not found" } });
       return;
     }
