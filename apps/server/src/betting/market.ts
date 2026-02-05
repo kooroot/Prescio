@@ -7,6 +7,7 @@
  * - Caches on-chain data to reduce RPC calls
  */
 import { type Address, formatEther } from "viem";
+import { Phase } from "@prescio/common";
 import {
   isOnChainEnabled,
   createMarket as onChainCreateMarket,
@@ -17,6 +18,7 @@ import {
   getUserBets as onChainGetUserBets,
   type OnChainMarketInfo,
 } from "./onchain.js";
+import { getGame } from "../game/state.js";
 
 // ============================================
 // Types
@@ -322,11 +324,16 @@ export async function getUserBets(gameId: string, userAddress: Address) {
 
 /**
  * Check if betting is currently enabled for a game.
+ * Phase-based logic: betting is open during REPORT and DISCUSSION phases only.
  */
 export function isBettingEnabled(gameId: string): boolean {
   if (!isOnChainEnabled()) return false;
-  const cached = marketCache.get(gameId);
-  return cached?.bettingEnabled ?? false;
+  
+  const game = getGame(gameId);
+  if (!game) return false;
+  
+  // Betting is only enabled during REPORT and DISCUSSION phases
+  return game.phase === Phase.REPORT || game.phase === Phase.DISCUSSION;
 }
 
 /**
