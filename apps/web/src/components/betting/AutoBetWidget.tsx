@@ -14,7 +14,8 @@ import {
   type AutoBetStatus,
 } from "@prescio/common";
 import { useI18n } from "../../i18n/context";
-import { Bot, X, Shield, Settings, TrendingUp, ChevronUp } from "lucide-react";
+import { Bot, X, Shield, Settings, TrendingUp, ChevronUp, Check } from "lucide-react";
+import { toast } from "sonner";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -70,10 +71,13 @@ export function AutoBetWidget() {
     fetchStatus();
   }, [address]);
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const handleSave = async () => {
     if (!address) return;
     setIsLoading(true);
     setError(null);
+    setSaveSuccess(false);
 
     try {
       const maxBetWei = parseEther(maxBet).toString();
@@ -86,9 +90,15 @@ export function AutoBetWidget() {
 
       if (res.success) {
         setStatus((prev) => prev ? { ...prev, config: res.config } : null);
+        setSaveSuccess(true);
+        toast.success(lang === "ko" ? "✅ 자동 베팅 설정 저장됨" : "✅ Auto-bet settings saved", {
+          description: `${STRATEGY_DESCRIPTIONS[strategy][lang === "ko" ? "nameKo" : "name"]} • ${maxBet} MON/round`,
+        });
+        setTimeout(() => setSaveSuccess(false), 2000);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
+      toast.error(lang === "ko" ? "❌ 저장 실패" : "❌ Failed to save");
     } finally {
       setIsLoading(false);
     }
@@ -101,8 +111,10 @@ export function AutoBetWidget() {
     try {
       await apiPost("/auto-bet/disable", { address });
       setStatus((prev) => prev ? { ...prev, config: prev.config ? { ...prev.config, enabled: false } : null } : null);
+      toast.success(lang === "ko" ? "🔴 자동 베팅 비활성화됨" : "🔴 Auto-bet disabled");
     } catch (err) {
       console.error("Failed to disable:", err);
+      toast.error(lang === "ko" ? "❌ 비활성화 실패" : "❌ Failed to disable");
     } finally {
       setIsLoading(false);
     }
@@ -211,9 +223,18 @@ export function AutoBetWidget() {
                   <button
                     onClick={handleSave}
                     disabled={isLoading}
-                    className="flex-1 py-2 px-3 bg-monad-purple hover:bg-monad-purple/80 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      saveSuccess 
+                        ? "bg-green-500 text-white" 
+                        : "bg-monad-purple hover:bg-monad-purple/80 disabled:bg-gray-600 text-white"
+                    }`}
                   >
-                    {isLoading ? "..." : isConfigured 
+                    {isLoading ? "..." : saveSuccess ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        {lang === "ko" ? "저장됨" : "Saved"}
+                      </>
+                    ) : isConfigured 
                       ? (lang === "ko" ? "저장" : "Save")
                       : (lang === "ko" ? "활성화" : "Enable")}
                   </button>
