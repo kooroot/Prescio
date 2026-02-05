@@ -220,6 +220,7 @@ function claimInsurance(bytes32 gameId, uint8 deadAgentIndex) external {
 
 ## 📚 References
 
+- [BETTING-PHASES.md](./BETTING-PHASES.md) - 베팅 페이즈 상세 설계
 - [ERC-1155: Multi Token Standard](https://eips.ethereum.org/EIPS/eip-1155)
 - [UniswapX: MEV-Protected Swaps](https://blog.uniswap.org/uniswapx-protocol)
 - [Frequent Batch Auctions (Budish et al.)](https://faculty.chicagobooth.edu/eric.budish/research/HFT-FrequentBatchAuctions.pdf)
