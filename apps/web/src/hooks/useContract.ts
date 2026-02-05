@@ -44,7 +44,7 @@ export function useMarketInfo(gameId: string | undefined) {
     chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!gameIdBytes,
-      refetchInterval: 15_000,
+      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
     },
   });
 
@@ -76,7 +76,7 @@ export function useOnChainOdds(gameId: string | undefined) {
     chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!gameIdBytes,
-      refetchInterval: 15_000,
+      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
     },
   });
 
@@ -100,7 +100,7 @@ export function useOnChainUserBet(
     chainId: MONAD_TESTNET_CHAIN_ID,
     query: {
       enabled: !!gameIdBytes && !!userAddress,
-      refetchInterval: 15_000,
+      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
     },
   });
 

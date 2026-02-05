@@ -30,8 +30,8 @@ export function useOdds(gameId: string) {
     queryKey: ["odds", gameId],
     queryFn: () => fetchOdds(gameId),
     enabled: !!gameId,
-    staleTime: 10_000,
-    refetchInterval: 30_000,
+    staleTime: 2_000,
+    refetchInterval: 5_000, // Fallback, primary updates via WebSocket
   });
 
   // Subscribe to WS BETTING_UPDATE
@@ -182,8 +182,8 @@ export function useUserBets(gameId: string, address?: `0x${string}`) {
     queryKey: ["bets", gameId, address],
     queryFn: () => fetchBets(gameId, address),
     enabled: !!gameId && !!address,
-    staleTime: 10_000,
-    refetchInterval: 30_000,
+    staleTime: 3_000,
+    refetchInterval: 10_000, // User bets don't change as often
   });
 
   return {
