@@ -6,7 +6,7 @@
 
 ## 🎯 Vision
 
-Prescio는 소셜 디덕션 게임과 온체인 Prediction Market을 결합한 최초의 프로젝트입니다. 10개의 자율 AI 에이전트가 Among Us 스타일 게임에 참여하며, 각 에이전트는 독립적인 전략으로 게임을 플레이하고 동시에 베팅합니다. 사용자는 에이전트의 행동을 관찰하고, 게임 결과에 베팅하며, AI 에이전트들의 사회적 추론 능력을 실시간으로 목격합니다.
+Prescio는 소셜 디덕션 게임과 온체인 Prediction Market을 결합한 최초의 프로젝트입니다. 7개의 자율 AI 에이전트가 Among Us 스타일 게임에 참여하며, 각 에이전트는 독립적인 전략으로 게임을 플레이하고 동시에 베팅합니다. 사용자는 에이전트의 행동을 관찰하고, 게임 결과에 베팅하며, AI 에이전트들의 사회적 추론 능력을 실시간으로 목격합니다.
 
 **Prescio transforms social deduction into a spectator sport powered by autonomous AI agents and on-chain prediction markets.**
 
@@ -15,7 +15,7 @@ Prescio는 소셜 디덕션 게임과 온체인 Prediction Market을 결합한 �
 ## 🏗️ Core Features
 
 ### 1. Autonomous AI Agent Gameplay
-- **10 unique AI agents** with distinct personas, strategies, and behavioral patterns
+- **7 AI agents per game** (from a pool of 10 unique personas) with distinct personas, strategies, and behavioral patterns
 - Each agent powered by **Gemini 2.0 Flash** with persona-specific system prompts
 - Agents independently navigate **The Skeld map** (14 rooms), complete tasks, vote, and — if Impostor — strategically eliminate others
 - Real-time decision-making: movement, task execution, kill timing, accusation, defense

@@ -9,7 +9,7 @@
 
 ## 🎮 One-Liner
 
-**Prescio is an autonomous AI social deduction game where 10 AI agents play Among Us while users bet on outcomes through an on-chain parimutuel prediction market on Monad.**
+**Prescio is an autonomous AI social deduction game where 7 AI agents play Among Us while users bet on outcomes through an on-chain parimutuel prediction market on Monad.**
 
 ---
 
@@ -54,14 +54,14 @@ Autonomy Spectrum:
 |-------|-----------|-----|
 | **Frontend** | React 19 + TanStack Router/Query + shadcn/ui + Tailwind | Modern, performant, beautiful UI |
 | **Backend** | Express + WebSocket | Real-time game state streaming |
-| **AI** | Gemini 2.0 Flash | Fast inference for 10 simultaneous agents |
+| **AI** | Gemini 2.0 Flash | Fast inference for 7 simultaneous agents |
 | **Contracts** | Solidity (Foundry) | Industry-standard, tested, gas-optimized |
 | **Infra** | Cloudflare Workers + cloudflared tunnel | Global CDN + secure backend tunneling |
 | **Chain** | Monad Testnet | EVM-compatible, high throughput |
 
 #### Technical Highlights
 
-1. **Real-time Multi-Agent Orchestration**: Managing 10 concurrent AI agents with WebSocket broadcasting to all connected spectators
+1. **Real-time Multi-Agent Orchestration**: Managing 7 concurrent AI agents with WebSocket broadcasting to all users
 2. **Structured AI Output Parsing**: Reliable JSON action extraction from LLM outputs with fallback handling
 3. **On-Chain Parimutuel Math**: Correct proportional payout calculations in Solidity (avoiding precision loss)
 4. **Map State Machine**: Graph-based room adjacency system with kill range, task assignment, and movement validation
@@ -96,7 +96,7 @@ Prescio NEEDS Monad. Here's why:
 | Requirement | Why Monad Fits |
 |------------|---------------|
 | **Speed** | Games last 5-15 min. Bets must confirm before the round ends. Monad's ~1s finality enables real-time betting. |
-| **Throughput** | 10 agents × multiple bets per round × many concurrent games = high tx volume. Monad handles this. |
+| **Throughput** | 7 agents × multiple bets per round × many concurrent games = high tx volume. Monad handles this. |
 | **Low Fees** | Micro-bets (0.01-1 MON) must be economically viable. High gas fees kill the experience. |
 | **EVM Compatibility** | We use standard Solidity/Foundry tooling. Monad's EVM compatibility means zero friction. |
 
@@ -246,7 +246,7 @@ AI plays game → Creates drama → Users share → New users bet
 
 > **Prescio = Among Us + AI Agents + Prediction Markets + Monad**
 >
-> 10 autonomous AI agents play social deduction games 24/7.
+> 7 autonomous AI agents play social deduction games 24/7.
 > Users watch, bet, and earn — all on-chain on Monad.
 > Every game is unique. Every game is a market.
 > Entertainment meets DeFi meets AI.
