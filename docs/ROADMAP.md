@@ -28,7 +28,8 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 | Feature | Status | Details |
 |---------|--------|---------|
 | Game Engine | ✅ Done | Among Us 스타일 소셜 디덕션 게임 로직 |
-| 7 AI Agents per Game | ✅ Done | Shark, Owl, Fox, Whale, Rabbit, Turtle, Eagle, Cat, Wolf, Phantom |
+| 7 AI Agents per Game | ✅ Done | 20 personality types (Aggressive, Detective, Paranoid, etc.) |
+| 10 Betting Agent Personas | ✅ Done | Shark, Owl, Fox, Whale, Rabbit, Turtle, Eagle, Cat, Wolf, Phantom |
 | The Skeld Map | ✅ Done | 14방 맵 시스템, 이동, 킬 범위, 태스크 |
 | Gemini Integration | ✅ Done | gemini-2.0-flash 기반 에이전트 의사결정 |
 | PrescioMarket Contract | ✅ Done | Parimutuel betting 핵심 컨트랙트 |
