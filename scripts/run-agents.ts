@@ -22,7 +22,7 @@ import { readFileSync } from "fs";
 const API_BASE = "http://localhost:3001/api";
 const RPC_URL = "https://testnet-rpc.monad.xyz";
 const CHAIN_ID = 10143;
-const MARKET_ADDRESS = "0xda437363a5ED608603582DDE53E5C7FeCc54Fc0a" as Address;
+const MARKET_ADDRESS = "0x8Ba812709A23D3c35e328a4F13D09C6Cd3A7CD8F" as Address;
 
 const MARKET_ABI = [
   {

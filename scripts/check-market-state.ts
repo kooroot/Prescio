@@ -20,7 +20,7 @@ async function main() {
   const gameIdBytes = keccak256(toHex(gameId));
   
   const result = await client.readContract({
-    address: '0xda437363a5ED608603582DDE53E5C7FeCc54Fc0a',
+    address: '0x8Ba812709A23D3c35e328a4F13D09C6Cd3A7CD8F',
     abi: MARKET_ABI,
     functionName: 'getMarketInfo',
     args: [gameIdBytes],
