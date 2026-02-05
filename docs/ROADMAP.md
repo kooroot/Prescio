@@ -12,16 +12,16 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
   ▼                ▼                ▼                ▼                ▼
 ┌────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
 │Phase 1 │──▶│ Phase 2  │──▶│ Phase 3  │──▶│ Phase 4  │──▶│ Phase 5  │
-│  MVP   │   │ Mainnet  │   │Expansion │   │Community │   │ Platform │
-│Testnet │   │ Launch   │   │& Growth  │   │  DAO     │   │Ecosystem │
+│Mainnet │   │ Growth & │   │Expansion │   │Community │   │ Platform │
+│ Launch │   │  Token   │   │& Features│   │  DAO     │   │Ecosystem │
 └────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘
 ```
 
 ---
 
-## 🚀 Phase 1: MVP on Testnet (Q1 2026) — *CURRENT*
+## 🚀 Phase 1: Mainnet Launch (Q1 2026) — *CURRENT*
 
-**Goal**: Moltiverse Hackathon 제출 및 핵심 프로토타입 완성
+**Goal**: Moltiverse Hackathon 제출, Monad Mainnet 배포, $PRESCIO 토큰 런칭
 
 ### ✅ Completed
 
@@ -37,43 +37,47 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 | Frontend UI | ✅ Done | React + shadcn/ui 게임 관전 화면 |
 | WebSocket Real-time | ✅ Done | 실시간 게임 상태 스트리밍 |
 | Multi-language | ✅ Done | ko/en/ja/zh 4개국어 지원 |
+| Auto-Bet System | ✅ Done | 유저 자동 베팅 전략 시스템 |
 | Cloudflare Deployment | ✅ Done | Workers + cloudflared tunnel 인프라 |
+| Open Source License | ✅ Done | MIT License |
 
-### 🔜 In Progress (Before Feb 15)
+### 🔜 In Progress (Before Feb 15 Deadline)
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| Betting UI Integration | 🔨 WIP | 프론트엔드 ↔ 컨트랙트 연동 |
-| Agent Betting Logic | 🔨 WIP | 에이전트가 직접 베팅하는 자율 로직 |
-| Game Replay System | 🔨 WIP | 완료된 게임 리플레이 |
-| Demo Video | 📋 Todo | 해커톤 제출용 데모 영상 |
+| **Monad Mainnet Deploy** | 📋 Todo | Testnet → Mainnet 컨트랙트 마이그레이션 |
+| **$PRESCIO Token Launch** | 📋 Todo | nad.fun에서 토큰 런칭 |
+| **GitHub Public** | 📋 Todo | Private → Public 전환 |
+| **Demo Video** | 📋 Todo | 2분 해커톤 제출용 데모 영상 |
+| **Hackathon Submission** | 📋 Todo | moltiverse.dev 제출 |
 
 ### 📊 Phase 1 Metrics Target
 
 - Active games per day: 10+
-- Unique testnet users: 100+
+- Unique mainnet users: 100+
 - AI agent rounds completed: 500+
+- $PRESCIO initial liquidity: TBD
 
 ---
 
-## 🌐 Phase 2: Mainnet Launch (Q2 2026)
+## 📈 Phase 2: Growth & Token Utility (Q2 2026)
 
-**Goal**: Monad Mainnet 배포, $PRESCIO 토큰 런칭, 본격 서비스 시작
+**Goal**: 토큰 유틸리티 확장, 스테이킹 런칭, 사용자 성장
 
 ### Milestones
 
 | Milestone | Target Date | Description |
 |-----------|------------|-------------|
 | **Security Audit** | Apr 2026 | PrescioMarket + PrescioVault 스마트 컨트랙트 감사 |
-| **Mainnet Deploy** | May 2026 | Monad Mainnet에 컨트랙트 배포 |
-| **$PRESCIO TGE** | May 2026 | 토큰 발행 및 초기 유동성 공급 |
-| **Staking Launch** | Jun 2026 | 스테이킹 프로그램 시작, 수수료 분배 |
+| **Staking Launch** | Apr 2026 | $PRESCIO 스테이킹 프로그램 시작, 수수료 분배 |
+| **Premium Features** | May 2026 | Auto-bet 고급 기능, 스테이커 전용 |
 | **Mobile Responsive** | Jun 2026 | 모바일 최적화 UI |
+| **Partnerships** | Q2 2026 | Monad 생태계 프로젝트 협력 |
 
 ### Key Features
 
-- [ ] 실제 MON 토큰 베팅 (testnet → mainnet)
-- [ ] $PRESCIO 토큰 스테이킹 & 거버넌스
+- [ ] $PRESCIO 토큰 스테이킹 & 수수료 분배
+- [ ] 프리미엄 구독 (Auto-bet 고급 전략)
 - [ ] 에이전트 성적 리더보드 (온체인)
 - [ ] 사용자 프로필 & 베팅 히스토리
 - [ ] 수수료 자동 분배 시스템
@@ -84,10 +88,11 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 - DAU (Daily Active Users): 1,000+
 - Daily betting volume: 10,000+ MON
 - Total games played: 10,000+
+- $PRESCIO stakers: 500+
 
 ---
 
-## 📈 Phase 3: Expansion & Growth (Q3 2026)
+## 🎮 Phase 3: Expansion & Features (Q3 2026)
 
 **Goal**: 게임 모드 확장, 커뮤니티 에이전트, 소셜 기능
 
@@ -186,8 +191,8 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026          2027+
 
 | Phase | Period | Key Milestone |
 |-------|--------|--------------|
-| **Phase 1** | Q1 2026 | ✅ MVP + Hackathon Submission |
-| **Phase 2** | Q2 2026 | Mainnet Launch + Token |
+| **Phase 1** | Q1 2026 | ✅ Mainnet Launch + Token + Hackathon |
+| **Phase 2** | Q2 2026 | Staking + Premium Features |
 | **Phase 3** | Q3 2026 | Game Mode Expansion |
 | **Phase 4** | Q4 2026 | DAO Governance |
 | **Phase 5** | 2027+ | Platform Ecosystem |
