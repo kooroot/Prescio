@@ -141,9 +141,22 @@ export class GameEngine extends EventEmitter {
     // Re-schedule the timer for current phase
     this.schedulePhase(gameId, game.phase);
 
-    // Resume odds polling if betting is enabled
+    // Resume betting state based on current phase
     if (isOnChainEnabled()) {
-      startOddsPolling(gameId);
+      const playerCount = game.players.length;
+      // Ensure market exists in cache
+      bettingGameStart(gameId, playerCount)
+        .then((ok) => {
+          // If phase is REPORT or DISCUSSION, betting should be open
+          if (game.phase === Phase.REPORT || game.phase === Phase.DISCUSSION) {
+            handleBettingOpen(gameId);
+            console.log(`[Engine] Betting resumed OPEN for game ${gameId} (phase: ${game.phase})`);
+          }
+          startOddsPolling(gameId);
+        })
+        .catch((err) => {
+          console.error(`[Engine] Failed to resume betting market:`, err instanceof Error ? err.message : err);
+        });
     }
 
     // Re-initialize agent manager for this game

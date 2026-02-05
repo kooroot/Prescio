@@ -59,6 +59,39 @@ export async function handleGameStart(gameId: string, playerCount: number): Prom
     return false;
   }
 
+  // Check if market already exists in cache
+  if (marketCache.has(gameId)) {
+    console.log(`[BettingMarket] Market already in cache for game ${gameId}`);
+    return true;
+  }
+
+  // Check if market already exists on-chain (for server restart case)
+  try {
+    const existingMarket = await onChainGetMarketInfo(gameId);
+    if (existingMarket && existingMarket.playerCount > 0) {
+      // Market exists on-chain, just restore cache
+      const stateMap = ["OPEN", "CLOSED", "RESOLVED"] as const;
+      const cached: CachedMarket = {
+        gameId,
+        playerCount: existingMarket.playerCount,
+        state: stateMap[existingMarket.state] ?? "OPEN",
+        totalPool: existingMarket.totalPool,
+        outcomeTotals: existingMarket.outcomeTotals,
+        odds: new Array(existingMarket.playerCount).fill(0n),
+        impostorIndex: existingMarket.state === 2 ? existingMarket.impostorIndex : null,
+        txHash: undefined,
+        createdAt: Date.now(),
+        lastUpdated: Date.now(),
+        bettingEnabled: false, // Will be enabled by handleBettingOpen
+      };
+      marketCache.set(gameId, cached);
+      console.log(`[BettingMarket] Restored market from chain for game ${gameId} (state: ${cached.state})`);
+      return true;
+    }
+  } catch (err) {
+    // Market doesn't exist, will create
+  }
+
   try {
     const txHash = await onChainCreateMarket(gameId, playerCount);
     if (!txHash) {
