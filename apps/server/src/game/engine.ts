@@ -24,7 +24,6 @@ import { agentManager } from "../agents/manager.js";
 import {
   handleGameStart as bettingGameStart,
   handleBettingOpen,
-  pauseBetting,
   handleBettingClose,
   handleGameEnd as bettingGameEnd,
   cleanupMarket,
@@ -197,12 +196,6 @@ export class GameEngine extends EventEmitter {
     updateGame(game);
     this.emit("phaseChange", game.id, Phase.NIGHT, game.round);
     this.schedulePhase(game.id, Phase.NIGHT);
-
-    // Pause betting during night (round 2+)
-    if (game.round > 1 && isOnChainEnabled()) {
-      pauseBetting(game.id);
-      console.log(`[Engine] Betting PAUSED for night (game ${game.id}, round ${game.round})`);
-    }
   }
 
   /**
@@ -345,11 +338,13 @@ export class GameEngine extends EventEmitter {
     // Abort any ongoing discussion
     this.abortDiscussion(game.id);
 
-    // Pause betting during vote (server-side only, don't close on-chain yet)
-    // On-chain close happens at game end to allow multi-round betting
+    // Close betting market on-chain (Round 1 only betting for V1)
     if (isOnChainEnabled()) {
-      pauseBetting(game.id);
-      console.log(`[Engine] Betting PAUSED for vote (game ${game.id})`);
+      handleBettingClose(game.id).catch((err) => {
+        console.error(`[Engine] Failed to close betting market:`, err instanceof Error ? err.message : err);
+      });
+      stopOddsPolling(game.id);
+      console.log(`[Engine] Betting CLOSED for game ${game.id}`);
     }
 
     startVote(game.id);
