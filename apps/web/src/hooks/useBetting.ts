@@ -43,7 +43,7 @@ export function useOdds(gameId: string) {
     }
   }, [data]);
 
-  // Subscribe to WS BETTING_UPDATE
+  // Subscribe to WS BETTING_UPDATE and PHASE_CHANGE
   useEffect(() => {
     if (!gameId) return;
 
@@ -61,6 +61,12 @@ export function useOdds(gameId: string) {
             },
           );
         }
+      }
+
+      // Refetch odds on phase change to get updated bettingEnabled
+      // (PHASE_CHANGE is only sent to clients subscribed to that game)
+      if (event.type === "PHASE_CHANGE") {
+        queryClient.invalidateQueries({ queryKey: ["odds", gameId] });
       }
     });
 
