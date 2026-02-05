@@ -126,7 +126,7 @@ export function AutoBetWidget() {
     <div className="fixed bottom-6 right-6 z-50">
       {/* Expanded Panel */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-80 rounded-2xl border border-monad-border bg-monad-card shadow-2xl shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
+        <div className="absolute bottom-16 right-0 w-96 rounded-2xl border border-monad-border bg-monad-card shadow-2xl shadow-black/50 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-200">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-monad-border/50 bg-gradient-to-r from-monad-purple/10 to-transparent">
             <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export function AutoBetWidget() {
           </div>
 
           {/* Content */}
-          <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
             {!isConnected ? (
               <div className="text-center py-6">
                 <Bot className="h-10 w-10 text-gray-500 mx-auto mb-3" />
@@ -162,7 +162,7 @@ export function AutoBetWidget() {
                   <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wider">
                     {lang === "ko" ? "전략" : "Strategy"}
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2">
                     {(Object.keys(STRATEGY_DESCRIPTIONS) as AutoBetStrategyType[]).map((key) => {
                       const desc = STRATEGY_DESCRIPTIONS[key];
                       const isSelected = strategy === key;
@@ -170,16 +170,16 @@ export function AutoBetWidget() {
                         <button
                           key={key}
                           onClick={() => setStrategy(key)}
-                          className={`p-2 rounded-lg border text-center transition-all ${
+                          className={`p-3 rounded-xl border text-center transition-all ${
                             isSelected
-                              ? "border-monad-purple bg-monad-purple/20"
+                              ? "border-monad-purple bg-monad-purple/20 ring-1 ring-monad-purple/50"
                               : "border-monad-border/50 bg-monad-dark/30 hover:border-monad-border"
                           }`}
                         >
-                          <div className={`mx-auto mb-0.5 ${isSelected ? "text-monad-purple" : "text-gray-500"}`}>
+                          <div className={`mx-auto mb-1 ${isSelected ? "text-monad-purple" : "text-gray-500"}`}>
                             {strategyIcons[key]}
                           </div>
-                          <div className={`text-xs font-medium ${isSelected ? "text-white" : "text-gray-400"}`}>
+                          <div className={`text-sm font-medium ${isSelected ? "text-white" : "text-gray-400"}`}>
                             {lang === "ko" ? desc.nameKo : desc.name}
                           </div>
                         </button>
@@ -198,16 +198,16 @@ export function AutoBetWidget() {
                   <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wider">
                     {lang === "ko" ? "라운드당 최대" : "Max per Round"}
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="number"
                       value={maxBet}
                       onChange={(e) => setMaxBet(e.target.value)}
                       min="0.1"
                       step="0.1"
-                      className="flex-1 bg-monad-dark/50 border border-monad-border/50 rounded-lg px-3 py-2 text-white text-sm focus:border-monad-purple focus:outline-none"
+                      className="flex-1 bg-monad-dark/50 border border-monad-border/50 rounded-xl px-4 py-3 text-white text-base focus:border-monad-purple focus:outline-none"
                     />
-                    <span className="text-gray-400 text-sm font-medium">MON</span>
+                    <span className="text-gray-400 font-medium">MON</span>
                   </div>
                 </div>
 
@@ -219,11 +219,11 @@ export function AutoBetWidget() {
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <button
                     onClick={handleSave}
                     disabled={isLoading}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                    className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
                       saveSuccess 
                         ? "bg-green-500 text-white" 
                         : "bg-monad-purple hover:bg-monad-purple/80 disabled:bg-gray-600 text-white"
@@ -231,7 +231,7 @@ export function AutoBetWidget() {
                   >
                     {isLoading ? "..." : saveSuccess ? (
                       <>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-5 w-5" />
                         {lang === "ko" ? "저장됨" : "Saved"}
                       </>
                     ) : isConfigured 
@@ -242,7 +242,7 @@ export function AutoBetWidget() {
                     <button
                       onClick={handleDisable}
                       disabled={isLoading}
-                      className="py-2 px-3 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                      className="py-3 px-4 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-xl font-semibold transition-colors"
                     >
                       {lang === "ko" ? "끄기" : "Off"}
                     </button>
