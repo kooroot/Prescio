@@ -116,11 +116,9 @@ export function handleBettingOpen(gameId: string): boolean {
     return false;
   }
 
-  if (cached.state !== "OPEN") {
-    console.log(`[BettingMarket] Market not in OPEN state for game ${gameId}, state: ${cached.state}`);
-    return false;
-  }
-
+  // V1 limitation: on-chain market can't reopen after VOTE closes it
+  // We use server-side bettingEnabled flag to control betting access
+  // On-chain state check removed to allow multi-round betting
   cached.bettingEnabled = true;
   cached.lastUpdated = Date.now();
 

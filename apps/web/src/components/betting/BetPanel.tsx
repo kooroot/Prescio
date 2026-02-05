@@ -89,10 +89,11 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   // Get outcome totals from odds API (oddsMap contains totalStaked per player)
   const odds = oddsMap[gameId] ?? [];
   const outcomeTotals = odds.map((o) => o.totalStaked);
-  // Check both on-chain state AND server-side bettingEnabled
-  const isOpen = hasMarket && marketState === ContractMarketState.OPEN && bettingEnabled;
+  // V1: Use server-side bettingEnabled flag (on-chain state can't reopen after VOTE)
+  // On-chain state only matters for RESOLVED (final payout)
+  const isOpen = hasMarket && bettingEnabled;
   const isResolved = hasMarket && marketState === ContractMarketState.RESOLVED;
-  const isPaused = hasMarket && marketState === ContractMarketState.OPEN && !bettingEnabled;
+  const isPaused = hasMarket && !bettingEnabled && !isResolved;
   
   // State label with PAUSED support
   const getStateLabel = () => {
