@@ -34,7 +34,9 @@ export function LobbyPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: activeGames = [], isLoading: loadingActive, error: activeError } = useActiveGames();
-  const { data: finishedGames = [], isLoading: loadingFinished } = useFinishedGames();
+  const { data: finishedData, isLoading: loadingFinished } = useFinishedGames();
+  const finishedGames = finishedData?.games ?? [];
+  const finishedTotal = finishedData?.total ?? 0;
 
   // Create game dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -231,9 +233,9 @@ export function LobbyPage() {
             </TabsTrigger>
             <TabsTrigger value="finished" className="data-[state=active]:bg-[#27272A]/60">
               {t("completed")}
-              {finishedGames.length > 0 && (
+              {finishedTotal > 0 && (
                 <Badge className="ml-2 bg-[#27272A]/50 text-gray-300 text-xs px-1.5">
-                  {finishedGames.length}
+                  {finishedTotal > 50 ? "50+" : finishedTotal}
                 </Badge>
               )}
             </TabsTrigger>
