@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "@/lib/wagmi";
 import { Header } from "@/components/layout/Header";
 import { Toaster } from "@/components/ui/sonner";
+import { AutoBetWidget } from "@/components/betting/AutoBetWidget";
 import { I18nProvider, useI18n } from "@/i18n";
 
 const queryClient = new QueryClient({
@@ -49,6 +50,7 @@ export function RootLayout() {
               <Outlet />
             </main>
             <AppFooter />
+            <AutoBetWidget />
             <Toaster />
           </div>
         </QueryClientProvider>

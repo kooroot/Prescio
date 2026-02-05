@@ -27,7 +27,6 @@ import { Plus, Users, Zap, Coins, Loader2, Gamepad2 } from "lucide-react";
 import { createGame, startGame } from "@/lib/api";
 import { useActiveGames, useFinishedGames } from "@/hooks/useGames";
 import { ActiveGameCard, FinishedGameCard } from "@/components/game/GameCard";
-import { AutoBetSettings } from "@/components/betting/AutoBetSettings";
 import { useI18n } from "@/i18n";
 
 export function LobbyPage() {
@@ -217,9 +216,6 @@ export function LobbyPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Auto-Bet Settings */}
-      <AutoBetSettings />
 
       {/* Games Tabs */}
       <div className="w-full">
