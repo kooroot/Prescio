@@ -117,19 +117,28 @@ async function fetchAndBroadcastOdds(gameId: string): Promise<void> {
 // ============================================
 
 /**
- * Format raw on-chain odds (x10000) into human-readable form.
+ * Format pool totals into human-readable odds.
+ * Note: The contract's getOdds() returns pool totals per outcome, not actual odds.
+ * We calculate odds from these totals using parimutuel formula.
  */
 export function formatOdds(
-  rawOdds: bigint[],
-  outcomeTotals: bigint[],
+  poolTotals: bigint[],    // Pool amount per outcome (from contract getOdds)
+  _outcomeTotals: bigint[], // Same as poolTotals (kept for compatibility)
   totalPool: bigint,
+  feeRate: number = 500,   // 5% fee (500/10000)
 ): FormattedOdds[] {
-  return rawOdds.map((rawOdd, index) => {
-    const decimal = Number(rawOdd) / 10000;
-    const staked = outcomeTotals[index] ?? 0n;
+  const distributable = totalPool - (totalPool * BigInt(feeRate)) / 10000n;
 
-    // Implied probability: 1 / decimal odds
-    const impliedProbability = decimal > 0 ? 1 / decimal : 0;
+  return poolTotals.map((staked, index) => {
+    let decimal = 0;
+    let impliedProbability = 0;
+
+    if (staked > 0n && totalPool > 0n) {
+      // Decimal odds = payout ratio = distributable / staked
+      decimal = Number(distributable * 10000n / staked) / 10000;
+      // Implied probability = staked / totalPool
+      impliedProbability = Number(staked) / Number(totalPool);
+    }
 
     return {
       playerIndex: index,
