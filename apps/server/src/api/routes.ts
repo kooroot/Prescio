@@ -778,6 +778,7 @@ apiRouter.get(
         suspectNickname: string;
         amount: string;
         claimed: boolean;
+        suspectWasImpostor?: boolean;
       };
       winner: string | null;
       finishedAt: number | null;
