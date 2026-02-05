@@ -66,7 +66,7 @@ export async function handleGameStart(gameId: string, playerCount: number): Prom
       return false;
     }
 
-    // Initialize cache
+    // Initialize cache - betting starts PAUSED (enabled at REPORT phase)
     const cached: CachedMarket = {
       gameId,
       playerCount,
@@ -78,16 +78,39 @@ export async function handleGameStart(gameId: string, playerCount: number): Prom
       txHash,
       createdAt: Date.now(),
       lastUpdated: Date.now(),
-      bettingEnabled: true,
+      bettingEnabled: false, // Start paused, will enable at REPORT
     };
     marketCache.set(gameId, cached);
 
-    console.log(`[BettingMarket] Market created for game ${gameId} (players: ${playerCount})`);
+    console.log(`[BettingMarket] Market created for game ${gameId} (players: ${playerCount}) - betting PAUSED`);
     return true;
   } catch (err) {
     console.error(`[BettingMarket] handleGameStart error:`, err instanceof Error ? err.message : err);
     return false;
   }
+}
+
+/**
+ * Enable betting for a market (called when REPORT phase starts).
+ * The market was created during NIGHT but betting was paused.
+ */
+export function handleBettingOpen(gameId: string): boolean {
+  const cached = marketCache.get(gameId);
+  if (!cached) {
+    console.log(`[BettingMarket] No market found for game ${gameId}`);
+    return false;
+  }
+
+  if (cached.state !== "OPEN") {
+    console.log(`[BettingMarket] Market not in OPEN state for game ${gameId}, state: ${cached.state}`);
+    return false;
+  }
+
+  cached.bettingEnabled = true;
+  cached.lastUpdated = Date.now();
+
+  console.log(`[BettingMarket] Betting enabled for game ${gameId}`);
+  return true;
 }
 
 /**

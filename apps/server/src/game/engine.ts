@@ -23,6 +23,7 @@ import { startVote, tallyVotes, allVotesCast, type VoteResult } from "./vote.js"
 import { agentManager } from "../agents/manager.js";
 import {
   handleGameStart as bettingGameStart,
+  handleBettingOpen,
   handleBettingClose,
   handleGameEnd as bettingGameEnd,
   cleanupMarket,
@@ -282,6 +283,12 @@ export class GameEngine extends EventEmitter {
     updateGame(game);
     this.emit("phaseChange", game.id, Phase.REPORT, game.round);
     this.schedulePhase(game.id, Phase.REPORT);
+
+    // Enable betting now that death is revealed (was PAUSED during NIGHT)
+    if (isOnChainEnabled()) {
+      handleBettingOpen(game.id);
+      console.log(`[Engine] Betting OPEN for game ${game.id} (round ${game.round})`);
+    }
   }
 
   // ---- DISCUSSION ----
