@@ -122,6 +122,36 @@ export class GameEngine extends EventEmitter {
   }
 
   /**
+   * Resume a game loop from its current phase (for games restored from persistence).
+   * Re-schedules the timer for the current phase.
+   */
+  resumeLoop(gameId: string): boolean {
+    const game = getGame(gameId);
+    if (!game) return false;
+
+    // Don't resume finished games or lobby games
+    if (game.winner || game.phase === Phase.LOBBY) return false;
+
+    console.log(`[Engine] Resuming game ${gameId} from phase ${game.phase} (round ${game.round})`);
+
+    // Re-emit phase change for clients
+    this.emit("phaseChange", gameId, game.phase, game.round);
+
+    // Re-schedule the timer for current phase
+    this.schedulePhase(gameId, game.phase);
+
+    // Resume odds polling if betting is enabled
+    if (isOnChainEnabled()) {
+      startOddsPolling(gameId);
+    }
+
+    // Re-initialize agent manager for this game
+    agentManager.initializeAgents(game);
+
+    return true;
+  }
+
+  /**
    * Transition to the next phase with guard against double-processing.
    */
   private transitionTo(gameId: string, nextPhase: Phase): void {

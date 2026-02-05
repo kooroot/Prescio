@@ -12,6 +12,7 @@ import {
 import {
   gameEngine,
   getGame,
+  getActiveGames,
   restoreGames,
 } from "./game/index.js";
 import { agentManager } from "./agents/manager.js";
@@ -258,9 +259,23 @@ gameEngine.on("engineError", (gameId, error) => {
 // ============================================
 // Restore Persisted State
 // ============================================
-restoreGames();
+const restoredCount = restoreGames();
 
 const bettingEnabled = initOnChain();
+
+// Resume game loops for restored active games
+if (restoredCount > 0) {
+  const activeGames = getActiveGames();
+  let resumedCount = 0;
+  for (const game of activeGames) {
+    if (gameEngine.resumeLoop(game.id)) {
+      resumedCount++;
+    }
+  }
+  if (resumedCount > 0) {
+    console.log(`[Engine] Resumed ${resumedCount} game loops from persistence`);
+  }
+}
 
 // ============================================
 // Start Server
