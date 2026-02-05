@@ -23,7 +23,7 @@ start_server() {
   echo "[keep-alive] Starting server..."
   cd "$PRESCIO_DIR/apps/server"
   PATH="$NODE_BIN:$PATH" NODE_OPTIONS="--max-old-space-size=256" \
-    "$NODE_BIN/tsx" watch src/index.ts >> "$LOG_DIR/server.log" 2>&1 &
+    ./node_modules/.bin/tsx watch src/index.ts >> "$LOG_DIR/server.log" 2>&1 &
   SERVER_PID=$!
   echo "[keep-alive] Server started (PID: $SERVER_PID)"
 }
