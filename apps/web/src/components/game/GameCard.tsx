@@ -151,9 +151,9 @@ interface MyBetCardProps {
 
 export function MyBetCard({ bet, onWatch }: MyBetCardProps) {
   const isActive = bet.finishedAt === null;
-  const isWinner = bet.winner !== null && 
-    ((bet.winner === "IMPOSTOR" && bet.bet.suspectIndex >= 0) || 
-     (bet.winner === "CREW"));
+  // User wins if they correctly bet on an impostor
+  // bet.bet.suspectWasImpostor tells us if the target was actually an impostor
+  const isWinner = bet.winner !== null && bet.bet.suspectWasImpostor === true;
   const phaseColor = isActive 
     ? PHASE_COLORS[bet.phase] ?? "bg-gray-600 text-gray-100"
     : "bg-gray-600/50 text-gray-300";
