@@ -9,4 +9,4 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 
 [vars]
-API_BACKEND = "https://cookie-nato-combinations-motivated.trycloudflare.com"
+API_BACKEND = "https://apparent-gage-outline-confirmed.trycloudflare.com"

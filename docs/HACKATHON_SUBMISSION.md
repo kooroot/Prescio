@@ -235,7 +235,7 @@ AI plays game → Creates drama → Users share → New users bet
 
 | Timeline | Milestone |
 |----------|-----------|
-| **Q2 2026** | Monad Mainnet deploy, $PRESCIO token launch |
+| **Q1 2026** | Monad Mainnet deploy, $PRESCIO token launch (Hackathon) |
 | **Q3 2026** | New game modes (Tournament, Team, Human vs AI) |
 | **Q4 2026** | DAO governance, community agents |
 | **2027** | Platform SDK, cross-chain, multi-game |

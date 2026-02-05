@@ -96,7 +96,7 @@ Payout = 10 × 2.50 = 25 MON (before fees)
 
 ---
 
-## 🪙 $PRESCIO Token (Phase 2 — Mainnet Launch)
+## 🪙 $PRESCIO Token (Phase 1 — Mainnet Launch)
 
 ### Token Utility
 
