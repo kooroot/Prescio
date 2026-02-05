@@ -26,8 +26,9 @@ import {
   broadcastToPlayers,
   type ConnectedClient,
 } from "./ws/broadcast.js";
-import { initOnChain, isOnChainEnabled, stopAllPolling } from "./betting/index.js";
+import { initOnChain, isOnChainEnabled, stopAllPolling, getOdds } from "./betting/index.js";
 import { startOrchestrator, stopOrchestrator } from "./orchestrator.js";
+import { processAutoBets, cleanupGame as cleanupAutoBetGame } from "./betting/user-agent.js";
 
 // ============================================
 // Express App
@@ -165,6 +166,41 @@ gameEngine.on("phaseChange", (gameId, phase, round) => {
       }));
     }
   }
+
+  // Process auto-bets during discussion phase
+  if (game && phase === Phase.DISCUSSION) {
+    // Fetch odds and trigger auto-bets asynchronously
+    (async () => {
+      try {
+        const odds = await getOdds(gameId);
+        if (odds) {
+          // Convert array odds to Record<address, Odds>
+          const oddsRecord: Record<string, { isImpostor: number; isInnocent: number }> = {};
+          game.players.forEach((player, index) => {
+            if (odds[index]) {
+              oddsRecord[player.address] = {
+                isImpostor: odds[index],
+                isInnocent: 1 / odds[index],
+              };
+            }
+          });
+
+          await processAutoBets(
+            gameId,
+            game,
+            oddsRecord,
+            async (walletAddress, targetPlayer, amount) => {
+              // For MVP, just log the decision (actual on-chain betting requires user signature)
+              console.log(`[AutoBet] Would bet ${amount} on ${targetPlayer} for ${walletAddress}`);
+              return { success: true, txHash: undefined };
+            }
+          );
+        }
+      } catch (err) {
+        console.error(`[AutoBet] Error processing auto-bets for ${gameId}:`, err);
+      }
+    })();
+  }
 });
 
 gameEngine.on("nightKills", (gameId, kills) => {
@@ -204,6 +240,9 @@ gameEngine.on("gameOver", (gameId, winner, game) => {
     rounds: game.round,
   }));
   console.log(`[Engine] Game ${gameId} OVER — winner: ${winner}`);
+
+  // Cleanup auto-bet game tracking
+  cleanupAutoBetGame(gameId);
 });
 
 gameEngine.on("engineError", (gameId, error) => {
