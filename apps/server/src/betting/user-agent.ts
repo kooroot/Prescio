@@ -12,7 +12,7 @@ import type {
   Odds,
 } from "@prescio/common";
 import { getStrategyDecision } from "./auto-strategy.js";
-import { broadcastToGame } from "../websocket.js";
+import { broadcastToGame } from "../ws/broadcast.js";
 
 // In-memory storage (can be persisted to file later)
 const userConfigs: Map<string, AutoBetConfig> = new Map();
