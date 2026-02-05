@@ -23,7 +23,7 @@ No tokens. No governance. Just AI deception and on-chain betting.
 │                    Game Server (Node.js)                         │
 │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────┐  │
 │  │   Engine   │  │   Agents   │  │   Betting  │  │Orchestrator│  │
-│  │  (phases)  │  │  (Gemini)  │  │ (on-chain) │  │(bot bets)  │  │
+│  │  (phases)  │  │(Claude+Gem)│  │ (on-chain) │  │(bot bets)  │  │
 │  └────────────┘  └────────────┘  └─────┬──────┘  └─────┬──────┘  │
 └────────────────────────────────────────┼───────────────┼────────┘
                                          │ viem         │
@@ -49,7 +49,7 @@ Connect your wallet, watch the AI agents argue in real-time, and place bets on w
 
 ## Key Features
 
-- **20 AI Personality Types** — Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, and 14 more unique styles. Each agent has distinct argumentation patterns powered by **Gemini 2.0 Flash**.
+- **20 AI Personality Types** — Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, and 14 more unique styles. Each agent has distinct argumentation patterns powered by **Claude + Gemini 2.0 Flash**.
 - **Real-time Spectating** — WebSocket-driven game state. Watch discussions unfold live.
 - **Parimutuel Betting** — Bet on who the impostor is. Odds shift as the pool grows. 5% protocol fee.
 - **Multi-language** — Agents can argue in English, Korean, Japanese, or Chinese.
@@ -64,7 +64,7 @@ Prescio/
 │   ├── server/              # Game engine + AI agents + betting bridge
 │   │   └── src/
 │   │       ├── game/        # Engine, phases, state, voting, round logic
-│   │       ├── agents/      # Gemini-powered LLM agents, 20 personalities, i18n
+│   │       ├── agents/      # Claude + Gemini LLM agents, 20 personalities, i18n
 │   │       ├── betting/     # On-chain market management (create/pause/resume/resolve)
 │   │       ├── ws/          # WebSocket broadcast for real-time updates
 │   │       ├── api/         # REST endpoints (/games, /bets, /odds)
@@ -88,7 +88,7 @@ Prescio/
 | Smart Contracts | Solidity 0.8.24, Foundry, OpenZeppelin (UUPS Upgradeable) |
 | Chain | Monad Testnet (chain ID 10143) |
 | Server | Node.js, Express, WebSocket (ws) |
-| AI | **Google Gemini 2.0 Flash** (`@google/generative-ai`) |
+| AI | Anthropic Claude (core) + Google Gemini 2.0 Flash |
 | Frontend | React 19, Vite, TanStack Router + Query |
 | Wallet | wagmi v2, viem |
 | UI | shadcn/ui, Tailwind CSS |
@@ -197,7 +197,7 @@ Monad's 10,000+ TPS and 1-second blocks enable real-time CCA that's impossible o
 - Node.js ≥ 18
 - pnpm ≥ 9
 - [Foundry](https://book.getfoundry.sh/getting-started/installation) (for contracts)
-- Google Gemini API key (for AI agents)
+- Anthropic Claude API key and/or Google Gemini API key (for AI agents)
 
 ### Setup
 
@@ -210,7 +210,7 @@ pnpm install
 
 # Copy environment file
 cp .env.example .env
-# Edit .env — at minimum set GEMINI_API_KEY
+# Edit .env — set ANTHROPIC_API_KEY and/or GEMINI_API_KEY
 
 # Run everything (server + web)
 pnpm dev
@@ -223,8 +223,9 @@ pnpm dev
 ### Environment Variables
 
 ```env
-# Required
-GEMINI_API_KEY=AIza...             # Google Gemini API for AI agents
+# Required (at least one AI provider)
+ANTHROPIC_API_KEY=sk-ant-...       # Claude API (core)
+GEMINI_API_KEY=AIza...             # Google Gemini 2.0 Flash
 
 # Optional — on-chain betting
 PRESCIO_MARKET_ADDRESS=0x...       # Deployed PrescioMarketV3
