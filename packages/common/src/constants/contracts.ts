@@ -1,7 +1,7 @@
 /** Contract addresses — updated after deployment */
 export const CONTRACT_ADDRESSES = {
   /** PrescioMarket contract */
-  PRESCIO_MARKET: "0xdCFd12C4797428E31AbA42C9c4Ca87339c3170De" as `0x${string}`,
+  PRESCIO_MARKET: "0xda437363a5ED608603582DDE53E5C7FeCc54Fc0a" as `0x${string}`,
   /** PrescioVault contract */
   PRESCIO_VAULT: "0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43" as `0x${string}`,
 } as const;

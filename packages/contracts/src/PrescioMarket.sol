@@ -146,9 +146,22 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
         uint256 fee = (market.totalPool * feeRate) / 10000;
         market.protocolFee = fee;
 
-        // Transfer fee to vault
-        if (fee > 0 && vault != address(0)) {
-            (bool success,) = payable(vault).call{value: fee}("");
+        // Check if anyone bet on the correct answer
+        uint256 winningPool = outcomePools[gameId][impostorIndex];
+        
+        // Determine amount to send to vault
+        uint256 toVault;
+        if (winningPool == 0) {
+            // No winners: entire pool goes to vault
+            toVault = market.totalPool;
+        } else {
+            // Winners exist: only fee goes to vault
+            toVault = fee;
+        }
+
+        // Transfer to vault
+        if (toVault > 0 && vault != address(0)) {
+            (bool success,) = payable(vault).call{value: toVault}("");
             if (!success) revert TransferFailed();
         }
 
@@ -164,6 +177,17 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     function setVault(address _vault) external onlyOwner {
         vault = _vault;
         emit VaultUpdated(_vault);
+    }
+
+    /**
+     * @notice Emergency withdraw all funds to owner (for stuck funds recovery)
+     * @dev Only callable by owner. Use with caution.
+     */
+    function emergencyWithdraw() external onlyOwner {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert NothingToClaim();
+        (bool success,) = payable(owner()).call{value: balance}("");
+        if (!success) revert TransferFailed();
     }
 
     // ============================================
