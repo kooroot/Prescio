@@ -86,7 +86,7 @@ export function GamePage() {
       <div className="hidden lg:grid lg:grid-cols-[1fr_320px] lg:gap-4">
         {/* Left: Game board + Chat */}
         <Card className="border-monad-border bg-monad-card/40 overflow-hidden">
-          <CardContent className="p-0 h-[calc(100vh-180px)]">
+          <CardContent className="p-0 h-[calc(100vh-180px)] overflow-y-auto">
             <GameBoard
               game={game}
               chatMessages={chatMessages}
@@ -141,7 +141,7 @@ export function GamePage() {
 
           <TabsContent value="game" className="mt-3">
             <Card className="border-monad-border bg-monad-card/40 overflow-hidden">
-              <CardContent className="p-0 h-[calc(100vh-280px)]">
+              <CardContent className="p-0 h-[calc(100vh-280px)] overflow-y-auto">
                 <GameBoard
                   game={game}
                   chatMessages={chatMessages}
