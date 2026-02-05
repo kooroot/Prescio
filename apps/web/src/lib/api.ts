@@ -123,7 +123,13 @@ interface OddsResponse {
   }>;
 }
 
-export async function fetchOdds(gameId: string): Promise<Record<string, Odds[]>> {
+export interface OddsResult {
+  oddsMap: Record<string, Odds[]>;
+  bettingEnabled: boolean;
+  totalPool: string;
+}
+
+export async function fetchOdds(gameId: string): Promise<OddsResult> {
   const res = await request<OddsResponse>(`/games/${gameId}/odds`);
   
   // Convert server response to the expected format
@@ -136,7 +142,11 @@ export async function fetchOdds(gameId: string): Promise<Record<string, Odds[]>>
     totalStaked: BigInt(Math.floor(parseFloat(o.totalStaked) * 1e18)),
   }));
   
-  return { [gameId]: odds };
+  return { 
+    oddsMap: { [gameId]: odds },
+    bettingEnabled: res.bettingEnabled,
+    totalPool: res.totalPool,
+  };
 }
 
 interface BetsResponse {

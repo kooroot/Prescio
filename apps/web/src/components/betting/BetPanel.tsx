@@ -78,7 +78,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const { userBet } = useOnChainUserBet(gameId, address);
 
   // API reads
-  const { oddsMap, totalPool: wsTotalPool } = useOdds(gameId);
+  const { oddsMap, bettingEnabled, totalPool: wsTotalPool } = useOdds(gameId);
   const { bets } = useUserBets(gameId, address);
   const { placeBet, isPending, isConfirming, isSuccess, error, reset } = usePlaceBet();
 
@@ -89,9 +89,18 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   // Get outcome totals from odds API (oddsMap contains totalStaked per player)
   const odds = oddsMap[gameId] ?? [];
   const outcomeTotals = odds.map((o) => o.totalStaked);
-  const isOpen = hasMarket && marketState === ContractMarketState.OPEN;
+  // Check both on-chain state AND server-side bettingEnabled
+  const isOpen = hasMarket && marketState === ContractMarketState.OPEN && bettingEnabled;
   const isResolved = hasMarket && marketState === ContractMarketState.RESOLVED;
-  const stateLabel = hasMarket ? marketStateLabel(marketState!) : { text: "No Market", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+  const isPaused = hasMarket && marketState === ContractMarketState.OPEN && !bettingEnabled;
+  
+  // State label with PAUSED support
+  const getStateLabel = () => {
+    if (!hasMarket) return { text: "No Market", color: "bg-gray-500/20 text-gray-400 border-gray-500/30" };
+    if (isPaused) return { text: "Betting Paused", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" };
+    return marketStateLabel(marketState!);
+  };
+  const stateLabel = getStateLabel();
 
   // Reset on success
   useEffect(() => {
@@ -165,6 +174,14 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
               if (isOpen) setSelectedIndex(idx === selectedIndex ? null : idx);
             }}
           />
+        )}
+
+        {/* ─── Betting Paused (NIGHT phase) ─── */}
+        {isPaused && (
+          <div className="flex items-center justify-center gap-2 rounded-lg bg-orange-500/5 border border-orange-500/10 px-4 py-3">
+            <Lock className="h-4 w-4 text-orange-500/50" />
+            <span className="text-sm text-orange-500/70">Betting opens at Report phase</span>
+          </div>
         )}
 
         {/* ─── Betting Closed ─── */}
