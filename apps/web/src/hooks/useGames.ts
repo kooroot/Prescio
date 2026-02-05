@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchGames, fetchHistory } from "@/lib/api";
-import type { GameListItem, HistoryGame } from "@/lib/api";
+import { fetchGames, fetchHistory, fetchMyBets } from "@/lib/api";
+import type { GameListItem, HistoryGame, MyBetGame } from "@/lib/api";
 
 /**
  * Fetch active games with 5-second polling
@@ -27,6 +27,23 @@ export function useFinishedGames() {
       const res = await fetchHistory(50);
       return { games: res.games, total: res.total };
     },
+    refetchInterval: 10000,
+    staleTime: 5000,
+  });
+}
+
+/**
+ * Fetch games where the user has placed bets
+ */
+export function useMyBets(address?: string) {
+  return useQuery({
+    queryKey: ["games", "my-bets", address],
+    queryFn: async (): Promise<{ bets: MyBetGame[]; total: number }> => {
+      if (!address) return { bets: [], total: 0 };
+      const res = await fetchMyBets(address);
+      return { bets: res.bets, total: res.total };
+    },
+    enabled: !!address,
     refetchInterval: 10000,
     staleTime: 5000,
   });

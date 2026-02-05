@@ -748,6 +748,111 @@ apiRouter.get(
 );
 
 // ------------------------------------------
+// GET /api/my-bets — Games where the user has placed bets
+// ------------------------------------------
+apiRouter.get(
+  "/my-bets",
+  asyncHandler(async (req, res) => {
+    const address = req.query.address as string;
+
+    if (!address) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address query param required" },
+      });
+      return;
+    }
+
+    if (!isOnChainEnabled()) {
+      res.json({ bets: [], total: 0 });
+      return;
+    }
+
+    const results: Array<{
+      gameId: string;
+      code: string;
+      phase: string;
+      round: number;
+      playerCount: number;
+      bet: {
+        suspectIndex: number;
+        suspectNickname: string;
+        amount: string;
+        claimed: boolean;
+      };
+      winner: string | null;
+      finishedAt: number | null;
+    }> = [];
+
+    // Check active games
+    const activeGames = getActiveGames();
+    for (const game of activeGames) {
+      try {
+        const userBet = await getUserBets(game.id, address as Address);
+        if (userBet && userBet.amount > 0n) {
+          const suspect = game.players[userBet.suspectIndex];
+          results.push({
+            gameId: game.id,
+            code: game.code,
+            phase: game.phase,
+            round: game.round,
+            playerCount: game.players.length,
+            bet: {
+              suspectIndex: userBet.suspectIndex,
+              suspectNickname: suspect?.nickname ?? `Player ${userBet.suspectIndex}`,
+              amount: formatEther(userBet.amount),
+              claimed: userBet.claimed,
+            },
+            winner: game.winner ?? null,
+            finishedAt: null,
+          });
+        }
+      } catch (err) {
+        // Skip if query fails
+      }
+    }
+
+    // Check recent finished games
+    for (const finished of finishedGames.slice(-50)) {
+      try {
+        const userBet = await getUserBets(finished.id, address as Address);
+        if (userBet && userBet.amount > 0n) {
+          const suspect = finished.players?.[userBet.suspectIndex];
+          results.push({
+            gameId: finished.id,
+            code: finished.code,
+            phase: "RESULT",
+            round: finished.rounds,
+            playerCount: finished.playerCount,
+            bet: {
+              suspectIndex: userBet.suspectIndex,
+              suspectNickname: suspect?.nickname ?? `Player ${userBet.suspectIndex}`,
+              amount: formatEther(userBet.amount),
+              claimed: userBet.claimed,
+            },
+            winner: finished.winner,
+            finishedAt: finished.finishedAt,
+          });
+        }
+      } catch (err) {
+        // Skip if query fails
+      }
+    }
+
+    // Sort by most recent first (active games first, then by finishedAt desc)
+    results.sort((a, b) => {
+      if (a.finishedAt === null && b.finishedAt !== null) return -1;
+      if (a.finishedAt !== null && b.finishedAt === null) return 1;
+      if (a.finishedAt !== null && b.finishedAt !== null) {
+        return b.finishedAt - a.finishedAt;
+      }
+      return 0;
+    });
+
+    res.json({ bets: results, total: results.length });
+  })
+);
+
+// ------------------------------------------
 // GET /api/config — Runtime config (WebSocket URL, etc.)
 // ------------------------------------------
 apiRouter.get(

@@ -186,3 +186,30 @@ export async function fetchBets(gameId: string, address?: string): Promise<Bet[]
 export function fetchLobby(gameId: string): Promise<LobbyInfo> {
   return request<LobbyInfo>(`/games/${gameId}/lobby`);
 }
+
+// ─── My Bets ─────────────────────────────────────────
+
+export interface MyBetGame {
+  gameId: string;
+  code: string;
+  phase: string;
+  round: number;
+  playerCount: number;
+  bet: {
+    suspectIndex: number;
+    suspectNickname: string;
+    amount: string;
+    claimed: boolean;
+  };
+  winner: string | null;
+  finishedAt: number | null;
+}
+
+export interface MyBetsResponse {
+  bets: MyBetGame[];
+  total: number;
+}
+
+export function fetchMyBets(address: string): Promise<MyBetsResponse> {
+  return request<MyBetsResponse>(`/my-bets?address=${address}`);
+}

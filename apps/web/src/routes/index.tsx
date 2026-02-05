@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
 import { Phase } from "@prescio/common";
 import type { GameLanguage } from "@prescio/common";
 import { Button } from "@/components/ui/button";
@@ -23,20 +24,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Zap, Coins, Loader2, Gamepad2 } from "lucide-react";
+import { Plus, Users, Zap, Coins, Loader2, Gamepad2, Wallet } from "lucide-react";
 import { createGame, startGame } from "@/lib/api";
-import { useActiveGames, useFinishedGames } from "@/hooks/useGames";
-import { ActiveGameCard, FinishedGameCard } from "@/components/game/GameCard";
+import { useActiveGames, useFinishedGames, useMyBets } from "@/hooks/useGames";
+import { ActiveGameCard, FinishedGameCard, MyBetCard } from "@/components/game/GameCard";
 import { useI18n } from "@/i18n";
 
 export function LobbyPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { address, isConnected } = useAccount();
   const { data: activeGames = [], isLoading: loadingActive, error: activeError } = useActiveGames();
   const { data: finishedData, isLoading: loadingFinished } = useFinishedGames();
+  const { data: myBetsData, isLoading: loadingMyBets } = useMyBets(address);
   const finishedGames = finishedData?.games ?? [];
   const finishedTotal = finishedData?.total ?? 0;
+  const myBets = myBetsData?.bets ?? [];
+  const myBetsTotal = myBetsData?.total ?? 0;
 
   // Create game dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -222,12 +227,20 @@ export function LobbyPage() {
       {/* Games Tabs */}
       <div className="w-full">
         <Tabs defaultValue="active" className="w-full">
-          <TabsList className="mb-4 grid w-full grid-cols-2 bg-monad-card/50">
+          <TabsList className="mb-4 grid w-full grid-cols-3 bg-monad-card/50">
             <TabsTrigger value="active" className="data-[state=active]:bg-monad-purple/20">
               {t("inProgress")}
               {inProgressGames.length > 0 && (
                 <Badge className="ml-2 bg-monad-purple/30 text-monad-purple text-xs px-1.5">
                   {inProgressGames.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="mybets" className="data-[state=active]:bg-yellow-500/20">
+              {t("myBets")}
+              {myBetsTotal > 0 && (
+                <Badge className="ml-2 bg-yellow-500/30 text-yellow-400 text-xs px-1.5">
+                  {myBetsTotal}
                 </Badge>
               )}
             </TabsTrigger>
@@ -290,6 +303,39 @@ export function LobbyPage() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          {/* My Bets Tab */}
+          <TabsContent value="mybets" className="space-y-2">
+            {!isConnected && (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-yellow-500/30 bg-yellow-500/5 py-16">
+                <Wallet className="mb-3 h-10 w-10 text-yellow-500/50" />
+                <p className="text-gray-400 font-medium">{t("connectToViewBets")}</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {t("connectToViewBetsDesc")}
+                </p>
+              </div>
+            )}
+
+            {isConnected && loadingMyBets && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-yellow-400" />
+              </div>
+            )}
+
+            {isConnected && !loadingMyBets && myBets.length === 0 && (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-monad-border bg-monad-card/30 py-16">
+                <div className="mb-3 text-4xl">🎰</div>
+                <p className="text-gray-400 font-medium">{t("noBetsYet")}</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {t("noBetsYetDesc")}
+                </p>
+              </div>
+            )}
+
+            {isConnected && myBets.map((bet) => (
+              <MyBetCard key={bet.gameId} bet={bet} onWatch={handleWatch} />
+            ))}
           </TabsContent>
 
           {/* Finished Games Tab */}

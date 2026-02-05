@@ -16,7 +16,12 @@ export const translations = {
 
     // Tabs
     inProgress: "In Progress",
+    myBets: "My Bets",
     completed: "Completed",
+    connectToViewBets: "Connect wallet to view your bets",
+    connectToViewBetsDesc: "Your betting history will appear here.",
+    noBetsYet: "No bets yet",
+    noBetsYetDesc: "Place bets on games to track them here.",
 
     // Game list
     failedToLoad: "Failed to load games. Is the server running?",
@@ -100,7 +105,12 @@ export const translations = {
     createGame: "새 게임 만들기",
 
     inProgress: "진행 중",
+    myBets: "내 베팅",
     completed: "완료됨",
+    connectToViewBets: "베팅 내역을 보려면 지갑을 연결하세요",
+    connectToViewBetsDesc: "여기에서 베팅 내역을 확인할 수 있습니다.",
+    noBetsYet: "아직 베팅 내역이 없습니다",
+    noBetsYetDesc: "게임에 베팅하면 여기에서 확인할 수 있습니다.",
 
     failedToLoad: "게임을 불러올 수 없습니다. 서버가 실행 중인지 확인하세요.",
     noGames: "진행 중인 게임이 없습니다. 새로 만들어보세요!",
@@ -176,7 +186,12 @@ export const translations = {
     createGame: "新しいゲームを作成",
 
     inProgress: "進行中",
+    myBets: "マイベット",
     completed: "完了",
+    connectToViewBets: "ウォレットを接続してベット履歴を表示",
+    connectToViewBetsDesc: "ここにベット履歴が表示されます。",
+    noBetsYet: "まだベットがありません",
+    noBetsYetDesc: "ゲームにベットするとここで確認できます。",
 
     failedToLoad: "ゲームの読み込みに失敗しました。サーバーは稼働していますか？",
     noGames: "進行中のゲームがありません。作成してみましょう！",
@@ -252,7 +267,12 @@ export const translations = {
     createGame: "创建新游戏",
 
     inProgress: "进行中",
+    myBets: "我的投注",
     completed: "已完成",
+    connectToViewBets: "连接钱包查看投注记录",
+    connectToViewBetsDesc: "您的投注历史将显示在这里。",
+    noBetsYet: "暂无投注",
+    noBetsYetDesc: "在游戏中下注后可在此处查看。",
 
     failedToLoad: "无法加载游戏。服务器是否在运行？",
     noGames: "没有进行中的游戏。创建一个吧！",
