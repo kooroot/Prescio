@@ -1,7 +1,14 @@
 /**
  * Betting module — public API
  */
-export { initOnChain, isOnChainEnabled, gameIdToBytes32 } from "./onchain.js";
+export { 
+  initOnChain, 
+  isOnChainEnabled, 
+  gameIdToBytes32,
+  pauseBetting as onChainPauseBetting,
+  resumeBetting as onChainResumeBetting,
+  isBettingOpen as onChainIsBettingOpen,
+} from "./onchain.js";
 export type { OnChainMarketInfo, OnChainUserBet } from "./onchain.js";
 
 export {

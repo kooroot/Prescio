@@ -125,6 +125,35 @@ export const PRESCIO_MARKET_ABI = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+  // V3: Betting pause/resume
+  {
+    type: "function",
+    name: "pauseBetting",
+    inputs: [{ name: "gameId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "resumeBetting",
+    inputs: [{ name: "gameId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "isBettingOpen",
+    inputs: [{ name: "gameId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "bettingPaused",
+    inputs: [{ name: "gameId", type: "bytes32", internalType: "bytes32" }],
+    outputs: [{ name: "", type: "bool", internalType: "bool" }],
+    stateMutability: "view",
+  },
   // Events
   {
     type: "event",
@@ -172,6 +201,23 @@ export const PRESCIO_MARKET_ABI = [
       { name: "gameId", type: "bytes32", indexed: true, internalType: "bytes32" },
       { name: "user", type: "address", indexed: true, internalType: "address" },
       { name: "payout", type: "uint256", indexed: false, internalType: "uint256" },
+    ],
+    anonymous: false,
+  },
+  // V3 Events
+  {
+    type: "event",
+    name: "BettingPaused",
+    inputs: [
+      { name: "gameId", type: "bytes32", indexed: true, internalType: "bytes32" },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "BettingResumed",
+    inputs: [
+      { name: "gameId", type: "bytes32", indexed: true, internalType: "bytes32" },
     ],
     anonymous: false,
   },
