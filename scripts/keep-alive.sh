@@ -40,12 +40,28 @@ start_tunnel() {
     TUNNEL_URL=$(grep -o 'https://[a-z-]*\.trycloudflare\.com' "$LOG_DIR/tunnel.log" | tail -1)
     if [ -n "$TUNNEL_URL" ]; then
       echo "[keep-alive] Tunnel URL: $TUNNEL_URL"
+      WS_URL=$(echo "$TUNNEL_URL" | sed 's|https://|wss://|')/ws
+      
       # Update wrangler.toml
       sed -i '' "s|API_BACKEND = \"https://.*trycloudflare.com\"|API_BACKEND = \"$TUNNEL_URL\"|" \
         "$PRESCIO_DIR/apps/web/wrangler.toml"
-      # Update server .env
+      
+      # Update server .env - CORS and WS_PUBLIC_URL
       sed -i '' "s|https://.*trycloudflare.com|$TUNNEL_URL|g" \
         "$PRESCIO_DIR/apps/server/.env"
+      # Add/update WS_PUBLIC_URL
+      if grep -q "WS_PUBLIC_URL" "$PRESCIO_DIR/apps/server/.env"; then
+        sed -i '' "s|WS_PUBLIC_URL=.*|WS_PUBLIC_URL=$WS_URL|" "$PRESCIO_DIR/apps/server/.env"
+      else
+        echo "WS_PUBLIC_URL=$WS_URL" >> "$PRESCIO_DIR/apps/server/.env"
+      fi
+      
+      # Restart server to pick up new env
+      echo "[keep-alive] Restarting server with WS_PUBLIC_URL..."
+      kill $SERVER_PID 2>/dev/null
+      sleep 2
+      start_server
+      
       # Deploy workers
       echo "[keep-alive] Deploying workers..."
       cd "$PRESCIO_DIR/apps/web"
