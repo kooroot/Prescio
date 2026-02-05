@@ -1,5 +1,6 @@
 import type { GameState, Market, Bet, Odds, LobbyInfo, GameLanguage } from "@prescio/common";
 import { BetStatus } from "@prescio/common";
+import { parseEther } from "viem";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
 
@@ -139,7 +140,7 @@ export async function fetchOdds(gameId: string): Promise<OddsResult> {
     numerator: Math.round(o.impliedProbability * 100),
     denominator: 100,
     impliedProbability: o.impliedProbability,
-    totalStaked: BigInt(Math.floor(parseFloat(o.totalStaked) * 1e18)),
+    totalStaked: parseEther(o.totalStaked || "0"),
   }));
   
   return { 
