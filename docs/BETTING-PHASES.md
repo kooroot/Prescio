@@ -301,17 +301,21 @@ Prescio의 베팅 시스템은 게임의 정보 공개 흐름과 동기화되어
 
 ## 🔧 구현 체크리스트
 
-### V1 (현재 - 단순화)
+### V1 (해커톤 버전) ✅
+
+> **Round 1만 베팅 가능** — 서버사이드 제어 + 온체인 CLOSE at VOTE
 
 - [x] LOBBY: 마켓 없음
-- [ ] NIGHT: 베팅 PAUSED (현재는 OPEN → 변경 필요)
-- [ ] REPORT: 베팅 OPEN 전환
-- [ ] DISCUSSION 종료: 베팅 LOCKED (현재는 VOTE 시작 시 → 변경 필요)
-- [x] VOTE: 베팅 LOCKED
+- [x] NIGHT: 베팅 PAUSED (마켓 생성, bettingEnabled=false)
+- [x] REPORT: 베팅 OPEN (bettingEnabled=true)
+- [x] DISCUSSION: 베팅 OPEN
+- [x] VOTE: 베팅 CLOSED (온체인 closeMarket)
+- [x] Round 2+: 베팅 불가 (마켓 이미 CLOSED)
 - [x] GAME_OVER: 마켓 RESOLVED
 
-### V2 (CCA 추가)
+### V2 (CCA 추가) — Post-Hackathon
 
+- [ ] ERC-1155 기반 라운드별 토큰
 - [ ] 라운드별 CCA Phase 분리
 - [ ] 가격 프리미엄: `P_base × (1+i)^round`
 - [ ] 블록 단위 배치 청산
