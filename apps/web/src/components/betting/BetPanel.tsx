@@ -85,7 +85,9 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   // Derived state
   const hasMarket = marketInfo != null && marketInfo.playerCount > 0;
   const marketState = hasMarket ? marketInfo.state : null;
-  const totalPool = marketInfo?.totalPool ?? 0n;
+  // Ensure totalPool is BigInt (in case of type mismatch from contract)
+  const rawPool = marketInfo?.totalPool;
+  const totalPool = typeof rawPool === 'bigint' ? rawPool : (rawPool ? BigInt(rawPool) : 0n);
   // Get outcome totals from odds API (oddsMap contains totalStaked per player)
   const odds = oddsMap[gameId] ?? [];
   const outcomeTotals = odds.map((o) => o.totalStaked);
