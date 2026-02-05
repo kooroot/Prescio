@@ -77,7 +77,7 @@ export function LobbyPage() {
   const lobbyGames = activeGames.filter((g) => g.phase === Phase.LOBBY);
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12">
+    <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-12">
       {/* Hero */}
       <div className="mb-10 text-center">
         <img src="/prescio-icon.png" alt="Prescio" className="mx-auto mb-4 h-40 w-40 rounded-3xl" />
