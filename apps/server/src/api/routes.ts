@@ -3,7 +3,7 @@
  */
 import { Router, type Router as RouterType } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { Phase, Room } from "@prescio/common";
+import { Phase, Room, type AutoBetStrategyType } from "@prescio/common";
 import {
   createGame,
   addPlayer,
@@ -31,6 +31,14 @@ import {
 } from "../betting/index.js";
 import { formatOdds } from "../betting/odds.js";
 import { formatEther, type Address } from "viem";
+import {
+  configureAutoBet,
+  getAutoBetStatus,
+  disableAutoBet,
+  joinGameAutoBet,
+  leaveGameAutoBet,
+  getGameAutoBettors,
+} from "../betting/user-agent.js";
 
 // ============================================
 // Bot Name Pool
@@ -588,5 +596,153 @@ apiRouter.post(
       isVisual: result.isVisual,
       taskProgress: result.taskProgress,
     });
+  })
+);
+
+// ============================================
+// Auto-Bet Strategy Routes
+// ============================================
+
+// ------------------------------------------
+// POST /api/auto-bet/configure — Configure auto-bet strategy
+// ------------------------------------------
+apiRouter.post(
+  "/auto-bet/configure",
+  asyncHandler(async (req, res) => {
+    const { address, strategy, maxBetPerRound, enabled } = req.body as {
+      address: string;
+      strategy: AutoBetStrategyType;
+      maxBetPerRound: string;
+      enabled: boolean;
+    };
+
+    if (!address || !strategy || !maxBetPerRound) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address, strategy, maxBetPerRound required" },
+      });
+      return;
+    }
+
+    const validStrategies = ["conservative", "balanced", "aggressive"];
+    if (!validStrategies.includes(strategy)) {
+      res.status(400).json({
+        error: { code: "INVALID_STRATEGY", message: "Invalid strategy type" },
+      });
+      return;
+    }
+
+    const config = configureAutoBet(address, strategy, maxBetPerRound, enabled ?? true);
+
+    res.json({
+      success: true,
+      config,
+    });
+  })
+);
+
+// ------------------------------------------
+// GET /api/auto-bet/status — Get auto-bet status for a wallet
+// ------------------------------------------
+apiRouter.get(
+  "/auto-bet/status",
+  asyncHandler(async (req, res) => {
+    const address = req.query.address as string;
+
+    if (!address) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address query param required" },
+      });
+      return;
+    }
+
+    const status = getAutoBetStatus(address);
+    res.json(status);
+  })
+);
+
+// ------------------------------------------
+// POST /api/auto-bet/disable — Disable auto-bet
+// ------------------------------------------
+apiRouter.post(
+  "/auto-bet/disable",
+  asyncHandler(async (req, res) => {
+    const { address } = req.body as { address: string };
+
+    if (!address) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address required" },
+      });
+      return;
+    }
+
+    disableAutoBet(address);
+    res.json({ success: true });
+  })
+);
+
+// ------------------------------------------
+// POST /api/auto-bet/join — Join a game for auto-betting
+// ------------------------------------------
+apiRouter.post(
+  "/auto-bet/join",
+  asyncHandler(async (req, res) => {
+    const { address, gameId } = req.body as { address: string; gameId: string };
+
+    if (!address || !gameId) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address and gameId required" },
+      });
+      return;
+    }
+
+    const game = getGame(gameId);
+    if (!game) {
+      res.status(404).json({
+        error: { code: "GAME_NOT_FOUND", message: "Game not found" },
+      });
+      return;
+    }
+
+    const joined = joinGameAutoBet(address, gameId);
+    if (!joined) {
+      res.status(400).json({
+        error: { code: "AUTO_BET_NOT_CONFIGURED", message: "Auto-bet not configured or disabled" },
+      });
+      return;
+    }
+
+    res.json({ success: true, gameId });
+  })
+);
+
+// ------------------------------------------
+// POST /api/auto-bet/leave — Leave a game
+// ------------------------------------------
+apiRouter.post(
+  "/auto-bet/leave",
+  asyncHandler(async (req, res) => {
+    const { address, gameId } = req.body as { address: string; gameId: string };
+
+    if (!address || !gameId) {
+      res.status(400).json({
+        error: { code: "MISSING_PARAMS", message: "address and gameId required" },
+      });
+      return;
+    }
+
+    leaveGameAutoBet(address, gameId);
+    res.json({ success: true });
+  })
+);
+
+// ------------------------------------------
+// GET /api/games/:id/auto-bettors — List active auto-bettors in a game
+// ------------------------------------------
+apiRouter.get(
+  "/games/:id/auto-bettors",
+  asyncHandler(async (req, res) => {
+    const gameId = String(req.params.id);
+    const bettors = getGameAutoBettors(gameId);
+    res.json({ gameId, bettors, count: bettors.length });
   })
 );
