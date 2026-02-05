@@ -13,26 +13,30 @@ No tokens. No governance. Just AI deception and on-chain betting.
 ## How It Works
 
 ```
-┌─────────────────────────────────────────────────┐
-│                   Spectators                     │
-│         Watch game · Place bets · Claim          │
-│              (React + wagmi + viem)              │
-└────────────────────┬────────────────────────────┘
-                     │ WebSocket + REST
-┌────────────────────▼────────────────────────────┐
-│              Game Server (Node.js)               │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
-│  │  Engine   │  │  Agents  │  │   Betting     │  │
-│  │ (phases)  │  │ (Claude) │  │  (on-chain)   │  │
-│  └──────────┘  └──────────┘  └───────┬───────┘  │
-└──────────────────────────────────────┼──────────┘
-                                       │ viem
-┌──────────────────────────────────────▼──────────┐
-│             Monad Testnet                        │
-│   PrescioMarket.sol  ·  PrescioVault.sol         │
-│   (parimutuel bets)     (protocol fees)          │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        Spectators                                │
+│           Watch game · Place bets · Claim winnings               │
+│                  (React 19 + wagmi v2 + viem)                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │ WebSocket + REST API
+┌───────────────────────────▼─────────────────────────────────────┐
+│                    Game Server (Node.js)                         │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────┐  │
+│  │   Engine   │  │   Agents   │  │   Betting  │  │Orchestrator│  │
+│  │  (phases)  │  │  (Gemini)  │  │ (on-chain) │  │(bot bets)  │  │
+│  └────────────┘  └────────────┘  └─────┬──────┘  └─────┬──────┘  │
+└────────────────────────────────────────┼───────────────┼────────┘
+                                         │ viem         │
+┌────────────────────────────────────────▼───────────────▼────────┐
+│                       Monad Testnet                              │
+│     PrescioMarketV3.sol  ·  PrescioVault.sol  ·  Bot Wallets     │
+│     (parimutuel + pause)    (protocol fees)    (10 personas)     │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### Spectators
+
+Connect your wallet, watch the AI agents argue in real-time, and place bets on who you think the impostor is. When the game ends and the impostor is revealed, winners split the pot proportionally based on their bet size.
 
 ### Game Loop
 
@@ -45,32 +49,34 @@ No tokens. No governance. Just AI deception and on-chain betting.
 
 ## Key Features
 
-- **20 AI Personality Types** — Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, and 14 more unique styles. Each agent has distinct argumentation patterns powered by Gemini.
+- **20 AI Personality Types** — Aggressive, Detective, Paranoid, Peacemaker, Joker, Strategist, and 14 more unique styles. Each agent has distinct argumentation patterns powered by **Gemini 2.0 Flash**.
 - **Real-time Spectating** — WebSocket-driven game state. Watch discussions unfold live.
-- **Parimutuel Betting** — Bet on who the impostor is. Odds shift as the pool grows. 2% protocol fee.
+- **Parimutuel Betting** — Bet on who the impostor is. Odds shift as the pool grows. 5% protocol fee.
 - **Multi-language** — Agents can argue in English, Korean, Japanese, or Chinese.
-- **Fully On-chain Markets** — `PrescioMarket.sol` handles bets, resolution, and payouts. No off-chain settlement.
+- **Fully On-chain Markets** — `PrescioMarketV3.sol` handles bets, resolution, and payouts with pause/resume support. No off-chain settlement.
+- **Bot Orchestrator** — 10 AI betting personas (Shark, Owl, Fox, Whale, Rabbit, Turtle, Eagle, Cat, Wolf, Phantom) automatically create games, place bets with unique strategies, and claim winnings.
 
 ## Architecture
 
 ```
 Prescio/
 ├── apps/
-│   ├── server/          # Game engine + AI agents + betting bridge
+│   ├── server/              # Game engine + AI agents + betting bridge
 │   │   └── src/
-│   │       ├── game/    # Engine, phases, state, voting
-│   │       ├── agents/  # LLM agents, personalities, i18n
-│   │       ├── betting/ # On-chain market management
-│   │       ├── ws/      # WebSocket broadcast
-│   │       └── api/     # REST endpoints
-│   └── web/             # Spectator frontend
+│   │       ├── game/        # Engine, phases, state, voting, round logic
+│   │       ├── agents/      # Gemini-powered LLM agents, 20 personalities, i18n
+│   │       ├── betting/     # On-chain market management (create/pause/resume/resolve)
+│   │       ├── ws/          # WebSocket broadcast for real-time updates
+│   │       ├── api/         # REST endpoints (/games, /bets, /odds)
+│   │       └── orchestrator.ts  # Bot wallet betting automation (10 personas)
+│   └── web/                 # Spectator frontend
 │       └── src/
-│           ├── components/  # Game board, chat, betting UI
+│           ├── components/  # Game board, chat, betting UI, player cards
 │           ├── hooks/       # useGame, useBetting, useWebSocket
 │           └── routes/      # TanStack Router pages
 ├── packages/
-│   ├── common/          # Shared types, constants, chain config
-│   └── contracts/       # Solidity (Foundry) — PrescioMarket + PrescioVault
+│   ├── common/              # Shared types, constants, chain config (Monad)
+│   └── contracts/           # Solidity (Foundry) — PrescioMarketV3 + PrescioVault
 ├── turbo.json
 └── pnpm-workspace.yaml
 ```
@@ -79,10 +85,10 @@ Prescio/
 
 | Layer | Tech |
 |-------|------|
-| Smart Contracts | Solidity 0.8.24, Foundry, OpenZeppelin |
+| Smart Contracts | Solidity 0.8.24, Foundry, OpenZeppelin (UUPS Upgradeable) |
 | Chain | Monad Testnet (chain ID 10143) |
 | Server | Node.js, Express, WebSocket (ws) |
-| AI | Anthropic Claude API |
+| AI | **Google Gemini 2.0 Flash** (`@google/generative-ai`) |
 | Frontend | React 19, Vite, TanStack Router + Query |
 | Wallet | wagmi v2, viem |
 | UI | shadcn/ui, Tailwind CSS |
@@ -92,10 +98,29 @@ Prescio/
 
 | Contract | Description |
 |----------|-------------|
-| `PrescioMarket.sol` | Parimutuel prediction market. Spectators bet on which player is the impostor. Pool split proportionally among winners minus 5% fee. Min bet: 0.1 MON. |
-| `PrescioVault.sol` | Protocol fee collector. Receives fees from resolved markets. Owner-withdrawable. |
+| `PrescioMarketV3.sol` | Parimutuel prediction market with pause/resume support. Spectators bet on which player is the impostor. Pool split proportionally among winners minus **5% fee**. Min bet: 0.1 MON. V3 adds `pauseBetting()`/`resumeBetting()` for multi-round game flow control. |
+| `PrescioVault.sol` | Protocol fee collector. Receives fees from resolved markets (or entire pool if no winners). Owner-withdrawable. |
 
-Both contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard` + UUPS upgradeable pattern. Server wallet is the market operator (creates/closes/resolves markets).
+Both contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard` + UUPS upgradeable pattern. Server wallet is the market operator (creates/pauses/resumes/closes/resolves markets).
+
+### Bot Orchestrator
+
+The server includes a built-in orchestrator that runs 10 AI betting personas with unique strategies:
+
+| Persona | Style | Bet Size | Probability |
+|---------|-------|----------|-------------|
+| Shark | Aggressive high-roller | 1-5 MON | 90% |
+| Whale | Deep pockets | 3-10 MON | 50% |
+| Eagle | Precision striker | 1.5-4 MON | 75% |
+| Rabbit | Quick small bets | 0.2-1 MON | 95% |
+| Fox | Contrarian | 1-3 MON | 80% |
+| Wolf | Pack mentality | 1-4 MON | 80% |
+| Cat | Curious and playful | 0.1-3 MON | 85% |
+| Owl | Analytical observer | 0.5-2 MON | 70% |
+| Turtle | Conservative steady | 0.3-1 MON | 60% |
+| Phantom | Unpredictable | 0.5-5 MON | 65% |
+
+These bots automatically create games, place bets, and claim winnings — providing liquidity and activity even without human spectators.
 
 ---
 
@@ -172,7 +197,7 @@ Monad's 10,000+ TPS and 1-second blocks enable real-time CCA that's impossible o
 - Node.js ≥ 18
 - pnpm ≥ 9
 - [Foundry](https://book.getfoundry.sh/getting-started/installation) (for contracts)
-- Anthropic API key (for AI agents)
+- Google Gemini API key (for AI agents)
 
 ### Setup
 
@@ -185,7 +210,7 @@ pnpm install
 
 # Copy environment file
 cp .env.example .env
-# Edit .env — at minimum set ANTHROPIC_API_KEY
+# Edit .env — at minimum set GEMINI_API_KEY
 
 # Run everything (server + web)
 pnpm dev
@@ -199,13 +224,13 @@ pnpm dev
 
 ```env
 # Required
-ANTHROPIC_API_KEY=sk-ant-...       # Claude API for AI agents
+GEMINI_API_KEY=AIza...             # Google Gemini API for AI agents
 
 # Optional — on-chain betting
-PRESCIO_MARKET_ADDRESS=0x...       # Deployed PrescioMarket
+PRESCIO_MARKET_ADDRESS=0x...       # Deployed PrescioMarketV3
 PRESCIO_VAULT_ADDRESS=0x...        # Deployed PrescioVault
 SERVER_PRIVATE_KEY=0x...           # Market operator wallet
-MONAD_RPC_URL=https://testnet.monad.xyz
+MONAD_RPC_URL=https://testnet-rpc.monad.xyz
 
 # Optional — game config
 GAME_LANGUAGE=en                   # en | ko | ja | zh
