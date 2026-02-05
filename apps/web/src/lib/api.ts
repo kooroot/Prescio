@@ -108,8 +108,35 @@ export function fetchMarkets(gameId: string): Promise<Market[]> {
   return request<Market[]>(`/games/${gameId}/markets`);
 }
 
-export function fetchOdds(gameId: string): Promise<Record<string, Odds[]>> {
-  return request<Record<string, Odds[]>>(`/games/${gameId}/odds`);
+interface OddsResponse {
+  gameId: string;
+  bettingEnabled: boolean;
+  state?: string;
+  totalPool: string;
+  odds: Array<{
+    playerIndex: number;
+    playerNickname: string;
+    playerId: string | null;
+    decimal: number;
+    impliedProbability: number;
+    totalStaked: string;
+  }>;
+}
+
+export async function fetchOdds(gameId: string): Promise<Record<string, Odds[]>> {
+  const res = await request<OddsResponse>(`/games/${gameId}/odds`);
+  
+  // Convert server response to the expected format
+  const odds: Odds[] = res.odds.map((o) => ({
+    outcomeId: String(o.playerIndex),
+    label: o.playerNickname,
+    numerator: Math.round(o.impliedProbability * 100),
+    denominator: 100,
+    impliedProbability: o.impliedProbability,
+    totalStaked: BigInt(Math.floor(parseFloat(o.totalStaked) * 1e18)),
+  }));
+  
+  return { [gameId]: odds };
 }
 
 interface BetsResponse {
