@@ -91,6 +91,21 @@ export async function handleGameStart(gameId: string, playerCount: number): Prom
 }
 
 /**
+ * Pause betting (server-side only, no on-chain tx).
+ * Called when entering VOTE or NIGHT phases.
+ */
+export function pauseBetting(gameId: string): boolean {
+  const cached = marketCache.get(gameId);
+  if (!cached) return false;
+
+  cached.bettingEnabled = false;
+  cached.lastUpdated = Date.now();
+
+  console.log(`[BettingMarket] Betting paused for game ${gameId}`);
+  return true;
+}
+
+/**
  * Enable betting for a market (called when REPORT phase starts).
  * The market was created during NIGHT but betting was paused.
  */

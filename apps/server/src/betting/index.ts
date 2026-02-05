@@ -7,6 +7,7 @@ export type { OnChainMarketInfo, OnChainUserBet } from "./onchain.js";
 export {
   handleGameStart,
   handleBettingOpen,
+  pauseBetting,
   handleBettingClose,
   handleGameEnd,
   getMarketInfo,
