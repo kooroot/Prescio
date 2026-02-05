@@ -23,9 +23,9 @@ export function useActiveGames() {
 export function useFinishedGames() {
   return useQuery({
     queryKey: ["games", "history"],
-    queryFn: async (): Promise<HistoryGame[]> => {
+    queryFn: async (): Promise<{ games: HistoryGame[]; total: number }> => {
       const res = await fetchHistory(50);
-      return res.games;
+      return { games: res.games, total: res.total };
     },
     refetchInterval: 10000,
     staleTime: 5000,
