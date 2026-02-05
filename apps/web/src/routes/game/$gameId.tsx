@@ -5,6 +5,7 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { PhaseIndicator } from "@/components/game/PhaseIndicator";
 import { PlayerList } from "@/components/game/PlayerList";
 import { BetPanel } from "@/components/betting/BetPanel";
+import { AutoBetPanel } from "@/components/betting/AutoBetPanel";
 import { GameMap } from "@/components/game/GameMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -94,7 +95,7 @@ export function GamePage() {
           </CardContent>
         </Card>
 
-        {/* Right: Betting + Players */}
+        {/* Right: Betting + Auto-Bet + Players */}
         <div className="flex flex-col gap-4">
           {/* Betting panel */}
           {game.phase !== Phase.LOBBY && (
@@ -103,6 +104,11 @@ export function GamePage() {
               players={game.players}
               phase={game.phase}
             />
+          )}
+
+          {/* Auto-Bet panel */}
+          {game.phase !== Phase.LOBBY && game.phase !== Phase.RESULT && (
+            <AutoBetPanel gameId={gameId} />
           )}
 
           <Card className="border-monad-border bg-monad-card/40">
@@ -136,6 +142,9 @@ export function GamePage() {
             </TabsTrigger>
             <TabsTrigger value="bet" className="flex-1 text-xs">
               🎰 Bet
+            </TabsTrigger>
+            <TabsTrigger value="auto" className="flex-1 text-xs">
+              🤖 Auto
             </TabsTrigger>
           </TabsList>
 
@@ -177,6 +186,21 @@ export function GamePage() {
                   <span className="text-4xl">🎰</span>
                   <p className="mt-3 text-sm text-gray-500">
                     Betting opens when game starts
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="auto" className="mt-3">
+            {game.phase !== Phase.LOBBY && game.phase !== Phase.RESULT ? (
+              <AutoBetPanel gameId={gameId} />
+            ) : (
+              <Card className="border-monad-border bg-monad-card/40 border-dashed">
+                <CardContent className="py-12 text-center">
+                  <span className="text-4xl">🤖</span>
+                  <p className="mt-3 text-sm text-gray-500">
+                    Auto-bet available during game
                   </p>
                 </CardContent>
               </Card>
