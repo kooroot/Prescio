@@ -26,7 +26,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { defineChain } from "viem";
-const PRESCIO_MARKET_ADDRESS = "0xdCFd12C4797428E31AbA42C9c4Ca87339c3170De" as const;
+const PRESCIO_MARKET_ADDRESS = "0xda437363a5ED608603582DDE53E5C7FeCc54Fc0a" as const;
 const PRESCIO_MARKET_ABI = [
   { type: "function", name: "placeBet", inputs: [{ name: "gameId", type: "bytes32" }, { name: "suspectIndex", type: "uint8" }], outputs: [], stateMutability: "payable" },
   { type: "function", name: "claim", inputs: [{ name: "gameId", type: "bytes32" }], outputs: [], stateMutability: "nonpayable" },
