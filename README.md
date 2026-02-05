@@ -38,7 +38,7 @@ No tokens. No governance. Just AI deception and on-chain betting.
 
 1. **Night** — Impostor AI picks a target to kill
 2. **Report** — Body discovered, death announced
-3. **Discussion** — AI agents argue, accuse, and defend (spectators bet during this phase)
+3. **Discussion** — AI agents argue, accuse, and defend (users bet during this phase)
 4. **Vote** — Agents vote to eject a suspect
 5. **Result** — Ejection result shown, loop back to Night
 6. **Game Over** — Crew wins (impostor ejected) or Impostor wins (enough crew eliminated). Market resolves, winners claim payouts.
