@@ -25,6 +25,7 @@ export interface OddsData {
 export function useOdds(gameId: string) {
   const queryClient = useQueryClient();
   const [totalPool, setTotalPool] = useState("0");
+  const [bettingEnabled, setBettingEnabled] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["odds", gameId],
@@ -33,6 +34,14 @@ export function useOdds(gameId: string) {
     staleTime: 2_000,
     refetchInterval: 5_000, // Fallback, primary updates via WebSocket
   });
+
+  // Update state from query data
+  useEffect(() => {
+    if (data) {
+      setTotalPool(data.totalPool);
+      setBettingEnabled(data.bettingEnabled);
+    }
+  }, [data]);
 
   // Subscribe to WS BETTING_UPDATE
   useEffect(() => {
@@ -44,11 +53,11 @@ export function useOdds(gameId: string) {
         if (payload.gameId === gameId) {
           setTotalPool(payload.totalPool);
           // Update odds in query cache
-          queryClient.setQueryData<Record<string, Odds[]>>(
+          queryClient.setQueryData(
             ["odds", gameId],
-            (prev) => {
-              if (!prev) return { [payload.marketId]: payload.odds };
-              return { ...prev, [payload.marketId]: payload.odds };
+            (prev: any) => {
+              if (!prev) return { oddsMap: { [payload.marketId]: payload.odds }, bettingEnabled: true, totalPool: payload.totalPool };
+              return { ...prev, oddsMap: { ...prev.oddsMap, [payload.marketId]: payload.odds }, totalPool: payload.totalPool };
             },
           );
         }
@@ -59,7 +68,8 @@ export function useOdds(gameId: string) {
   }, [gameId, queryClient]);
 
   return {
-    oddsMap: data ?? {},
+    oddsMap: data?.oddsMap ?? {},
+    bettingEnabled,
     totalPool,
     isLoading,
     error,
