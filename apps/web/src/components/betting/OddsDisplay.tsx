@@ -109,7 +109,9 @@ export function OddsDisplay({
     prevTotalsRef.current = outcomeTotals;
   }, [outcomeTotals]);
 
-  const totalPoolNum = totalPool > 0n ? Number(totalPool) : 1;
+  // Ensure totalPool is BigInt
+  const safeTotalPool = typeof totalPool === 'bigint' ? totalPool : BigInt(totalPool || 0);
+  const totalPoolNum = safeTotalPool > 0n ? Number(safeTotalPool) : 1;
 
   return (
     <div className="flex flex-col gap-1">
@@ -119,16 +121,16 @@ export function OddsDisplay({
           Odds
         </span>
         <span className="text-xs font-mono text-monad-purple">
-          Pool: {parseFloat(formatEther(totalPool)).toFixed(2)} MON
+          Pool: {parseFloat(formatEther(safeTotalPool)).toFixed(2)} MON
         </span>
       </div>
 
       {/* Player odds bars */}
       {players.map((player, index) => {
-        const staked = (index < outcomeTotals.length ? outcomeTotals[index] : undefined) ?? 0n;
-        const safePool = totalPool ?? 0n;
+        const rawStaked = index < outcomeTotals.length ? outcomeTotals[index] : undefined;
+        const staked = typeof rawStaked === 'bigint' ? rawStaked : BigInt(rawStaked || 0);
         const percentage =
-          safePool > 0n ? (Number(staked) / totalPoolNum) * 100 : 0;
+          safeTotalPool > 0n ? (Number(staked) / totalPoolNum) * 100 : 0;
 
         return (
           <OddsBar
