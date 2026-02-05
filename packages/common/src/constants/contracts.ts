@@ -65,7 +65,6 @@ export const PRESCIO_MARKET_ABI = [
       { name: "totalPool", type: "uint256", internalType: "uint256" },
       { name: "impostorIndex", type: "uint8", internalType: "uint8" },
       { name: "protocolFee", type: "uint256", internalType: "uint256" },
-      { name: "outcomeTotals", type: "uint256[]", internalType: "uint256[]" },
     ],
     stateMutability: "view",
   },
