@@ -13,7 +13,7 @@ interface UseWebSocketOptions {
 /**
  * WebSocket hook for a single game.
  * - Connects to the game WS on mount
- * - Sends JOIN_SPECTATE automatically
+ * - JOIN_SPECTATE is sent automatically by wsClient on connection
  * - Forwards all server events to onEvent callback
  * - Sends LEAVE_SPECTATE + disconnects on cleanup
  */
@@ -24,14 +24,8 @@ export function useWebSocket({ gameId, onEvent, address }: UseWebSocketOptions) 
   useEffect(() => {
     if (!gameId) return;
 
-    // Connect
+    // Connect (JOIN_SPECTATE is sent automatically on connection)
     wsClient.connect(gameId, address);
-
-    // Send JOIN_SPECTATE once connected
-    // Small delay to ensure connection is established
-    const joinTimer = setTimeout(() => {
-      wsClient.send({ type: "JOIN_SPECTATE", payload: { gameId } });
-    }, 200);
 
     // Subscribe to events
     const unsub = wsClient.on((event) => {
@@ -39,7 +33,6 @@ export function useWebSocket({ gameId, onEvent, address }: UseWebSocketOptions) 
     });
 
     return () => {
-      clearTimeout(joinTimer);
       unsub();
       // Send leave before disconnect
       if (wsClient.isConnected()) {

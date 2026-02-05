@@ -96,6 +96,13 @@ function createWsClient(): WsClient {
       console.log("[WS] Connected");
       reconnectAttempts = 0;
 
+      // Auto-send JOIN_SPECTATE on connection
+      if (currentGameId) {
+        const joinMsg = JSON.stringify({ type: "JOIN_SPECTATE", payload: { gameId: currentGameId } });
+        ws?.send(joinMsg);
+        console.log("[WS] Sent JOIN_SPECTATE for", currentGameId);
+      }
+
       // Start ping
       pingTimer = setInterval(() => {
         if (ws?.readyState === WebSocket.OPEN) {
