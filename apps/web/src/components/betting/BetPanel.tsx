@@ -109,9 +109,10 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const estimatedPayout = useMemo(() => {
     if (selectedIndex === null || !betAmount) return null;
     const betWei = parseEther(betAmount);
-    const currentOutcome = selectedIndex < outcomeTotals.length ? outcomeTotals[selectedIndex] : 0n;
+    const currentOutcome = (selectedIndex < outcomeTotals.length ? outcomeTotals[selectedIndex] : undefined) ?? 0n;
     const newOutcome = currentOutcome + betWei;
-    const newTotal = totalPool + betWei;
+    const safePool = totalPool ?? 0n;
+    const newTotal = safePool + betWei;
     if (newOutcome === 0n) return null;
     // Payout = (myBet / winnerPool) * totalPool * (1 - fee)
     // Approximate with 5% fee

@@ -125,9 +125,10 @@ export function OddsDisplay({
 
       {/* Player odds bars */}
       {players.map((player, index) => {
-        const staked = index < outcomeTotals.length ? outcomeTotals[index] : 0n;
+        const staked = (index < outcomeTotals.length ? outcomeTotals[index] : undefined) ?? 0n;
+        const safePool = totalPool ?? 0n;
         const percentage =
-          totalPool > 0n ? (Number(staked) / totalPoolNum) * 100 : 0;
+          safePool > 0n ? (Number(staked) / totalPoolNum) * 100 : 0;
 
         return (
           <OddsBar
