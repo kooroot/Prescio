@@ -1,9 +1,24 @@
-/** Contract addresses — updated after deployment */
+/** Contract addresses — Monad Mainnet (Chain ID: 143) */
 export const CONTRACT_ADDRESSES = {
-  /** PrescioMarket contract */
-  PRESCIO_MARKET: "0x8Ba812709A23D3c35e328a4F13D09C6Cd3A7CD8F" as `0x${string}`,
+  /** PrescioMarket contract (Proxy) */
+  PRESCIO_MARKET: "0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C" as `0x${string}`,
   /** PrescioVault contract */
   PRESCIO_VAULT: "0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43" as `0x${string}`,
+  /** PrescioStaking contract (Proxy) */
+  PRESCIO_STAKING: "0xB835F850E26809Ac18032dA45c207bB8859481a7" as `0x${string}`,
+  /** AutoBetController contract (Proxy) */
+  AUTOBET_CONTROLLER: "0xEd96846b9Df01294404E52eA6A646ED96aC6791C" as `0x${string}`,
+  /** PRESCIO Token */
+  PRESCIO_TOKEN: "0xffC86Ab0C36B0728BbF52164f6319762DA867777" as `0x${string}`,
+} as const;
+
+/** Contract addresses — Monad Testnet (Chain ID: 10143) */
+export const TESTNET_CONTRACT_ADDRESSES = {
+  PRESCIO_MARKET: "0x13DAD4fE98D5C0EC317408A510b21A66992A1680" as `0x${string}`,
+  PRESCIO_VAULT: "0x4f97726E10F4676cDBa66B1D79ECAe921d9eFb76" as `0x${string}`,
+  PRESCIO_STAKING: "0xD7CBdCAD334f2d783088224ac3680C5f127c68FD" as `0x${string}`,
+  AUTOBET_CONTROLLER: "0x00b652f6618e553Ae2ecB3e7292ACf6255a8Bafc" as `0x${string}`,
+  PRESCIO_TOKEN: "0xffC86Ab0C36B0728BbF52164f6319762DA867777" as `0x${string}`,
 } as const;
 
 /** PrescioMarket ABI — Parimutuel betting market */

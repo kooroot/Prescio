@@ -214,11 +214,12 @@ AI plays game → Creates drama → Users share → New users bet
 
 | Resource | URL |
 |----------|-----|
-| **Live Demo** | [prescio.xyz] |
-| **GitHub** | [github.com/prescio] |
-| **Smart Contracts** | [Monad Testnet Explorer] |
-| **Demo Video** | [YouTube/Loom] |
-| **Documentation** | [docs.prescio.xyz] |
+| **Live Demo** | [prescio.koosoot.workers.dev](https://prescio.koosoot.workers.dev) |
+| **GitHub** | [github.com/kooroot/Prescio](https://github.com/kooroot/Prescio) |
+| **PRESCIO Token** | [`0xffC86Ab0C36B0728BbF52164f6319762DA867777`](https://monadexplorer.com/address/0xffC86Ab0C36B0728BbF52164f6319762DA867777) |
+| **PrescioMarket** | [`0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C`](https://monadexplorer.com/address/0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C) |
+| **PrescioStaking** | [`0xB835F850E26809Ac18032dA45c207bB8859481a7`](https://monadexplorer.com/address/0xB835F850E26809Ac18032dA45c207bB8859481a7) |
+| **nad.fun Token** | [nad.fun/tokens/0xffC86Ab0C36B0728BbF52164f6319762DA867777](https://nad.fun/tokens/0xffC86Ab0C36B0728BbF52164f6319762DA867777) |
 
 ---
 

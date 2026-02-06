@@ -86,7 +86,7 @@ Prescio/
 | Layer | Tech |
 |-------|------|
 | Smart Contracts | Solidity 0.8.24, Foundry, OpenZeppelin (UUPS Upgradeable) |
-| Chain | Monad Testnet (chain ID 10143) |
+| Chain | Monad Mainnet (chain ID 143) |
 | Server | Node.js, Express, WebSocket (ws) |
 | AI | Anthropic Claude (core) + Google Gemini 2.0 Flash |
 | Frontend | React 19, Vite, TanStack Router + Query |
@@ -96,12 +96,26 @@ Prescio/
 
 ## Smart Contracts
 
+### Deployed Contracts (Monad Mainnet)
+
+| Contract | Address |
+|----------|---------|
+| **PRESCIO Token** | [`0xffC86Ab0C36B0728BbF52164f6319762DA867777`](https://monadexplorer.com/address/0xffC86Ab0C36B0728BbF52164f6319762DA867777) |
+| **PrescioMarket** | [`0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C`](https://monadexplorer.com/address/0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C) |
+| **PrescioVault** | [`0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43`](https://monadexplorer.com/address/0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43) |
+| **PrescioStaking** | [`0xB835F850E26809Ac18032dA45c207bB8859481a7`](https://monadexplorer.com/address/0xB835F850E26809Ac18032dA45c207bB8859481a7) |
+| **AutoBetController** | [`0xEd96846b9Df01294404E52eA6A646ED96aC6791C`](https://monadexplorer.com/address/0xEd96846b9Df01294404E52eA6A646ED96aC6791C) |
+
+### Contract Descriptions
+
 | Contract | Description |
 |----------|-------------|
-| `PrescioMarketV3.sol` | Parimutuel prediction market with pause/resume support. Spectators bet on which player is the impostor. Pool split proportionally among winners minus **5% fee**. Min bet: 0.1 MON. V3 adds `pauseBetting()`/`resumeBetting()` for multi-round game flow control. |
-| `PrescioVault.sol` | Protocol fee collector. Receives fees from resolved markets (or entire pool if no winners). Owner-withdrawable. |
+| `PrescioMarket.sol` | Parimutuel prediction market with pause/resume support. 7-day emergency timelock, reentrancy guard. Min bet: 0.1 MON, 1% protocol fee. |
+| `PrescioVault.sol` | Protocol fee collector. Receives fees from resolved markets. Zero-address validation. |
+| `PrescioStaking.sol` | Dual reward staking system. Earn MON from betting fees (30%) + PRESCIO from penalties (40%). UUPS upgradeable. |
+| `AutoBetController.sol` | Automated betting controller with user balance tracking. Links to staking for reward distribution. |
 
-Both contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard` + UUPS upgradeable pattern. Server wallet is the market operator (creates/pauses/resumes/closes/resolves markets).
+All contracts use OpenZeppelin's `Ownable` + `ReentrancyGuard` + UUPS upgradeable pattern.
 
 ### Bot Orchestrator
 
