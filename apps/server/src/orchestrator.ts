@@ -65,7 +65,8 @@ const personas: BotPersona[] = [
 interface BotWallet { name: string; address: string; privateKey: string; }
 
 const monadChain = {
-  id: 10143, name: "Monad Testnet",
+  id: config.monad.chainId,
+  name: config.monad.chainId === 143 ? "Monad" : "Monad Testnet",
   nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
   rpcUrls: { default: { http: [RPC_URL] } },
 } as const;
