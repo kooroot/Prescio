@@ -6,15 +6,21 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title PrescioVault
+ * @author Prescio Team
  * @notice Collects protocol fees from PrescioMarket
  * @dev Owner can withdraw accumulated fees
+ * 
+ * Security Features:
+ * - Zero address validation in withdrawFeesTo
+ * - Code deduplication with internal _withdraw function
+ * - ReentrancyGuard protection
  */
 contract PrescioVault is Ownable, ReentrancyGuard {
     // ============================================
     // Events
     // ============================================
 
-    event FeesReceived(uint256 amount);
+    event FeesReceived(address indexed from, uint256 amount);
     event FeesWithdrawn(address indexed to, uint256 amount);
 
     // ============================================
@@ -23,6 +29,7 @@ contract PrescioVault is Ownable, ReentrancyGuard {
 
     error TransferFailed();
     error NoFees();
+    error ZeroAddress();
 
     // ============================================
     // Constructor
@@ -35,22 +42,38 @@ contract PrescioVault is Ownable, ReentrancyGuard {
     // ============================================
 
     /**
-     * @notice Withdraw all accumulated fees
+     * @notice Withdraw all accumulated fees to owner
      */
     function withdrawFees() external onlyOwner nonReentrant {
-        uint256 balance = address(this).balance;
-        if (balance == 0) revert NoFees();
-
-        (bool success,) = payable(owner()).call{value: balance}("");
-        if (!success) revert TransferFailed();
-
-        emit FeesWithdrawn(owner(), balance);
+        _withdrawTo(owner());
     }
 
     /**
      * @notice Withdraw fees to a specific address
+     * @param to Destination address
      */
     function withdrawFeesTo(address to) external onlyOwner nonReentrant {
+        if (to == address(0)) revert ZeroAddress();
+        _withdrawTo(to);
+    }
+
+    /**
+     * @notice Get current fee balance
+     * @return Current balance of the vault
+     */
+    function feeBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    // ============================================
+    // Internal Functions
+    // ============================================
+
+    /**
+     * @dev Internal function to handle withdrawal logic
+     * @param to Destination address
+     */
+    function _withdrawTo(address to) private {
         uint256 balance = address(this).balance;
         if (balance == 0) revert NoFees();
 
@@ -60,14 +83,14 @@ contract PrescioVault is Ownable, ReentrancyGuard {
         emit FeesWithdrawn(to, balance);
     }
 
-    /**
-     * @notice Get current fee balance
-     */
-    function feeBalance() external view returns (uint256) {
-        return address(this).balance;
-    }
+    // ============================================
+    // Receive
+    // ============================================
 
+    /**
+     * @notice Receive ETH from market contract
+     */
     receive() external payable {
-        emit FeesReceived(msg.value);
+        emit FeesReceived(msg.sender, msg.value);
     }
 }
