@@ -1,10 +1,7 @@
 import { useReadContract } from "wagmi";
 import { keccak256, toHex, formatEther } from "viem";
-import {
-  CONTRACT_ADDRESSES,
-  PRESCIO_MARKET_ABI,
-  MONAD_TESTNET_CHAIN_ID,
-} from "@prescio/common";
+import { PRESCIO_MARKET_ABI } from "@prescio/common";
+import { useNetwork } from "./useNetwork";
 
 /** Convert a gameId string to a bytes32 hash the contract expects */
 export function gameIdToBytes32(gameId: string): `0x${string}` {
@@ -34,17 +31,18 @@ export interface MarketInfo {
  * Read on-chain market info for a game.
  */
 export function useMarketInfo(gameId: string | undefined) {
+  const { contracts, chainId } = useNetwork();
   const gameIdBytes = gameId ? gameIdToBytes32(gameId) : undefined;
 
   const { data, isLoading, error, refetch } = useReadContract({
-    address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+    address: contracts.PRESCIO_MARKET,
     abi: PRESCIO_MARKET_ABI,
     functionName: "getMarketInfo",
     args: gameIdBytes ? [gameIdBytes] : undefined,
-    chainId: MONAD_TESTNET_CHAIN_ID,
+    chainId: chainId as 143 | 10143,
     query: {
       enabled: !!gameIdBytes,
-      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
+      refetchInterval: 5_000,
     },
   });
 
@@ -66,17 +64,18 @@ export function useMarketInfo(gameId: string | undefined) {
  * Read on-chain odds for a game.
  */
 export function useOnChainOdds(gameId: string | undefined) {
+  const { contracts, chainId } = useNetwork();
   const gameIdBytes = gameId ? gameIdToBytes32(gameId) : undefined;
 
   const { data, isLoading, error, refetch } = useReadContract({
-    address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+    address: contracts.PRESCIO_MARKET,
     abi: PRESCIO_MARKET_ABI,
     functionName: "getOdds",
     args: gameIdBytes ? [gameIdBytes] : undefined,
-    chainId: MONAD_TESTNET_CHAIN_ID,
+    chainId: chainId as 143 | 10143,
     query: {
       enabled: !!gameIdBytes,
-      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
+      refetchInterval: 5_000,
     },
   });
 
@@ -90,17 +89,18 @@ export function useOnChainUserBet(
   gameId: string | undefined,
   userAddress: `0x${string}` | undefined,
 ) {
+  const { contracts, chainId } = useNetwork();
   const gameIdBytes = gameId ? gameIdToBytes32(gameId) : undefined;
 
   const { data, isLoading, error, refetch } = useReadContract({
-    address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+    address: contracts.PRESCIO_MARKET,
     abi: PRESCIO_MARKET_ABI,
     functionName: "getUserBets",
     args: gameIdBytes && userAddress ? [gameIdBytes, userAddress] : undefined,
-    chainId: MONAD_TESTNET_CHAIN_ID,
+    chainId: chainId as 143 | 10143,
     query: {
       enabled: !!gameIdBytes && !!userAddress,
-      refetchInterval: 5_000, // Fast polling for Monad 1s blocks
+      refetchInterval: 5_000,
     },
   });
 

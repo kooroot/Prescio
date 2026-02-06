@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useWalletClient, useWaitForTransactionReceipt } from "wagmi";
-import { parseEther, formatEther, createPublicClient, http, encodeFunctionData } from "viem";
+import { parseEther, formatEther, createPublicClient, http } from "viem";
 import {
-  CONTRACT_ADDRESSES,
   PRESCIO_MARKET_ABI,
-  MONAD_TESTNET_CHAIN_ID,
-  MONAD_TESTNET_RPC,
+  monadMainnet,
   monadTestnet,
+  MONAD_MAINNET_RPC,
+  MONAD_TESTNET_RPC,
 } from "@prescio/common";
 import type { Odds, Bet, ServerEvent, ServerPayloads } from "@prescio/common";
 import { fetchOdds, fetchBets } from "@/lib/api";
 import { wsClient } from "@/lib/ws";
 import { gameIdToBytes32 } from "./useContract";
+import { useNetwork, getNetworkConfig } from "./useNetwork";
 
 // ─── useOdds ────────────────────────────────────────
 
@@ -32,10 +33,9 @@ export function useOdds(gameId: string) {
     queryFn: () => fetchOdds(gameId),
     enabled: !!gameId,
     staleTime: 2_000,
-    refetchInterval: 5_000, // Fallback, primary updates via WebSocket
+    refetchInterval: 5_000,
   });
 
-  // Update state from query data
   useEffect(() => {
     if (data) {
       setTotalPool(data.totalPool);
@@ -43,7 +43,6 @@ export function useOdds(gameId: string) {
     }
   }, [data]);
 
-  // Subscribe to WS BETTING_UPDATE and PHASE_CHANGE
   useEffect(() => {
     if (!gameId) return;
 
@@ -52,7 +51,6 @@ export function useOdds(gameId: string) {
         const payload = event.payload as ServerPayloads["BETTING_UPDATE"];
         if (payload.gameId === gameId) {
           setTotalPool(payload.totalPool);
-          // Update odds in query cache
           queryClient.setQueryData(
             ["odds", gameId],
             (prev: any) => {
@@ -63,8 +61,6 @@ export function useOdds(gameId: string) {
         }
       }
 
-      // Refetch odds on phase change to get updated bettingEnabled
-      // (PHASE_CHANGE is only sent to clients subscribed to that game)
       if (event.type === "PHASE_CHANGE") {
         queryClient.invalidateQueries({ queryKey: ["odds", gameId] });
       }
@@ -84,16 +80,14 @@ export function useOdds(gameId: string) {
 
 // ─── usePlaceBet ────────────────────────────────────
 
-const monadPublicClient = createPublicClient({
-  chain: monadTestnet,
-  transport: http(MONAD_TESTNET_RPC),
-});
-
 export function usePlaceBet() {
   const { data: walletClient } = useWalletClient();
+  const { contracts, isMainnet, chainId } = useNetwork();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  const chain = isMainnet ? monadMainnet : monadTestnet;
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
@@ -113,12 +107,12 @@ export function usePlaceBet() {
       try {
         const gameIdBytes = gameIdToBytes32(gameId);
         const hash = await walletClient.writeContract({
-          address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+          address: contracts.PRESCIO_MARKET,
           abi: PRESCIO_MARKET_ABI,
           functionName: "placeBet",
           args: [gameIdBytes, suspectIndex],
           value: parseEther(amountInEther),
-          chain: monadTestnet,
+          chain,
         });
         setTxHash(hash);
       } catch (err) {
@@ -127,7 +121,7 @@ export function usePlaceBet() {
         setIsPending(false);
       }
     },
-    [walletClient],
+    [walletClient, contracts, chain],
   );
 
   return {
@@ -145,9 +139,12 @@ export function usePlaceBet() {
 
 export function useClaim(gameId: string) {
   const { data: walletClient } = useWalletClient();
+  const { contracts, isMainnet } = useNetwork();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  const chain = isMainnet ? monadMainnet : monadTestnet;
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash: txHash,
@@ -166,11 +163,11 @@ export function useClaim(gameId: string) {
     try {
       const gameIdBytes = gameIdToBytes32(gameId);
       const hash = await walletClient.writeContract({
-        address: CONTRACT_ADDRESSES.PRESCIO_MARKET,
+        address: contracts.PRESCIO_MARKET,
         abi: PRESCIO_MARKET_ABI,
         functionName: "claim",
         args: [gameIdBytes],
-        chain: monadTestnet,
+        chain,
       });
       setTxHash(hash);
     } catch (err) {
@@ -178,7 +175,7 @@ export function useClaim(gameId: string) {
     } finally {
       setIsPending(false);
     }
-  }, [gameId, walletClient]);
+  }, [gameId, walletClient, contracts, chain]);
 
   return {
     claim,
@@ -199,7 +196,7 @@ export function useUserBets(gameId: string, address?: `0x${string}`) {
     queryFn: () => fetchBets(gameId, address),
     enabled: !!gameId && !!address,
     staleTime: 3_000,
-    refetchInterval: 10_000, // User bets don't change as often
+    refetchInterval: 10_000,
   });
 
   return {
