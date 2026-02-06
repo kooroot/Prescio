@@ -81,15 +81,20 @@ export {
 
 export {
   CONTRACT_ADDRESSES,
+  TESTNET_CONTRACT_ADDRESSES,
   PRESCIO_MARKET_ABI,
   PRESCIO_VAULT_ABI,
 } from "./constants/contracts.js";
 
 // Utils
 export {
+  monadMainnet,
   monadTestnet,
+  MONAD_MAINNET_CHAIN_ID,
   MONAD_TESTNET_CHAIN_ID,
+  MONAD_MAINNET_RPC,
   MONAD_TESTNET_RPC,
+  MONAD_MAINNET_EXPLORER,
   MONAD_TESTNET_EXPLORER,
   getExplorerTxUrl,
   getExplorerAddressUrl,
