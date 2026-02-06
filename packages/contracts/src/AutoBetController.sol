@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IPrescioStaking {
     enum Tier { NONE, BRONZE, SILVER, GOLD, DIAMOND, LEGENDARY }
@@ -187,7 +187,7 @@ contract AutoBetController is
         if (_staking == address(0)) revert ZeroAddress();
         if (_market == address(0)) revert ZeroAddress();
         
-        __Ownable_init(msg.sender);
+        __Ownable_init();
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
 

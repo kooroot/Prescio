@@ -1,15 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 /**
  * @title PrescioMarket
- * @notice Parimutuel prediction market for Prescio impostor-detection game on Monad
+ * @author Prescio Team
+ * @notice UUPS upgradeable parimutuel prediction market for Prescio
  * @dev Players bet on who the impostor is. Pool is split proportionally among winners.
+ * 
+ * Security Features:
+ * - ReentrancyGuardUpgradeable (storage-safe reentrancy protection)
+ * - 7-day timelock on emergency withdrawals
+ * - Pull pattern for vault fees (DoS prevention)
+ * - Market-specific feeRate (immutable per market)
+ * - Zero address validation
+ * - Storage gap for future upgrades
  */
-contract PrescioMarket is Ownable, ReentrancyGuard {
+contract PrescioMarket is 
+    Initializable, 
+    UUPSUpgradeable, 
+    OwnableUpgradeable, 
+    ReentrancyGuardUpgradeable 
+{
     // ============================================
     // Types
     // ============================================
@@ -22,10 +38,11 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
 
     struct MarketInfo {
         uint8 playerCount;
-        uint8 impostorIndex; // set on resolve
+        uint8 impostorIndex;
         MarketState state;
         uint256 totalPool;
-        uint256 protocolFee; // fee amount deducted on resolve
+        uint256 protocolFee;
+        uint256 marketFeeRate; // Fee rate locked at market creation
     }
 
     struct UserBet {
@@ -38,68 +55,119 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     // Constants
     // ============================================
 
-    uint256 public constant MIN_BET = 0.1 ether; // 0.1 MON
+    uint256 public constant MIN_BET = 0.1 ether;
     uint256 public constant MAX_FEE_RATE = 1000; // 10% max
+    uint256 public constant FEE_DENOMINATOR = 10000;
+    uint256 public constant EMERGENCY_DELAY = 7 days;
 
     // ============================================
-    // State
+    // State Variables
     // ============================================
 
     address public vault;
-    uint256 public feeRate; // basis points, e.g. 200 = 2%
+    uint256 public feeRate;
 
     mapping(bytes32 => MarketInfo) public markets;
-    mapping(bytes32 => mapping(uint8 => uint256)) public outcomePools; // gameId => suspectIndex => total
     mapping(bytes32 => mapping(address => UserBet)) public userBets;
+    mapping(bytes32 => mapping(uint8 => uint256)) public outcomePools;
+    
+    // Betting pause state per market
+    mapping(bytes32 => bool) public bettingPaused;
+    
+    // Pull pattern for vault fees
+    uint256 public pendingVaultFees;
+    
+    // Emergency withdraw timelock
+    uint256 public emergencyWithdrawRequestTime;
+    bool public emergencyWithdrawRequested;
+
+    // ============================================
+    // Storage Gap
+    // ============================================
+    
+    uint256[50] private __gap;
 
     // ============================================
     // Events
     // ============================================
 
-    event MarketCreated(bytes32 indexed gameId, uint8 playerCount);
-    event BetPlaced(bytes32 indexed gameId, address indexed user, uint8 suspectIndex, uint256 amount);
+    event MarketCreated(bytes32 indexed gameId, uint8 playerCount, uint256 feeRate);
     event MarketClosed(bytes32 indexed gameId);
     event MarketResolved(bytes32 indexed gameId, uint8 impostorIndex, uint256 totalPool, uint256 fee);
+    event BetPlaced(bytes32 indexed gameId, address indexed user, uint8 suspectIndex, uint256 amount);
     event Claimed(bytes32 indexed gameId, address indexed user, uint256 payout);
-    event FeeRateUpdated(uint256 newFeeRate);
-    event VaultUpdated(address newVault);
+    event FeeRateUpdated(uint256 oldRate, uint256 newRate);
+    event VaultUpdated(address indexed oldVault, address indexed newVault);
+    event BettingPaused(bytes32 indexed gameId);
+    event BettingResumed(bytes32 indexed gameId);
+    event VaultFeesWithdrawn(address indexed vault, uint256 amount);
+    event EmergencyWithdrawRequested(address indexed owner, uint256 unlockTime);
+    event EmergencyWithdrawCancelled(address indexed owner);
+    event EmergencyWithdraw(address indexed to, uint256 amount);
 
     // ============================================
     // Errors
     // ============================================
 
+    error InvalidFeeRate();
+    error InvalidPlayerCount();
     error MarketAlreadyExists();
     error MarketNotFound();
     error MarketNotOpen();
     error MarketNotClosed();
     error MarketNotResolved();
-    error InvalidPlayerCount();
     error InvalidSuspectIndex();
     error BetTooSmall();
     error AlreadyBet();
     error NothingToClaim();
     error AlreadyClaimed();
     error TransferFailed();
-    error InvalidFeeRate();
+    error BettingIsPaused();
+    error ZeroAddress();
+    error EmergencyNotRequested();
+    error EmergencyDelayNotPassed();
+    error EmergencyAlreadyRequested();
 
     // ============================================
-    // Constructor
+    // Initializer
     // ============================================
 
-    constructor(uint256 _feeRate, address _vault) Ownable(msg.sender) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    /**
+     * @notice Initialize the market contract
+     * @param _feeRate Default fee rate (in basis points, max 1000 = 10%)
+     * @param _vault Address of the vault to receive fees
+     */
+    function initialize(uint256 _feeRate, address _vault) public initializer {
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+
         if (_feeRate > MAX_FEE_RATE) revert InvalidFeeRate();
+        if (_vault == address(0)) revert ZeroAddress();
+        
         feeRate = _feeRate;
         vault = _vault;
     }
 
     // ============================================
-    // Owner Functions
+    // UUPS Authorization
+    // ============================================
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    // ============================================
+    // Owner Functions - Market Management
     // ============================================
 
     /**
-     * @notice Create a market for a game
-     * @param gameId Unique game identifier
-     * @param playerCount Number of players (suspects) in the game
+     * @notice Create a new prediction market
+     * @param gameId Unique identifier for the game
+     * @param playerCount Number of players (suspects)
      */
     function createMarket(bytes32 gameId, uint8 playerCount) external onlyOwner {
         if (playerCount < 2) revert InvalidPlayerCount();
@@ -110,14 +178,16 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
             impostorIndex: 0,
             state: MarketState.OPEN,
             totalPool: 0,
-            protocolFee: 0
+            protocolFee: 0,
+            marketFeeRate: feeRate // Lock fee rate at creation
         });
 
-        emit MarketCreated(gameId, playerCount);
+        emit MarketCreated(gameId, playerCount, feeRate);
     }
 
     /**
-     * @notice Close betting for a market (called when discussion phase ends)
+     * @notice Close betting for a market
+     * @param gameId Game identifier
      */
     function closeMarket(bytes32 gameId) external onlyOwner {
         MarketInfo storage market = markets[gameId];
@@ -129,11 +199,11 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Resolve market with the actual impostor
+     * @notice Resolve a market and determine the winner
      * @param gameId Game identifier
-     * @param impostorIndex Index of the impostor player
+     * @param impostorIndex Index of the impostor (winner)
      */
-    function resolve(bytes32 gameId, uint8 impostorIndex) external onlyOwner {
+    function resolve(bytes32 gameId, uint8 impostorIndex) external onlyOwner nonReentrant {
         MarketInfo storage market = markets[gameId];
         if (market.playerCount == 0) revert MarketNotFound();
         if (market.state != MarketState.CLOSED) revert MarketNotClosed();
@@ -142,52 +212,137 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
         market.state = MarketState.RESOLVED;
         market.impostorIndex = impostorIndex;
 
-        // Calculate and store fee
-        uint256 fee = (market.totalPool * feeRate) / 10000;
+        // Use market-specific fee rate
+        uint256 fee = (market.totalPool * market.marketFeeRate) / FEE_DENOMINATOR;
         market.protocolFee = fee;
 
         // Check if anyone bet on the correct answer
         uint256 winningPool = outcomePools[gameId][impostorIndex];
         
-        // Determine amount to send to vault
-        uint256 toVault;
+        // Pull pattern - accumulate fees instead of sending directly
         if (winningPool == 0) {
             // No winners: entire pool goes to vault
-            toVault = market.totalPool;
+            pendingVaultFees += market.totalPool;
         } else {
             // Winners exist: only fee goes to vault
-            toVault = fee;
-        }
-
-        // Transfer to vault
-        if (toVault > 0 && vault != address(0)) {
-            (bool success,) = payable(vault).call{value: toVault}("");
-            if (!success) revert TransferFailed();
+            pendingVaultFees += fee;
         }
 
         emit MarketResolved(gameId, impostorIndex, market.totalPool, fee);
     }
 
+    // ============================================
+    // Owner Functions - Configuration
+    // ============================================
+
+    /**
+     * @notice Update the default fee rate for new markets
+     * @param _feeRate New fee rate (max 10%)
+     */
     function setFeeRate(uint256 _feeRate) external onlyOwner {
         if (_feeRate > MAX_FEE_RATE) revert InvalidFeeRate();
+        emit FeeRateUpdated(feeRate, _feeRate);
         feeRate = _feeRate;
-        emit FeeRateUpdated(_feeRate);
-    }
-
-    function setVault(address _vault) external onlyOwner {
-        vault = _vault;
-        emit VaultUpdated(_vault);
     }
 
     /**
-     * @notice Emergency withdraw all funds to owner (for stuck funds recovery)
-     * @dev Only callable by owner. Use with caution.
+     * @notice Update the vault address
+     * @param _vault New vault address
      */
-    function emergencyWithdraw() external onlyOwner {
+    function setVault(address _vault) external onlyOwner {
+        if (_vault == address(0)) revert ZeroAddress();
+        emit VaultUpdated(vault, _vault);
+        vault = _vault;
+    }
+
+    /**
+     * @notice Pause betting for a market
+     * @param gameId Game identifier
+     */
+    function pauseBetting(bytes32 gameId) external onlyOwner {
+        MarketInfo storage market = markets[gameId];
+        if (market.playerCount == 0) revert MarketNotFound();
+        bettingPaused[gameId] = true;
+        emit BettingPaused(gameId);
+    }
+
+    /**
+     * @notice Resume betting for a market
+     * @param gameId Game identifier
+     */
+    function resumeBetting(bytes32 gameId) external onlyOwner {
+        MarketInfo storage market = markets[gameId];
+        if (market.playerCount == 0) revert MarketNotFound();
+        bettingPaused[gameId] = false;
+        emit BettingResumed(gameId);
+    }
+
+    // ============================================
+    // Owner Functions - Withdrawals
+    // ============================================
+
+    /**
+     * @notice Withdraw accumulated vault fees (pull pattern)
+     * @dev Anyone can call this to push fees to vault
+     */
+    function withdrawVaultFees() external nonReentrant {
+        uint256 amount = pendingVaultFees;
+        if (amount == 0) revert NothingToClaim();
+        
+        pendingVaultFees = 0;
+        
+        (bool success,) = payable(vault).call{value: amount}("");
+        if (!success) revert TransferFailed();
+        
+        emit VaultFeesWithdrawn(vault, amount);
+    }
+
+    /**
+     * @notice Request emergency withdrawal (starts timelock)
+     * @dev 7 day delay for emergency withdrawals
+     */
+    function requestEmergencyWithdraw() external onlyOwner {
+        if (emergencyWithdrawRequested) revert EmergencyAlreadyRequested();
+        
+        emergencyWithdrawRequested = true;
+        emergencyWithdrawRequestTime = block.timestamp;
+        
+        emit EmergencyWithdrawRequested(owner(), block.timestamp + EMERGENCY_DELAY);
+    }
+
+    /**
+     * @notice Cancel emergency withdrawal request
+     */
+    function cancelEmergencyWithdraw() external onlyOwner {
+        if (!emergencyWithdrawRequested) revert EmergencyNotRequested();
+        
+        emergencyWithdrawRequested = false;
+        emergencyWithdrawRequestTime = 0;
+        
+        emit EmergencyWithdrawCancelled(owner());
+    }
+
+    /**
+     * @notice Execute emergency withdrawal after timelock
+     * @dev Can only execute after 7 day delay
+     */
+    function emergencyWithdraw() external onlyOwner nonReentrant {
+        if (!emergencyWithdrawRequested) revert EmergencyNotRequested();
+        if (block.timestamp < emergencyWithdrawRequestTime + EMERGENCY_DELAY) {
+            revert EmergencyDelayNotPassed();
+        }
+        
         uint256 balance = address(this).balance;
         if (balance == 0) revert NothingToClaim();
+        
+        // Reset state before transfer
+        emergencyWithdrawRequested = false;
+        emergencyWithdrawRequestTime = 0;
+        
         (bool success,) = payable(owner()).call{value: balance}("");
         if (!success) revert TransferFailed();
+        
+        emit EmergencyWithdraw(owner(), balance);
     }
 
     // ============================================
@@ -195,7 +350,7 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     // ============================================
 
     /**
-     * @notice Place a bet on who the impostor is
+     * @notice Place a bet on a suspect
      * @param gameId Game identifier
      * @param suspectIndex Index of the suspected impostor
      */
@@ -203,6 +358,7 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
         MarketInfo storage market = markets[gameId];
         if (market.playerCount == 0) revert MarketNotFound();
         if (market.state != MarketState.OPEN) revert MarketNotOpen();
+        if (bettingPaused[gameId]) revert BettingIsPaused();
         if (suspectIndex >= market.playerCount) revert InvalidSuspectIndex();
         if (msg.value < MIN_BET) revert BetTooSmall();
         if (userBets[gameId][msg.sender].amount > 0) revert AlreadyBet();
@@ -213,8 +369,8 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
             claimed: false
         });
 
-        outcomePools[gameId][suspectIndex] += msg.value;
         market.totalPool += msg.value;
+        outcomePools[gameId][suspectIndex] += msg.value;
 
         emit BetPlaced(gameId, msg.sender, suspectIndex, msg.value);
     }
@@ -249,61 +405,86 @@ contract PrescioMarket is Ownable, ReentrancyGuard {
     // ============================================
 
     /**
-     * @notice Get market info
+     * @notice Check if betting is currently open for a market
+     * @param gameId Game identifier
+     * @return bool True if betting is open
      */
-    function getMarketInfo(bytes32 gameId)
-        external
-        view
-        returns (
-            uint8 playerCount,
-            MarketState state,
-            uint256 totalPool,
-            uint8 impostorIndex,
-            uint256 protocolFee,
-            uint256[] memory outcomeTotals
-        )
-    {
+    function isBettingOpen(bytes32 gameId) external view returns (bool) {
         MarketInfo storage market = markets[gameId];
-        playerCount = market.playerCount;
-        state = market.state;
-        totalPool = market.totalPool;
-        impostorIndex = market.impostorIndex;
-        protocolFee = market.protocolFee;
-
-        outcomeTotals = new uint256[](playerCount);
-        for (uint8 i = 0; i < playerCount; i++) {
-            outcomeTotals[i] = outcomePools[gameId][i];
-        }
+        return market.playerCount > 0 && 
+               market.state == MarketState.OPEN && 
+               !bettingPaused[gameId];
     }
 
     /**
-     * @notice Get a user's bet for a game
+     * @notice Get market information
+     * @param gameId Game identifier
      */
-    function getUserBets(bytes32 gameId, address user)
-        external
-        view
-        returns (uint8 suspectIndex, uint256 amount, bool claimed)
-    {
-        UserBet storage bet = userBets[gameId][user];
-        return (bet.suspectIndex, bet.amount, bet.claimed);
+    function getMarketInfo(bytes32 gameId) external view returns (
+        uint8 playerCount, 
+        uint8 state, 
+        uint256 totalPool, 
+        uint8 impostorIndex, 
+        uint256 protocolFee,
+        uint256 marketFeeRate
+    ) {
+        MarketInfo storage m = markets[gameId];
+        return (m.playerCount, uint8(m.state), m.totalPool, m.impostorIndex, m.protocolFee, m.marketFeeRate);
     }
 
     /**
-     * @notice Get current odds for each outcome (returns multiplied by 10000 for precision)
-     * @dev Returns 0 for outcomes with no bets. Odds = totalPool / outcomePool (x10000)
+     * @notice Get user's bet information
+     * @param gameId Game identifier
+     * @param user User address
      */
-    function getOdds(bytes32 gameId) external view returns (uint256[] memory odds) {
-        MarketInfo storage market = markets[gameId];
-        odds = new uint256[](market.playerCount);
+    function getUserBets(bytes32 gameId, address user) external view returns (
+        uint8 suspectIndex, 
+        uint256 amount, 
+        bool claimed
+    ) {
+        UserBet storage b = userBets[gameId][user];
+        return (b.suspectIndex, b.amount, b.claimed);
+    }
 
-        if (market.totalPool == 0) return odds;
+    /**
+     * @notice Get the betting pool for a specific outcome
+     * @param gameId Game identifier
+     * @param suspectIndex Suspect index
+     */
+    function getOutcomePool(bytes32 gameId, uint8 suspectIndex) external view returns (uint256) {
+        return outcomePools[gameId][suspectIndex];
+    }
 
-        uint256 distributable = market.totalPool - ((market.totalPool * feeRate) / 10000);
-        for (uint8 i = 0; i < market.playerCount; i++) {
-            uint256 pool = outcomePools[gameId][i];
-            if (pool > 0) {
-                odds[i] = (distributable * 10000) / pool;
-            }
+    /**
+     * @notice Get all outcome pools for a market
+     * @param gameId Game identifier
+     * @return odds Array of pool sizes for each outcome
+     */
+    function getOdds(bytes32 gameId) external view returns (uint256[] memory) {
+        uint8 playerCount = markets[gameId].playerCount;
+        uint256[] memory odds = new uint256[](playerCount);
+        for (uint8 i = 0; i < playerCount;) {
+            odds[i] = outcomePools[gameId][i];
+            unchecked { ++i; }
         }
+        return odds;
+    }
+
+    /**
+     * @notice Get emergency withdraw status
+     * @return requested Whether emergency is requested
+     * @return requestTime Time of request
+     * @return unlockTime When withdrawal will be available
+     */
+    function getEmergencyStatus() external view returns (
+        bool requested,
+        uint256 requestTime,
+        uint256 unlockTime
+    ) {
+        return (
+            emergencyWithdrawRequested,
+            emergencyWithdrawRequestTime,
+            emergencyWithdrawRequested ? emergencyWithdrawRequestTime + EMERGENCY_DELAY : 0
+        );
     }
 }
