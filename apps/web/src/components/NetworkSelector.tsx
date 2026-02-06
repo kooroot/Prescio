@@ -17,15 +17,15 @@ interface Network {
 }
 
 const NETWORKS: Network[] = [
+  { id: "monad-mainnet", name: "Monad Mainnet", chainId: 143, status: "live" },
   { id: "monad-testnet", name: "Monad Testnet", chainId: 10143, status: "live" },
-  { id: "monad-mainnet", name: "Monad Mainnet", chainId: 10143, status: "soon" },
 ];
 
 const STORAGE_KEY = "prescio-network";
 
 export function NetworkSelector() {
   const [networkId, setNetworkId] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_KEY) ?? "monad-testnet";
+    return localStorage.getItem(STORAGE_KEY) ?? "monad-mainnet";
   });
 
   const current = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
