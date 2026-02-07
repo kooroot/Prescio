@@ -5,9 +5,15 @@ import { createWalletClient, createPublicClient, http, parseEther, formatEther }
 import { privateKeyToAccount } from "viem/accounts";
 import { readFileSync } from "fs";
 
-const RPC_URL = "https://rpc.monad.xyz";
-const SERVER_PRIVATE_KEY = "0x0000000000000000000000000000000000000000000000000000000000000000";
-const AMOUNT_PER_BOT = "10"; // 10 MON each
+const RPC_URL = process.env.MONAD_RPC_URL || "https://rpc.monad.xyz";
+const SERVER_PRIVATE_KEY = process.env.SERVER_PRIVATE_KEY;
+const AMOUNT_PER_BOT = process.env.AMOUNT_PER_BOT || "10"; // 10 MON each
+
+if (!SERVER_PRIVATE_KEY) {
+  console.error("ERROR: SERVER_PRIVATE_KEY environment variable is required");
+  console.error("Usage: SERVER_PRIVATE_KEY=0x... npx tsx scripts/fund-bots.ts");
+  process.exit(1);
+}
 
 const monadMainnet = {
   id: 143,
