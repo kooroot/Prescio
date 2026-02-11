@@ -653,17 +653,32 @@ function Header() {
             <span className="text-lg font-semibold text-white">Prescio</span>
           </a>
           <span className="text-[#A1A1AA] text-sm">/</span>
-          <span className="text-white text-sm font-medium">Staking</span>
+          <nav className="flex items-center gap-1">
+            <a 
+              href="#"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                window.location.hash !== "#leaderboard"
+                  ? "bg-[#6E54FF] text-white"
+                  : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+              }`}
+            >
+              Staking
+            </a>
+            <a 
+              href="#leaderboard"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                window.location.hash === "#leaderboard"
+                  ? "bg-[#6E54FF] text-white"
+                  : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Leaderboard
+            </a>
+          </nav>
         </div>
         
         <div className="flex items-center gap-3">
-          <a 
-            href="#leaderboard"
-            className="px-4 py-2 bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-          >
-            <Trophy className="w-4 h-4 text-yellow-500" />
-            Leaderboard
-          </a>
           <a 
             href="https://prescio.fun" 
             className="px-4 py-2 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
@@ -1696,14 +1711,6 @@ export default function App() {
               <h1 className="text-2xl font-bold">PRESCIO {pageTitle}</h1>
             </div>
             <p className="text-[#A1A1AA] text-sm">{pageDescription}</p>
-            {isLeaderboard && (
-              <a 
-                href="#" 
-                className="inline-flex items-center gap-2 mt-3 text-[#6E54FF] hover:text-[#6E54FF]/80 text-sm font-medium transition-colors"
-              >
-                ← Back to Staking
-              </a>
-            )}
           </div>
 
           {/* Page Content */}
