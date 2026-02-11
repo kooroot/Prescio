@@ -840,6 +840,7 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
   
   const chainId = useChainId();
   const isCorrectNetwork = chainId === MONAD_MAINNET_CHAIN_ID;
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   
   const { stakedAmount, lockEnd, lockType, startTime, exists, isLoading, refetch: refetchStake } = useUserStakeData(address);
   const { allowance, refetch: refetchAllowance } = useTokenAllowance(address, STAKING_CONTRACT_ADDRESS);
@@ -1104,11 +1105,18 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
           )}
           
           <Button
-            onClick={handleStake}
-            disabled={!!stakeValidationError || isProcessing || !isCorrectNetwork}
+            onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleStake}
+            disabled={isCorrectNetwork ? (!!stakeValidationError || isProcessing) : isSwitching}
             className="w-full py-3 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            {isProcessing ? (
+            {isSwitching ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Switching Network...
+              </>
+            ) : !isCorrectNetwork ? (
+              "Switch to Monad Mainnet"
+            ) : isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 {txStatus === "approving" ? "Approving..." : "Staking..."}
@@ -1166,12 +1174,19 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
           )}
           
           <Button
-            onClick={handleUnstake}
-            disabled={!!unstakeValidationError || isProcessing || !isCorrectNetwork}
+            onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleUnstake}
+            disabled={isCorrectNetwork ? (!!unstakeValidationError || isProcessing) : isSwitching}
             variant="outline"
             className="w-full py-3 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            {isProcessing ? (
+            {isSwitching ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Switching Network...
+              </>
+            ) : !isCorrectNetwork ? (
+              "Switch to Monad Mainnet"
+            ) : isProcessing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Processing...
@@ -1198,6 +1213,7 @@ function RewardsCard({ address }: { address: Address }) {
   
   const chainId = useChainId();
   const isCorrectNetwork = chainId === MONAD_MAINNET_CHAIN_ID;
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   
   const { pendingMON, pendingPRESCIO, isLoading, refetch } = useUserStakeData(address);
 
@@ -1302,12 +1318,20 @@ function RewardsCard({ address }: { address: Address }) {
           </div>
         </div>
         <Button
-          onClick={handleClaimMON}
-          disabled={isProcessingMON || pendingMON === 0n || !isCorrectNetwork}
+          onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleClaimMON}
+          disabled={isCorrectNetwork ? (isProcessingMON || pendingMON === 0n) : isSwitching}
           className="w-full py-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           variant="ghost"
         >
-          {isProcessingMON ? <Loader2 className="h-4 w-4 animate-spin" /> : "Claim MON"}
+          {isSwitching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : !isCorrectNetwork ? (
+            "Switch to Monad"
+          ) : isProcessingMON ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Claim MON"
+          )}
         </Button>
       </div>
       
@@ -1332,12 +1356,20 @@ function RewardsCard({ address }: { address: Address }) {
           </div>
         </div>
         <Button
-          onClick={handleClaimPRESCIO}
-          disabled={isProcessingPRESCIO || pendingPRESCIO === 0n || !isCorrectNetwork}
+          onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleClaimPRESCIO}
+          disabled={isCorrectNetwork ? (isProcessingPRESCIO || pendingPRESCIO === 0n) : isSwitching}
           className="w-full py-2 bg-[#6E54FF]/10 text-[#6E54FF] hover:bg-[#6E54FF]/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           variant="ghost"
         >
-          {isProcessingPRESCIO ? <Loader2 className="h-4 w-4 animate-spin" /> : "Claim PRESCIO"}
+          {isSwitching ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : !isCorrectNetwork ? (
+            "Switch to Monad"
+          ) : isProcessingPRESCIO ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Claim PRESCIO"
+          )}
         </Button>
       </div>
     </div>
