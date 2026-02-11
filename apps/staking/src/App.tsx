@@ -24,8 +24,11 @@ import {
   Copy,
   LogOut,
   ChevronDown,
+  Trophy,
+  Coins,
 } from "lucide-react";
 import { MONAD_MAINNET_CHAIN_ID, monadMainnet } from "@/lib/wagmi";
+import { LeaderboardPage } from "@/components/leaderboard";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Contract Config
@@ -192,6 +195,16 @@ const STAKING_ABI = [
   {
     inputs: [],
     name: "emergencyUnstake",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "bool", name: "extendLock", type: "bool" },
+    ],
+    name: "addStake",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -650,7 +663,30 @@ function Header() {
             <span className="text-lg font-semibold text-white">Prescio</span>
           </a>
           <span className="text-[#A1A1AA] text-sm">/</span>
-          <span className="text-white text-sm font-medium">Staking</span>
+          <nav className="flex items-center gap-1">
+            <a 
+              href="#"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                window.location.hash !== "#leaderboard"
+                  ? "bg-[#6E54FF] text-white"
+                  : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+              }`}
+            >
+              <Coins className="w-3.5 h-3.5" />
+              Staking
+            </a>
+            <a 
+              href="#leaderboard"
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                window.location.hash === "#leaderboard"
+                  ? "bg-[#6E54FF] text-white"
+                  : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              Leaderboard
+            </a>
+          </nav>
         </div>
         
         <div className="flex items-center gap-3">
@@ -945,7 +981,6 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
     if (!amount || amount.trim() === "") return "Enter an amount";
     if (parsedAmount === 0n) return "Amount must be greater than 0";
     if (parsedAmount > prescioBalance) return "Insufficient balance";
-    if (exists) return "Already staked. Unstake first.";
     return null;
   };
 
@@ -1033,13 +1068,25 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
 
   const handleStakeAfterApproval = () => {
     setTxStatus("staking");
-    writeStake({
-      address: STAKING_CONTRACT_ADDRESS,
-      abi: STAKING_ABI,
-      functionName: "stake",
-      args: [parsedAmount, LockType.FLEXIBLE], // Default to flexible (7 days)
-      chainId: MONAD_MAINNET_CHAIN_ID,
-    });
+    if (exists) {
+      // Already staked - use addStake to add more
+      writeStake({
+        address: STAKING_CONTRACT_ADDRESS,
+        abi: STAKING_ABI,
+        functionName: "addStake",
+        args: [parsedAmount, false], // false = don't extend lock
+        chainId: MONAD_MAINNET_CHAIN_ID,
+      });
+    } else {
+      // New stake
+      writeStake({
+        address: STAKING_CONTRACT_ADDRESS,
+        abi: STAKING_ABI,
+        functionName: "stake",
+        args: [parsedAmount, LockType.FLEXIBLE], // Default to flexible (7 days)
+        chainId: MONAD_MAINNET_CHAIN_ID,
+      });
+    }
   };
 
   const handleStake = async () => {
@@ -1569,16 +1616,102 @@ function WalletNotConnected({ onConnect }: { onConnect: () => void }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Tab Navigation Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+type AppTab = "staking" | "leaderboard";
+
+interface TabNavigationProps {
+  activeTab: AppTab;
+  onTabChange: (tab: AppTab) => void;
+}
+
+function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
+  return (
+    <div className="flex gap-1 p-1 bg-[#18181B] rounded-xl mb-6">
+      <button
+        onClick={() => onTabChange("staking")}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
+          activeTab === "staking"
+            ? "bg-[#6E54FF] text-white"
+            : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+        }`}
+      >
+        <Coins className="w-4 h-4" />
+        <span>Staking</span>
+      </button>
+      <button
+        onClick={() => onTabChange("leaderboard")}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex-1 justify-center ${
+          activeTab === "leaderboard"
+            ? "bg-[#6E54FF] text-white"
+            : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
+        }`}
+      >
+        <Trophy className="w-4 h-4" />
+        <span>Leaderboard</span>
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staking Content Component (Original Main Content)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function StakingContent({ address }: { address: Address }) {
+  return (
+    <>
+      {/* Protocol Stats */}
+      <ProtocolStats />
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Position & Tiers */}
+        <div className="lg:col-span-2 space-y-6">
+          <MyPositionCard address={address} />
+          <TierBenefitsTable address={address} />
+        </div>
+
+        {/* Right: Actions */}
+        <div className="space-y-6">
+          <StakeUnstakeTabs address={address} />
+          <RewardsCard address={address} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main App Component
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
+  const [currentPage, setCurrentPage] = useState<"staking" | "leaderboard">(() => {
+    return window.location.hash === "#leaderboard" ? "leaderboard" : "staking";
+  });
+
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentPage(window.location.hash === "#leaderboard" ? "leaderboard" : "staking");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const handleConnect = () => {
     connect({ connector: injected() });
   };
+
+  const isLeaderboard = currentPage === "leaderboard";
+  const pageTitle = isLeaderboard ? "Leaderboard" : "Staking";
+  const pageDescription = isLeaderboard 
+    ? "See top stakers and your ranking" 
+    : "Stake PRESCIO to boost betting limits and earn rewards";
 
   return (
     <>
@@ -1593,34 +1726,20 @@ export default function App() {
           {/* Network Switch Banner */}
           {isConnected && <NetworkSwitchBanner />}
           
-          {/* Header */}
-          <div className="mb-8">
+          {/* Page Header */}
+          <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               <img src="/prescio-icon.png" alt="PRESCIO" className="w-10 h-10 rounded-xl" />
-              <h1 className="text-2xl font-bold">PRESCIO Staking</h1>
+              <h1 className="text-2xl font-bold">PRESCIO {pageTitle}</h1>
             </div>
-            <p className="text-[#A1A1AA] text-sm">Stake PRESCIO to boost betting limits and earn rewards</p>
+            <p className="text-[#A1A1AA] text-sm">{pageDescription}</p>
           </div>
 
-          {/* Protocol Stats */}
-          <ProtocolStats />
-
-          {/* Main Grid */}
-          {isConnected && address ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Left: Position & Tiers */}
-              <div className="lg:col-span-2 space-y-6">
-                <MyPositionCard address={address} />
-                <TierBenefitsTable address={address} />
-              </div>
-
-              {/* Right: Actions */}
-              <div className="space-y-6">
-                <StakeUnstakeTabs address={address} />
-                <RewardsCard address={address} />
-              </div>
-            </div>
+          {/* Page Content */}
+          {isLeaderboard ? (
+            <LeaderboardPage />
+          ) : isConnected && address ? (
+            <StakingContent address={address} />
           ) : (
             <WalletNotConnected onConnect={handleConnect} />
           )}
