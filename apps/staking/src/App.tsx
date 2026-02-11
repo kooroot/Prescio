@@ -656,12 +656,13 @@ function Header() {
           <nav className="flex items-center gap-1">
             <a 
               href="#"
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                 window.location.hash !== "#leaderboard"
                   ? "bg-[#6E54FF] text-white"
                   : "text-[#A1A1AA] hover:text-white hover:bg-[#27272A]"
               }`}
             >
+              <Coins className="w-3.5 h-3.5" />
               Staking
             </a>
             <a 
