@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * @dev Stake $PRESCIO tokens to unlock Auto-bet features and earn dual rewards (MON + PRESCIO)
  * 
  * Features:
- * - 5-tier staking system (Bronze → Legendary)
+ * - 5-tier staking system (Bronze → Diamond)
  * - Flexible (7d) and Fixed (14d/30d/60d/90d) lock periods
  * - Auto-bet eligibility gating (Silver+ required)
  * - Weekly epoch-based reward distribution with pagination
@@ -38,6 +38,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * - Penalty distribution: 40% burn, 40% stakers (PRESCIO), 20% treasury
  * - Independent claim functions for each reward type
  * - Gas-optimized single-loop calculation for both rewards
+ * 
+ * v1.3 - Tier Requirements Update:
+ * - Updated tier minimums: Bronze 5M, Silver 20M, Gold 50M, Diamond 150M
+ * - Added explicit BET_MULT constants for each tier
+ * - Bronze boost: 1.1x, Silver: 1.25x, Gold: 1.5x, Diamond: 2.0x
  */
 contract PrescioStaking is 
     Initializable, 
@@ -51,7 +56,7 @@ contract PrescioStaking is
     // Types
     // ============================================
 
-    enum Tier { NONE, BRONZE, SILVER, GOLD, DIAMOND, LEGENDARY }
+    enum Tier { NONE, BRONZE, SILVER, GOLD, DIAMOND }
     
     enum LockType { 
         FLEXIBLE,    // 7 days, early exit with penalty
@@ -99,12 +104,17 @@ contract PrescioStaking is
     uint256 public constant PENALTY_PRECISION = 1000;
     uint256 public constant FEE_PRECISION = 10000;
     
-    // Tier minimum stakes
-    uint256 public constant TIER_BRONZE_MIN = 1_000 * 1e18;
-    uint256 public constant TIER_SILVER_MIN = 10_000 * 1e18;
-    uint256 public constant TIER_GOLD_MIN = 50_000 * 1e18;
-    uint256 public constant TIER_DIAMOND_MIN = 200_000 * 1e18;
-    uint256 public constant TIER_LEGENDARY_MIN = 500_000 * 1e18;
+    // Tier minimum stakes (18 decimals)
+    uint256 public constant TIER_BRONZE_MIN = 5_000_000 * 1e18;      // 5M
+    uint256 public constant TIER_SILVER_MIN = 20_000_000 * 1e18;     // 20M
+    uint256 public constant TIER_GOLD_MIN = 50_000_000 * 1e18;       // 50M
+    uint256 public constant TIER_DIAMOND_MIN = 150_000_000 * 1e18;   // 150M
+
+    // Bet multipliers (100 = 1.0x)
+    uint256 public constant BRONZE_BET_MULT = 110;   // 1.1x
+    uint256 public constant SILVER_BET_MULT = 125;   // 1.25x
+    uint256 public constant GOLD_BET_MULT = 150;     // 1.5x
+    uint256 public constant DIAMOND_BET_MULT = 200;  // 2.0x
     
     // Lock multipliers (100 = 1.0x)
     uint256 public constant LOCK_MULT_7D = 100;
@@ -266,47 +276,38 @@ contract PrescioStaking is
     }
 
     function _initializeTiers() internal {
-        // Bronze: 1,000 PRESCIO, no auto-bet
+        // Bronze: 5M PRESCIO, no auto-bet
         tierConfigs[Tier.BRONZE] = TierConfig({
             minStake: TIER_BRONZE_MIN,
-            rewardBoost: 100,  // 1.0x
+            rewardBoost: BRONZE_BET_MULT,  // 1.1x
             autoBetDailyLimit: 0,
             maxConcurrentBets: 0,
             autoBetEnabled: false
         });
 
-        // Silver: 10,000 PRESCIO, basic auto-bet
+        // Silver: 20M PRESCIO, basic auto-bet
         tierConfigs[Tier.SILVER] = TierConfig({
             minStake: TIER_SILVER_MIN,
-            rewardBoost: 120,  // 1.2x
+            rewardBoost: SILVER_BET_MULT,  // 1.25x
             autoBetDailyLimit: 100 * 1e18,  // 100 MON
             maxConcurrentBets: 3,
             autoBetEnabled: true
         });
 
-        // Gold: 50,000 PRESCIO, standard auto-bet
+        // Gold: 50M PRESCIO, standard auto-bet
         tierConfigs[Tier.GOLD] = TierConfig({
             minStake: TIER_GOLD_MIN,
-            rewardBoost: 150,  // 1.5x
+            rewardBoost: GOLD_BET_MULT,  // 1.5x
             autoBetDailyLimit: 500 * 1e18,  // 500 MON
             maxConcurrentBets: 10,
             autoBetEnabled: true
         });
 
-        // Diamond: 200,000 PRESCIO, premium auto-bet
+        // Diamond: 150M PRESCIO, premium auto-bet (highest tier)
         tierConfigs[Tier.DIAMOND] = TierConfig({
             minStake: TIER_DIAMOND_MIN,
-            rewardBoost: 200,  // 2.0x
+            rewardBoost: DIAMOND_BET_MULT,  // 2.0x
             autoBetDailyLimit: 2_000 * 1e18,  // 2000 MON
-            maxConcurrentBets: 255,  // Unlimited
-            autoBetEnabled: true
-        });
-
-        // Legendary: 500,000 PRESCIO, ultimate auto-bet
-        tierConfigs[Tier.LEGENDARY] = TierConfig({
-            minStake: TIER_LEGENDARY_MIN,
-            rewardBoost: 300,  // 3.0x
-            autoBetDailyLimit: 10_000 * 1e18,  // 10000 MON
             maxConcurrentBets: 255,  // Unlimited
             autoBetEnabled: true
         });
@@ -658,7 +659,6 @@ contract PrescioStaking is
      * @return Tier enum value
      */
     function getTierForAmount(uint256 amount) public pure returns (Tier) {
-        if (amount >= TIER_LEGENDARY_MIN) return Tier.LEGENDARY;
         if (amount >= TIER_DIAMOND_MIN) return Tier.DIAMOND;
         if (amount >= TIER_GOLD_MIN) return Tier.GOLD;
         if (amount >= TIER_SILVER_MIN) return Tier.SILVER;

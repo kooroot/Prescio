@@ -1,4 +1,5 @@
-import { ExternalLink, ChevronDown } from "lucide-react";
+import { ExternalLink, ChevronDown, Coins } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,13 @@ export function Header() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          <Link
+            to="/staking"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-monad-purple transition-colors hover:bg-monad-purple/10"
+          >
+            <Coins className="h-4 w-4" />
+            Staking
+          </Link>
         </div>
 
         {/* Right: Network + Language + Wallet */}

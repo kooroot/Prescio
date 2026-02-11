@@ -24,14 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Zap, Coins, Loader2, Gamepad2, Wallet } from "lucide-react";
+import { Plus, Users, Zap, Coins, Loader2, Gamepad2, Wallet, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { createGame, startGame } from "@/lib/api";
 import { useActiveGames, useFinishedGames, useMyBets } from "@/hooks/useGames";
 import { ActiveGameCard, FinishedGameCard, MyBetCard } from "@/components/game/GameCard";
 import { useI18n } from "@/i18n";
+import { useNetwork } from "@/hooks/useNetwork";
 
 export function LobbyPage() {
   const { t } = useI18n();
+  const { network } = useNetwork();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { address, isConnected } = useAccount();
@@ -110,7 +113,7 @@ export function LobbyPage() {
         </Badge>
         <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Zap className="mr-1.5 h-3 w-3" />
-          {t("badgeMonad")}
+          {network.name}
         </Badge>
         <Badge variant="outline" className="border-monad-purple/20 text-[#9B87FF] px-3 py-1">
           <Coins className="mr-1.5 h-3 w-3" />
@@ -118,17 +121,18 @@ export function LobbyPage() {
         </Badge>
       </div>
 
-      {/* Create Game Button + Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            size="lg"
-            className="mb-10 bg-monad-purple hover:bg-monad-purple/80 text-white font-semibold px-8 monad-glow"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            {t("createGame")}
-          </Button>
-        </DialogTrigger>
+      {/* Create Game Button + Stake to Boost + Dialog */}
+      <div className="mb-10 flex items-center gap-3">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              size="lg"
+              className="bg-monad-purple hover:bg-monad-purple/80 text-white font-semibold px-8 monad-glow"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              {t("createGame")}
+            </Button>
+          </DialogTrigger>
         <DialogContent className="border-monad-border bg-monad-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -222,7 +226,23 @@ export function LobbyPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+        </Dialog>
+
+        {/* Stake to Boost CTA */}
+        <Link to="/staking">
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-monad-purple/50 text-monad-purple hover:bg-monad-purple/10 font-semibold px-6"
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            Stake to Boost
+            <Badge className="ml-2 bg-monad-purple/20 text-monad-purple text-xs px-1.5 py-0.5">
+              2.0x
+            </Badge>
+          </Button>
+        </Link>
+      </div>
 
       {/* Games Tabs */}
       <div className="w-full">
