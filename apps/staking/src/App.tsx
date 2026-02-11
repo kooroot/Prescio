@@ -129,6 +129,27 @@ const STAKING_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [],
+    name: "getCurrentEpochInfo",
+    outputs: [
+      { internalType: "uint256", name: "epochNumber", type: "uint256" },
+      { internalType: "uint256", name: "monRewards", type: "uint256" },
+      { internalType: "uint256", name: "prescioRewards", type: "uint256" },
+      { internalType: "uint256", name: "weight", type: "uint256" },
+      { internalType: "uint256", name: "startTime", type: "uint256" },
+      { internalType: "bool", name: "finalized", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalWeight",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
   // Write functions
   {
     inputs: [
@@ -307,6 +328,17 @@ function useUserStakeData(address: Address | undefined) {
     },
   });
 
+  const { data: userWeight, isLoading: isLoadingWeight, refetch: refetchWeight } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "getUserWeight",
+    args: address ? [address] : undefined,
+    chainId: MONAD_MAINNET_CHAIN_ID,
+    query: {
+      enabled: !!address,
+    },
+  });
+
   const stakedAmount = stakeData?.[0] ?? 0n;
   const lockEnd = stakeData?.[1] ?? 0n;
   const lockType = stakeData?.[2] ?? 0;
@@ -322,7 +354,8 @@ function useUserStakeData(address: Address | undefined) {
     refetchStake();
     refetchTier();
     refetchRewards();
-  }, [refetchStake, refetchTier, refetchRewards]);
+    refetchWeight();
+  }, [refetchStake, refetchTier, refetchRewards, refetchWeight]);
 
   return {
     stakedAmount,
@@ -334,7 +367,41 @@ function useUserStakeData(address: Address | undefined) {
     tierNumber: tierData ?? 0,
     pendingMON,
     pendingPRESCIO,
-    isLoading: isLoadingStake || isLoadingTier || isLoadingRewards,
+    userWeight: userWeight ?? 0n,
+    isLoading: isLoadingStake || isLoadingTier || isLoadingRewards || isLoadingWeight,
+    refetch,
+  };
+}
+
+// Hook to fetch current epoch info
+function useCurrentEpochInfo() {
+  const { data: epochInfo, isLoading, refetch } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "getCurrentEpochInfo",
+    chainId: MONAD_MAINNET_CHAIN_ID,
+  });
+
+  const epochNumber = epochInfo?.[0] ?? 0n;
+  const epochMonRewards = epochInfo?.[1] ?? 0n;
+  const epochPrescioRewards = epochInfo?.[2] ?? 0n;
+  const totalWeight = epochInfo?.[3] ?? 0n;
+  const epochStartTime = epochInfo?.[4] ?? 0n;
+  const finalized = epochInfo?.[5] ?? false;
+
+  // Calculate epoch end time (7 days from start)
+  const EPOCH_DURATION = 7n * 24n * 60n * 60n; // 7 days in seconds
+  const epochEndTime = epochStartTime > 0n ? epochStartTime + EPOCH_DURATION : 0n;
+
+  return {
+    epochNumber,
+    epochMonRewards,
+    epochPrescioRewards,
+    totalWeight,
+    epochStartTime,
+    epochEndTime,
+    finalized,
+    isLoading,
     refetch,
   };
 }
@@ -1207,6 +1274,43 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
   );
 }
 
+// Epoch countdown component
+function EpochCountdown({ epochEndTime }: { epochEndTime: bigint }) {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const endTime = Number(epochEndTime);
+      const remaining = endTime - now;
+
+      if (remaining <= 0) {
+        setTimeLeft("Finalizing...");
+        return;
+      }
+
+      const days = Math.floor(remaining / 86400);
+      const hours = Math.floor((remaining % 86400) / 3600);
+      const minutes = Math.floor((remaining % 3600) / 60);
+
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m`);
+      } else {
+        setTimeLeft(`${minutes}m`);
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [epochEndTime]);
+
+  return <span>{timeLeft}</span>;
+}
+
 function RewardsCard({ address }: { address: Address }) {
   const [txStatus, setTxStatus] = useState<TxStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -1215,7 +1319,23 @@ function RewardsCard({ address }: { address: Address }) {
   const isCorrectNetwork = chainId === MONAD_MAINNET_CHAIN_ID;
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   
-  const { pendingMON, pendingPRESCIO, isLoading, refetch } = useUserStakeData(address);
+  const { pendingMON, pendingPRESCIO, userWeight, isLoading, refetch } = useUserStakeData(address);
+  const { 
+    epochNumber, 
+    epochMonRewards, 
+    epochPrescioRewards, 
+    totalWeight,
+    epochEndTime,
+    isLoading: isLoadingEpoch 
+  } = useCurrentEpochInfo();
+
+  // Calculate estimated rewards for current epoch
+  const estimatedMON = totalWeight > 0n && userWeight > 0n
+    ? (epochMonRewards * userWeight) / totalWeight
+    : 0n;
+  const estimatedPRESCIO = totalWeight > 0n && userWeight > 0n
+    ? (epochPrescioRewards * userWeight) / totalWeight
+    : 0n;
 
   // Write contract hooks for claiming
   const { writeContract: writeClaimMON, data: claimMONHash, isPending: isClaimingMON, error: claimMONError } = useWriteContract();
@@ -1297,9 +1417,31 @@ function RewardsCard({ address }: { address: Address }) {
       
       <TransactionStatus status={txStatus} errorMessage={errorMessage} onDismiss={dismissStatus} />
       
+      {/* Current Epoch Info */}
+      <div className="p-3 bg-[#0E100F] border border-[#27272A] rounded-lg mb-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#6E54FF]" />
+            <span className="text-xs text-[#A1A1AA]">Epoch #{isLoadingEpoch ? "..." : epochNumber.toString()}</span>
+          </div>
+          <div className="text-xs text-[#A1A1AA]">
+            {isLoadingEpoch ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : epochEndTime > 0n ? (
+              <span className="text-yellow-400">
+                <EpochCountdown epochEndTime={epochEndTime} /> left
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <p className="text-[10px] text-[#71717A]">
+          Rewards are distributed every 7 days when the epoch finalizes
+        </p>
+      </div>
+      
       {/* MON Rewards */}
       <div className="p-3 border border-[#27272A] rounded-lg mb-3">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <img src="/monad-icon.png" alt="MON" className="w-6 h-6 rounded-full" />
             <div>
@@ -1307,20 +1449,36 @@ function RewardsCard({ address }: { address: Address }) {
               <p className="text-xs text-[#A1A1AA]">From betting fees</p>
             </div>
           </div>
-          <div className="text-right">
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
-            ) : (
-              <p className="text-sm font-mono font-medium text-white">
-                {parseFloat(formatEther(pendingMON)).toFixed(4)} MON
-              </p>
-            )}
-          </div>
         </div>
+        
+        {/* Claimable */}
+        <div className="flex items-center justify-between py-1.5">
+          <span className="text-xs text-[#A1A1AA]">Claimable</span>
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin text-[#A1A1AA]" />
+          ) : (
+            <span className="text-sm font-mono font-medium text-white">
+              {parseFloat(formatEther(pendingMON)).toFixed(4)} MON
+            </span>
+          )}
+        </div>
+        
+        {/* Estimated for this epoch */}
+        <div className="flex items-center justify-between py-1.5 border-t border-[#27272A]/50">
+          <span className="text-xs text-[#A1A1AA]">This Epoch (Est.)</span>
+          {isLoading || isLoadingEpoch ? (
+            <Loader2 className="h-3 w-3 animate-spin text-[#A1A1AA]" />
+          ) : (
+            <span className="text-sm font-mono text-yellow-400/80">
+              ~{parseFloat(formatEther(estimatedMON)).toFixed(4)} MON
+            </span>
+          )}
+        </div>
+        
         <Button
           onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleClaimMON}
           disabled={isCorrectNetwork ? (isProcessingMON || pendingMON === 0n) : isSwitching}
-          className="w-full py-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          className="w-full py-2 mt-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           variant="ghost"
         >
           {isSwitching ? (
@@ -1337,7 +1495,7 @@ function RewardsCard({ address }: { address: Address }) {
       
       {/* PRESCIO Rewards */}
       <div className="p-3 border border-[#27272A] rounded-lg">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <img src="/prescio-icon.png" alt="PRESCIO" className="w-6 h-6 rounded-full" />
             <div>
@@ -1345,20 +1503,36 @@ function RewardsCard({ address }: { address: Address }) {
               <p className="text-xs text-[#A1A1AA]">From penalties</p>
             </div>
           </div>
-          <div className="text-right">
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
-            ) : (
-              <p className="text-sm font-mono font-medium text-white">
-                {Math.floor(parseFloat(formatEther(pendingPRESCIO))).toLocaleString()} PRESCIO
-              </p>
-            )}
-          </div>
         </div>
+        
+        {/* Claimable */}
+        <div className="flex items-center justify-between py-1.5">
+          <span className="text-xs text-[#A1A1AA]">Claimable</span>
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin text-[#A1A1AA]" />
+          ) : (
+            <span className="text-sm font-mono font-medium text-white">
+              {Math.floor(parseFloat(formatEther(pendingPRESCIO))).toLocaleString()} PRESCIO
+            </span>
+          )}
+        </div>
+        
+        {/* Estimated for this epoch */}
+        <div className="flex items-center justify-between py-1.5 border-t border-[#27272A]/50">
+          <span className="text-xs text-[#A1A1AA]">This Epoch (Est.)</span>
+          {isLoading || isLoadingEpoch ? (
+            <Loader2 className="h-3 w-3 animate-spin text-[#A1A1AA]" />
+          ) : (
+            <span className="text-sm font-mono text-yellow-400/80">
+              ~{Math.floor(parseFloat(formatEther(estimatedPRESCIO))).toLocaleString()} PRESCIO
+            </span>
+          )}
+        </div>
+        
         <Button
           onClick={!isCorrectNetwork ? () => switchChain({ chainId: MONAD_MAINNET_CHAIN_ID }) : handleClaimPRESCIO}
           disabled={isCorrectNetwork ? (isProcessingPRESCIO || pendingPRESCIO === 0n) : isSwitching}
-          className="w-full py-2 bg-[#6E54FF]/10 text-[#6E54FF] hover:bg-[#6E54FF]/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          className="w-full py-2 mt-2 bg-[#6E54FF]/10 text-[#6E54FF] hover:bg-[#6E54FF]/20 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           variant="ghost"
         >
           {isSwitching ? (
