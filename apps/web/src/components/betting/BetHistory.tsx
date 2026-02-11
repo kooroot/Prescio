@@ -70,8 +70,8 @@ export function BetHistory({ bets, players, isConnected }: BetHistoryProps) {
             </div>
             <div className="flex flex-col items-end gap-0.5">
               {statusBadge(bet.status)}
-              {bet.potentialPayout && bet.potentialPayout > 0n && (
-                <span className="text-[10px] text-gray-500">
+              {BigInt(bet.potentialPayout?.toString() ?? "0") > 0n && (
+                <span className="text-sm font-semibold text-green-400">
                   → {parseFloat(formatEther(BigInt(bet.potentialPayout.toString()))).toFixed(2)} MON
                 </span>
               )}

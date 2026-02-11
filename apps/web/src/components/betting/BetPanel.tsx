@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAccount, useConnect } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { MONAD_TESTNET_CHAIN_ID, MONAD_TESTNET_RPC } from "@prescio/common";
 import { formatEther, parseEther } from "viem";
+import { useNetwork } from "@/hooks/useNetwork";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,32 +41,27 @@ function marketStateLabel(state: ContractMarketState) {
 export function BetPanel({ gameId, players, phase }: BetPanelProps) {
   const { address, isConnected, chainId } = useAccount();
   const { connect } = useConnect();
-  const isWrongChain = isConnected && chainId !== MONAD_TESTNET_CHAIN_ID;
+  const { network } = useNetwork();
+  const isWrongChain = isConnected && chainId !== network.chainId;
 
   const switchToMonad = async () => {
     const provider = (window as any).ethereum;
     if (!provider) return;
-    const chainIdHex = `0x${MONAD_TESTNET_CHAIN_ID.toString(16)}`;
+    const chainIdHex = `0x${network.chainId.toString(16)}`;
     const chainParams = {
       chainId: chainIdHex,
-      chainName: "Monad Testnet",
+      chainName: network.name,
       nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
-      rpcUrls: [MONAD_TESTNET_RPC],
-      blockExplorerUrls: ["https://testnet.monadexplorer.com"],
+      rpcUrls: [network.rpcUrl],
+      blockExplorerUrls: [network.explorerUrl],
     };
     try {
-      // Try removing old chain config first (resets RPC)
-      await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] });
-      try {
-        await provider.request({ method: "wallet_removeEthereumChain", params: [{ chainId: chainIdHex }] });
-      } catch (_) { /* ignore if not supported */ }
-      await provider.request({ method: "wallet_addEthereumChain", params: [chainParams] });
+      // Try switching first
+      await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });
     } catch (err: any) {
-      // Fallback: just try add (which switches if exists)
-      try {
+      // If chain not added, add it
+      if (err.code === 4902) {
         await provider.request({ method: "wallet_addEthereumChain", params: [chainParams] });
-      } catch (_) {
-        await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });
       }
     }
   };
@@ -226,7 +221,7 @@ export function BetPanel({ gameId, players, phase }: BetPanelProps) {
                 onClick={switchToMonad}
                 className="w-full bg-yellow-600 hover:bg-yellow-700"
               >
-                ⚠️ Switch to Monad Testnet
+                ⚠️ Switch to {network.name}
               </Button>
             ) : (
               <div className="flex flex-col gap-3">

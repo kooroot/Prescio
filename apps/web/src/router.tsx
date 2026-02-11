@@ -1,8 +1,7 @@
-import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
+import { createRouter, createRootRoute, createRoute, redirect } from "@tanstack/react-router";
 import { RootLayout } from "./routes/__root";
 import { LobbyPage } from "./routes/index";
 import { GamePage } from "./routes/game/$gameId";
-import { StakingPage } from "./pages/StakingPage";
 
 // Root route
 const rootRoute = createRootRoute({
@@ -23,11 +22,15 @@ const gameRoute = createRoute({
   component: GamePage,
 });
 
-// Staking route
+// Staking route — Redirect to staking.prescio.fun
 const stakingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/staking",
-  component: StakingPage,
+  beforeLoad: () => {
+    window.location.href = "https://staking.prescio.fun";
+    throw redirect({ to: "/" });
+  },
+  component: () => null,
 });
 
 // Route tree

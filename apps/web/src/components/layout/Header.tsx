@@ -1,4 +1,4 @@
-import { ExternalLink, ChevronDown, Coins } from "lucide-react";
+import { ExternalLink, ChevronDown, Coins, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
@@ -59,13 +59,25 @@ export function Header() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link
-            to="/staking"
+          <a
+            href="https://staking.prescio.fun"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-monad-purple transition-colors hover:bg-monad-purple/10"
           >
             <Coins className="h-4 w-4" />
             Staking
-          </Link>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+          <a
+            href="https://nad.fun/tokens/0xffC86Ab0C36B0728BbF52164f6319762DA867777"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-400 hover:to-green-500 hover:shadow-emerald-500/40"
+          >
+            <Sparkles className="h-4 w-4" />
+            Buy $PRESCIO
+          </a>
         </div>
 
         {/* Right: Network + Language + Wallet */}

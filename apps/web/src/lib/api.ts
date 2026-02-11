@@ -175,6 +175,32 @@ export async function fetchBets(gameId: string, address?: string): Promise<Bet[]
   // Convert server response to Bet[] for the frontend
   if (!res.userBet) return [];
 
+  const betAmountWei = BigInt(Math.floor(parseFloat(res.userBet.amount) * 1e18));
+  
+  // Calculate potential payout - fetch odds data which has accurate staking info
+  let potentialPayout = 0n;
+  try {
+    const oddsRes = await request<OddsResponse>(`/games/${gameId}/odds`);
+    if (oddsRes.odds && oddsRes.odds.length > 0) {
+      // Calculate totalPool from individual stakes
+      const totalPoolWei = oddsRes.odds.reduce((sum, o) => {
+        return sum + parseEther(o.totalStaked || "0");
+      }, 0n);
+      
+      const outcomeIndex = res.userBet.suspectIndex;
+      const outcomeData = oddsRes.odds[outcomeIndex];
+      if (outcomeData && totalPoolWei > 0n) {
+        const outcomeTotalWei = parseEther(outcomeData.totalStaked || "0");
+        if (outcomeTotalWei > 0n) {
+          // payout = (betAmount / outcomeTotal) * totalPool * 0.95 (5% fee)
+          potentialPayout = (betAmountWei * totalPoolWei * 95n) / (outcomeTotalWei * 100n);
+        }
+      }
+    }
+  } catch {
+    // If odds fetch fails, potentialPayout stays 0
+  }
+
   return [
     {
       id: `${gameId}-${address}`,
@@ -182,8 +208,8 @@ export async function fetchBets(gameId: string, address?: string): Promise<Bet[]
       userId: address ?? "",
       userAddress: (address ?? "0x0") as `0x${string}`,
       outcomeId: String(res.userBet.suspectIndex),
-      amount: BigInt(Math.floor(parseFloat(res.userBet.amount) * 1e18)),
-      potentialPayout: 0n,
+      amount: betAmountWei,
+      potentialPayout,
       status: res.userBet.claimed ? BetStatus.CLAIMED : BetStatus.OPEN,
       txHash: null,
       createdAt: Date.now(),

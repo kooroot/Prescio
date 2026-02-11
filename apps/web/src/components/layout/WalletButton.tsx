@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Wallet, LogOut, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { MONAD_TESTNET_EXPLORER } from "@prescio/common";
+import { useNetwork } from "@/hooks/useNetwork";
 
 function truncateAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -21,6 +21,7 @@ export function WalletButton() {
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { network } = useNetwork();
 
   if (!isConnected || !address) {
     return (
@@ -66,7 +67,7 @@ export function WalletButton() {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              window.open(`${MONAD_TESTNET_EXPLORER}/address/${address}`, "_blank");
+              window.open(`${network.explorerUrl}/address/${address}`, "_blank");
             }}
             className="cursor-pointer text-gray-200 focus:bg-gray-800 focus:text-white"
           >

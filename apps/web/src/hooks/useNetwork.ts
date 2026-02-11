@@ -4,6 +4,10 @@ import {
   TESTNET_CONTRACT_ADDRESSES,
   MONAD_MAINNET_CHAIN_ID,
   MONAD_TESTNET_CHAIN_ID,
+  MONAD_MAINNET_RPC,
+  MONAD_TESTNET_RPC,
+  MONAD_MAINNET_EXPLORER,
+  MONAD_TESTNET_EXPLORER,
 } from "@prescio/common";
 
 const STORAGE_KEY = "prescio-network";
@@ -14,6 +18,8 @@ interface NetworkConfig {
   id: NetworkId;
   name: string;
   chainId: number;
+  rpcUrl: string;
+  explorerUrl: string;
   contracts: typeof CONTRACT_ADDRESSES;
 }
 
@@ -22,12 +28,16 @@ const NETWORKS: Record<NetworkId, NetworkConfig> = {
     id: "monad-mainnet",
     name: "Monad Mainnet",
     chainId: MONAD_MAINNET_CHAIN_ID,
+    rpcUrl: MONAD_MAINNET_RPC,
+    explorerUrl: MONAD_MAINNET_EXPLORER,
     contracts: CONTRACT_ADDRESSES,
   },
   "monad-testnet": {
     id: "monad-testnet",
     name: "Monad Testnet",
     chainId: MONAD_TESTNET_CHAIN_ID,
+    rpcUrl: MONAD_TESTNET_RPC,
+    explorerUrl: MONAD_TESTNET_EXPLORER,
     contracts: TESTNET_CONTRACT_ADDRESSES,
   },
 };

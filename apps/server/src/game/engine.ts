@@ -104,8 +104,8 @@ export class GameEngine extends EventEmitter {
     const game = getGame(gameId);
     if (!game || game.phase !== Phase.NIGHT) return;
 
-    this.emit("phaseChange", gameId, Phase.NIGHT, game.round);
     this.schedulePhase(gameId, Phase.NIGHT);
+    this.emit("phaseChange", gameId, Phase.NIGHT, game.round);
 
     // Create on-chain betting market (async, non-blocking)
     if (isOnChainEnabled()) {
@@ -210,8 +210,8 @@ export class GameEngine extends EventEmitter {
   private enterNight(game: GameState): void {
     game.phase = Phase.NIGHT;
     updateGame(game);
-    this.emit("phaseChange", game.id, Phase.NIGHT, game.round);
     this.schedulePhase(game.id, Phase.NIGHT);
+    this.emit("phaseChange", game.id, Phase.NIGHT, game.round);
   }
 
   /**
@@ -297,8 +297,8 @@ export class GameEngine extends EventEmitter {
   private enterReport(game: GameState): void {
     game.phase = Phase.REPORT;
     updateGame(game);
-    this.emit("phaseChange", game.id, Phase.REPORT, game.round);
     this.schedulePhase(game.id, Phase.REPORT);
+    this.emit("phaseChange", game.id, Phase.REPORT, game.round);
 
     // Enable betting now that death is revealed (was PAUSED during NIGHT)
     // handleBettingOpen now calls resumeBetting on-chain if needed (V3)
@@ -316,7 +316,6 @@ export class GameEngine extends EventEmitter {
   private enterDiscussion(game: GameState): void {
     game.phase = Phase.DISCUSSION;
     updateGame(game);
-    this.emit("phaseChange", game.id, Phase.DISCUSSION, game.round);
 
     // Cancel any previous discussion abort controller
     this.abortDiscussion(game.id);
@@ -326,8 +325,9 @@ export class GameEngine extends EventEmitter {
     this.discussionAborts.set(game.id, abortController);
 
     // Start agent discussion AND timer concurrently
-    // Discussion timer is the hard deadline
+    // Discussion timer is the hard deadline - schedule BEFORE emitting
     this.schedulePhase(game.id, Phase.DISCUSSION);
+    this.emit("phaseChange", game.id, Phase.DISCUSSION, game.round);
 
     // Trigger AI discussion with abort signal
     agentManager
@@ -377,8 +377,8 @@ export class GameEngine extends EventEmitter {
     // game.phase is set by startVote
     const updatedGame = getGame(game.id);
     if (!updatedGame) return;
-    this.emit("phaseChange", game.id, Phase.VOTE, updatedGame.round);
     this.schedulePhase(game.id, Phase.VOTE);
+    this.emit("phaseChange", game.id, Phase.VOTE, updatedGame.round);
 
     // Trigger AI voting (runs async)
     agentManager
@@ -429,8 +429,8 @@ export class GameEngine extends EventEmitter {
   private enterResult(game: GameState): void {
     game.phase = Phase.RESULT;
     updateGame(game);
-    this.emit("phaseChange", game.id, Phase.RESULT, game.round);
     this.schedulePhase(game.id, Phase.RESULT);
+    this.emit("phaseChange", game.id, Phase.RESULT, game.round);
   }
 
   /**

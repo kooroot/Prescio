@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Zap, Coins, Loader2, Gamepad2, Wallet, Sparkles } from "lucide-react";
+import { Plus, Users, Zap, Coins, Loader2, Gamepad2, Wallet } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { createGame, startGame } from "@/lib/api";
 import { useActiveGames, useFinishedGames, useMyBets } from "@/hooks/useGames";
@@ -121,7 +121,7 @@ export function LobbyPage() {
         </Badge>
       </div>
 
-      {/* Create Game Button + Stake to Boost + Dialog */}
+      {/* Create Game Button + Dialog */}
       <div className="mb-10 flex items-center gap-3">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -228,20 +228,6 @@ export function LobbyPage() {
         </DialogContent>
         </Dialog>
 
-        {/* Stake to Boost CTA */}
-        <Link to="/staking">
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-monad-purple/50 text-monad-purple hover:bg-monad-purple/10 font-semibold px-6"
-          >
-            <Sparkles className="mr-2 h-5 w-5" />
-            Stake to Boost
-            <Badge className="ml-2 bg-monad-purple/20 text-monad-purple text-xs px-1.5 py-0.5">
-              2.0x
-            </Badge>
-          </Button>
-        </Link>
       </div>
 
       {/* Games Tabs */}

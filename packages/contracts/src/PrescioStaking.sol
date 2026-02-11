@@ -47,7 +47,7 @@ contract PrescioStaking is
     // Version
     // ============================================
     
-    uint256 public constant VERSION = 3;
+    uint256 public constant VERSION = 4;
 
     // ============================================
     // Types
@@ -183,11 +183,14 @@ contract PrescioStaking is
     // [M-01 FIX] Weight snapshot at epoch start for finalization
     uint256 public weightAtEpochStart;
 
+    // v1.4 - Vault integration for automated reward distribution
+    address public vaultContract;
+
     // ============================================
     // Storage Gap (for future upgrades)
     // ============================================
     
-    uint256[46] private __gap; // Reduced from 47 to account for weightAtEpochStart
+    uint256[45] private __gap; // Reduced from 46 to account for vaultContract
 
     // ============================================
     // Events
@@ -206,6 +209,8 @@ contract PrescioStaking is
     event PenaltyAccumulated(address indexed from, uint256 burn, uint256 stakers, uint256 treasury); // [L-01 FIX]
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event AutoBetControllerUpdated(address indexed oldController, address indexed newController);
+    event VaultContractUpdated(address indexed oldVault, address indexed newVault);
+    event RewardsDepositedFromVault(address indexed vault, uint256 amount, uint256 epoch);
 
     // ============================================
     // Errors
@@ -231,6 +236,7 @@ contract PrescioStaking is
     error MaxEpochsExceeded();
     error InsufficientPrescioBalance();
     error DirectTransferNotAllowed(); // [I-03 FIX]
+    error NotVaultContract();
 
     // ============================================
     // Modifiers
@@ -238,6 +244,11 @@ contract PrescioStaking is
 
     modifier onlyAutoBetController() {
         if (msg.sender != autoBetController) revert NotAutoBetController();
+        _;
+    }
+
+    modifier onlyVault() {
+        if (msg.sender != vaultContract) revert NotVaultContract();
         _;
     }
 
@@ -278,6 +289,15 @@ contract PrescioStaking is
     function initializeV3() public reinitializer(3) {
         // Initialize weightAtEpochStart with current totalWeight
         weightAtEpochStart = totalWeight;
+    }
+
+    /**
+     * @notice Reinitializer for v1.4 upgrade - Vault integration
+     * @param _vault Address of the PrescioVault contract
+     */
+    function initializeV4(address _vault) public reinitializer(4) {
+        if (_vault == address(0)) revert ZeroAddress();
+        vaultContract = _vault;
     }
 
     function _initializeTiers() internal {
@@ -505,9 +525,21 @@ contract PrescioStaking is
     // Epoch Management
     // ============================================
 
+    /**
+     * @notice Deposit MON rewards (owner only)
+     */
     function depositRewards() external payable onlyOwner {
         epochs[currentEpoch].totalRewards += msg.value;
         emit RewardsDeposited(msg.value, currentEpoch);
+    }
+
+    /**
+     * @notice Deposit MON rewards from vault contract
+     * @dev Called by PrescioVault.distributeToStaking()
+     */
+    function depositRewardsFromVault() external payable onlyVault nonReentrant {
+        epochs[currentEpoch].totalRewards += msg.value;
+        emit RewardsDepositedFromVault(msg.sender, msg.value, currentEpoch);
     }
 
     /**
@@ -753,6 +785,16 @@ contract PrescioStaking is
     }
 
     /**
+     * @notice Set the vault contract address for reward deposits
+     * @param _vault Address of the vault contract
+     */
+    function setVaultContract(address _vault) external onlyOwner {
+        if (_vault == address(0)) revert ZeroAddress();
+        emit VaultContractUpdated(vaultContract, _vault);
+        vaultContract = _vault;
+    }
+
+    /**
      * @notice Update tier configuration
      * @dev [L-03 FIX] Validates tier ordering
      */
@@ -771,7 +813,7 @@ contract PrescioStaking is
             Tier lowerTier = Tier(uint8(tier) - 1);
             if (minStake < tierConfigs[lowerTier].minStake) revert InvalidTierOrder();
         }
-        if (tier < Tier.LEGENDARY) {
+        if (tier < Tier.DIAMOND) {
             Tier higherTier = Tier(uint8(tier) + 1);
             if (tierConfigs[higherTier].minStake > 0 && minStake > tierConfigs[higherTier].minStake) {
                 revert InvalidTierOrder();

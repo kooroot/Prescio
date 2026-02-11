@@ -41,9 +41,10 @@ function formatTime(timestamp: number): string {
 export function ChatLog({ messages }: ChatLogProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  // Auto-scroll disabled
+  // useEffect(() => {
+  //   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [messages.length]);
 
   if (messages.length === 0) {
     return (

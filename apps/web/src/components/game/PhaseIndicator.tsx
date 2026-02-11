@@ -87,15 +87,17 @@ export function PhaseIndicator({ phase, timeRemaining, round }: PhaseIndicatorPr
         </div>
       </div>
 
-      {countdown > 0 && phase !== Phase.LOBBY && phase !== Phase.RESULT && (
+      {phase !== Phase.LOBBY && phase !== Phase.RESULT && (
         <Badge
           className={`font-mono text-lg px-3 py-1 ${
             isUrgent
               ? "bg-impostor text-white animate-pulse"
-              : "bg-monad-card text-gray-200"
+              : countdown > 0
+                ? "bg-monad-card text-gray-200"
+                : "bg-gray-700 text-gray-400"
           }`}
         >
-          {timerStr}
+          {countdown > 0 ? timerStr : "—:——"}
         </Badge>
       )}
     </div>
