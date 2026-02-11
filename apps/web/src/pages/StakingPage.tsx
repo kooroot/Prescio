@@ -1,30 +1,100 @@
 import { useState, useMemo } from "react";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useConnect, useReadContract, useReadContracts } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { formatEther, parseEther } from "viem";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatEther, parseEther, type Address } from "viem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet,
   Loader2,
-  Coins,
-  TrendingUp,
+  Zap,
   Clock,
   AlertTriangle,
-  Sparkles,
-  Zap,
-  Crown,
-  Diamond,
-  Award,
-  Gift,
-  ArrowUpRight,
-  ArrowDownRight,
-  Timer,
-  Check,
 } from "lucide-react";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contract Config
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STAKING_CONTRACT_ADDRESS = "0xa0742ffb1762FF3EA001793aCBA202f82244D983" as const;
+const PRESCIO_TOKEN_ADDRESS = "0xffC86Ab0C36B0728BbF52164f6319762DA867777" as const;
+const MONAD_MAINNET_CHAIN_ID = 143;
+
+// ERC20 balanceOf ABI
+const ERC20_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+// Minimal ABI for reading staking data
+const STAKING_ABI = [
+  {
+    inputs: [],
+    name: "totalStaked",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getStakerCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "stakes",
+    outputs: [
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "uint256", name: "lockEnd", type: "uint256" },
+      { internalType: "uint8", name: "lockType", type: "uint8" },
+      { internalType: "uint256", name: "startTime", type: "uint256" },
+      { internalType: "uint256", name: "lastClaimEpoch", type: "uint256" },
+      { internalType: "uint256", name: "lastPrescioClaimEpoch", type: "uint256" },
+      { internalType: "uint256", name: "firstEligibleEpoch", type: "uint256" },
+      { internalType: "bool", name: "exists", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getTier",
+    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getPendingRewards",
+    outputs: [
+      { internalType: "uint256", name: "monRewards", type: "uint256" },
+      { internalType: "uint256", name: "prescioRewards", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "user", type: "address" }],
+    name: "getUserWeight",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "currentEpoch",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -34,72 +104,143 @@ interface TierInfo {
   name: string;
   minStake: bigint;
   bettingBoost: number;
-  icon: React.ReactNode;
-  color: string;
-  gradient: string;
-  glow: string;
+  colorClass: string;
+  bgClass: string;
+  progressColor: string;
 }
 
+// Updated tier thresholds: Bronze 5M, Silver 20M, Gold 50M, Diamond 150M
 const TIERS: TierInfo[] = [
   {
     name: "Bronze",
-    minStake: parseEther("1000"),
-    bettingBoost: 1.5,
-    icon: <Award className="h-5 w-5" />,
-    color: "text-amber-600",
-    gradient: "from-amber-700 to-amber-900",
-    glow: "shadow-amber-500/20",
+    minStake: parseEther("5000000"),
+    bettingBoost: 1.1,
+    colorClass: "text-amber-600",
+    bgClass: "tier-bronze",
+    progressColor: "bg-amber-600",
   },
   {
     name: "Silver",
-    minStake: parseEther("10000"),
-    bettingBoost: 1.8,
-    icon: <Coins className="h-5 w-5" />,
-    color: "text-gray-300",
-    gradient: "from-gray-400 to-gray-600",
-    glow: "shadow-gray-400/20",
+    minStake: parseEther("20000000"),
+    bettingBoost: 1.25,
+    colorClass: "text-gray-400",
+    bgClass: "tier-silver",
+    progressColor: "bg-gray-400",
   },
   {
     name: "Gold",
-    minStake: parseEther("50000"),
-    bettingBoost: 2.0,
-    icon: <Crown className="h-5 w-5" />,
-    color: "text-yellow-400",
-    gradient: "from-yellow-400 to-amber-600",
-    glow: "shadow-yellow-400/30",
+    minStake: parseEther("50000000"),
+    bettingBoost: 1.5,
+    colorClass: "text-yellow-400",
+    bgClass: "tier-gold",
+    progressColor: "bg-yellow-400",
   },
   {
     name: "Diamond",
-    minStake: parseEther("200000"),
-    bettingBoost: 2.5,
-    icon: <Diamond className="h-5 w-5" />,
-    color: "text-cyan-300",
-    gradient: "from-cyan-300 via-purple-400 to-pink-400",
-    glow: "shadow-cyan-400/40",
+    minStake: parseEther("150000000"),
+    bettingBoost: 2.0,
+    colorClass: "text-cyan-400",
+    bgClass: "tier-diamond",
+    progressColor: "bg-cyan-400",
   },
 ];
+
+// Tier enum mapping from contract
+const TIER_ENUM_MAP: Record<number, TierInfo | null> = {
+  0: null, // NONE
+  1: TIERS[0], // BRONZE
+  2: TIERS[1], // SILVER
+  3: TIERS[2], // GOLD
+  4: TIERS[3], // DIAMOND
+};
 
 const UNSTAKE_PERIOD_DAYS = 7;
 const EARLY_WITHDRAW_PENALTY = 5; // 5%
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mock Data (Replace with actual contract hooks)
+// Custom Hooks for Contract Data
 // ─────────────────────────────────────────────────────────────────────────────
 
-const mockUserData = {
-  stakedAmount: parseEther("55000"),
-  pendingUnstake: parseEther("5000"),
-  unstakeRequestTime: Date.now() - 3 * 24 * 60 * 60 * 1000, // 3 days ago
-  pendingRewardsMON: parseEther("12.5"),
-  pendingRewardsPRESCIO: parseEther("340"),
-  prescioBalance: parseEther("100000"),
-};
+function useProtocolStats() {
+  const { data: totalStaked, isLoading: isLoadingTotalStaked } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "totalStaked",
+    chainId: MONAD_MAINNET_CHAIN_ID,
+  });
 
-const mockProtocolStats = {
-  totalStaked: parseEther("12500000"),
-  totalStakers: 1247,
-  apr: 18.5,
-};
+  const { data: stakerCount, isLoading: isLoadingStakerCount } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "getStakerCount",
+    chainId: MONAD_MAINNET_CHAIN_ID,
+  });
+
+  return {
+    totalStaked: totalStaked ?? 0n,
+    stakerCount: stakerCount ?? 0n,
+    isLoading: isLoadingTotalStaked || isLoadingStakerCount,
+  };
+}
+
+function useUserStakeData(address: Address | undefined) {
+  const { data: stakeData, isLoading: isLoadingStake } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "stakes",
+    args: address ? [address] : undefined,
+    chainId: MONAD_MAINNET_CHAIN_ID,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  const { data: tierData, isLoading: isLoadingTier } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "getTier",
+    args: address ? [address] : undefined,
+    chainId: MONAD_MAINNET_CHAIN_ID,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  const { data: pendingRewards, isLoading: isLoadingRewards } = useReadContract({
+    address: STAKING_CONTRACT_ADDRESS,
+    abi: STAKING_ABI,
+    functionName: "getPendingRewards",
+    args: address ? [address] : undefined,
+    chainId: MONAD_MAINNET_CHAIN_ID,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  const stakedAmount = stakeData?.[0] ?? 0n;
+  const lockEnd = stakeData?.[1] ?? 0n;
+  const lockType = stakeData?.[2] ?? 0;
+  const startTime = stakeData?.[3] ?? 0n;
+  const exists = stakeData?.[7] ?? false;
+
+  const tier = tierData !== undefined ? TIER_ENUM_MAP[tierData] : null;
+
+  const pendingMON = pendingRewards?.[0] ?? 0n;
+  const pendingPRESCIO = pendingRewards?.[1] ?? 0n;
+
+  return {
+    stakedAmount,
+    lockEnd,
+    lockType,
+    startTime,
+    exists,
+    tier,
+    tierNumber: tierData ?? 0,
+    pendingMON,
+    pendingPRESCIO,
+    isLoading: isLoadingStake || isLoadingTier || isLoadingRewards,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
@@ -123,11 +264,10 @@ function getNextTier(stakedAmount: bigint): TierInfo | null {
   return null;
 }
 
-function formatNumber(value: bigint, decimals = 2): string {
-  const num = parseFloat(formatEther(value));
-  if (num >= 1000000) return `${(num / 1000000).toFixed(decimals)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(decimals)}K`;
-  return num.toFixed(decimals);
+// Format number with commas, no abbreviation
+function formatFullNumber(value: bigint): string {
+  const num = Math.floor(parseFloat(formatEther(value)));
+  return num.toLocaleString();
 }
 
 function formatCountdown(targetTime: number): string {
@@ -139,521 +279,496 @@ function formatCountdown(targetTime: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CSS for tier backgrounds (inject via style tag or add to global CSS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const tierStyles = `
+  .tier-bronze { 
+    background: linear-gradient(to bottom right, rgba(180, 83, 9, 0.15), rgba(146, 64, 14, 0.08));
+    border-color: rgba(217, 119, 6, 0.35);
+  }
+  .tier-silver { 
+    background: linear-gradient(to bottom right, rgba(156, 163, 175, 0.15), rgba(107, 114, 128, 0.08));
+    border-color: rgba(156, 163, 175, 0.35);
+  }
+  .tier-gold { 
+    background: linear-gradient(to bottom right, rgba(234, 179, 8, 0.15), rgba(202, 138, 4, 0.08));
+    border-color: rgba(234, 179, 8, 0.35);
+  }
+  .tier-diamond { 
+    background: linear-gradient(to bottom right, rgba(34, 211, 238, 0.15), rgba(6, 182, 212, 0.08));
+    border-color: rgba(34, 211, 238, 0.35);
+  }
+  .tab-active { 
+    background: rgba(110, 84, 255, 0.1);
+    color: #6E54FF;
+  }
+`;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Components
 // ─────────────────────────────────────────────────────────────────────────────
 
-function StakingStats() {
+function ProtocolStats() {
+  const { totalStaked, stakerCount, isLoading } = useProtocolStats();
+
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-monad-purple/20 to-monad-purple/5 border border-monad-purple/20 p-4">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-monad-purple/10 rounded-full blur-2xl" />
-        <p className="text-xs text-gray-400 mb-1">Total Staked</p>
-        <p className="text-xl font-bold text-white font-mono">
-          {formatNumber(mockProtocolStats.totalStaked)}
-        </p>
-        <p className="text-xs text-monad-purple mt-1">PRESCIO</p>
+    <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4">
+        <p className="text-xs text-[#A1A1AA] mb-1">Total Staked</p>
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
+            <span className="text-[#A1A1AA]">Loading...</span>
+          </div>
+        ) : (
+          <>
+            <p className="text-xl font-semibold text-white">{formatFullNumber(totalStaked)}</p>
+            <p className="text-xs text-[#A1A1AA]">PRESCIO</p>
+          </>
+        )}
       </div>
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border border-cyan-500/20 p-4">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/10 rounded-full blur-2xl" />
-        <p className="text-xs text-gray-400 mb-1">Total Stakers</p>
-        <p className="text-xl font-bold text-white font-mono">
-          {mockProtocolStats.totalStakers.toLocaleString()}
-        </p>
-        <p className="text-xs text-cyan-400 mt-1">Users</p>
+      <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4">
+        <p className="text-xs text-[#A1A1AA] mb-1">Total Stakers</p>
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
+            <span className="text-[#A1A1AA]">Loading...</span>
+          </div>
+        ) : (
+          <>
+            <p className="text-xl font-semibold text-white">{Number(stakerCount).toLocaleString()}</p>
+            <p className="text-xs text-[#A1A1AA]">Users</p>
+          </>
+        )}
       </div>
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/20 p-4">
-        <div className="absolute top-0 right-0 w-20 h-20 bg-green-500/10 rounded-full blur-2xl" />
-        <p className="text-xs text-gray-400 mb-1">Est. APR</p>
-        <p className="text-xl font-bold text-white font-mono">
-          {mockProtocolStats.apr}%
-        </p>
-        <p className="text-xs text-green-400 mt-1">Variable</p>
+      <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4">
+        <p className="text-xs text-[#A1A1AA] mb-1">Est. APR</p>
+        <p className="text-xl font-semibold text-green-400">-</p>
+        <p className="text-xs text-[#A1A1AA]">Variable</p>
       </div>
     </div>
   );
 }
 
-function CurrentStakeCard() {
-  const currentTier = getCurrentTier(mockUserData.stakedAmount);
-  const nextTier = getNextTier(mockUserData.stakedAmount);
+function MyPositionCard({ address }: { address: Address }) {
+  const { stakedAmount, tier, isLoading } = useUserStakeData(address);
+  
+  const currentTier = tier ?? getCurrentTier(stakedAmount);
+  const nextTier = getNextTier(stakedAmount);
   
   const progressToNext = nextTier
-    ? Number((mockUserData.stakedAmount * 100n) / nextTier.minStake)
+    ? Number((stakedAmount * 100n) / nextTier.minStake)
     : 100;
+  
+  const amountToNext = nextTier
+    ? nextTier.minStake - stakedAmount
+    : 0n;
+
+  // Get tier-specific classes
+  const tierBgClass = currentTier?.bgClass || "";
+  const tierColorClass = currentTier?.colorClass || "text-gray-400";
+  const progressColorClass = currentTier?.progressColor || "bg-gray-400";
+
+  if (isLoading) {
+    return (
+      <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-6 flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#6E54FF]" />
+      </div>
+    );
+  }
 
   return (
-    <Card className="border-monad-border bg-gradient-to-br from-monad-card/80 to-monad-card/40 backdrop-blur-sm overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-monad-purple via-cyan-400 to-pink-500" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-monad-purple" />
-          My Staking Position
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Current Stake Amount */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-3xl font-bold text-white font-mono">
-              {formatNumber(mockUserData.stakedAmount)}
-            </p>
-            <p className="text-sm text-gray-400">PRESCIO Staked</p>
-          </div>
-          {currentTier && (
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r ${currentTier.gradient} shadow-lg ${currentTier.glow}`}>
-              {currentTier.icon}
-              <span className="font-bold text-white">{currentTier.name}</span>
-            </div>
-          )}
+    <div className={`${tierBgClass} border rounded-xl p-6`}>
+      <h2 className={`text-sm font-medium ${tierColorClass} opacity-80 uppercase tracking-wide mb-4`}>
+        My Position
+      </h2>
+      
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <p className="text-3xl font-bold text-white mb-1">{formatFullNumber(stakedAmount)}</p>
+          <p className="text-sm text-[#A1A1AA]">PRESCIO Staked</p>
         </div>
-
-        {/* Betting Boost */}
-        <div className="flex items-center justify-between rounded-lg bg-monad-purple/10 border border-monad-purple/20 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-monad-purple" />
-            <span className="text-sm text-gray-300">Betting Boost</span>
-          </div>
-          <span className="text-lg font-bold text-monad-purple">
-            {currentTier ? `${currentTier.bettingBoost}x` : "1x"} Max Bet
-          </span>
-        </div>
-
-        {/* Progress to Next Tier */}
-        {nextTier && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-400">Progress to {nextTier.name}</span>
-              <span className={nextTier.color}>
-                {formatNumber(nextTier.minStake - mockUserData.stakedAmount)} more
-              </span>
-            </div>
-            <div className="h-2 bg-monad-dark rounded-full overflow-hidden">
-              <div
-                className={`h-full bg-gradient-to-r ${nextTier.gradient} transition-all duration-500`}
-                style={{ width: `${Math.min(progressToNext, 100)}%` }}
-              />
-            </div>
+        {currentTier && (
+          <div className={`flex items-center gap-2 px-3 py-1.5 ${tierBgClass} border rounded-lg`}>
+            <svg className={`w-4 h-4 ${tierColorClass}`} fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+            <span className={`text-sm font-medium ${tierColorClass}`}>{currentTier.name}</span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      
+      {/* Betting Boost */}
+      <div className="flex items-center justify-between p-3 bg-[#6E54FF]/5 border border-[#6E54FF]/10 rounded-lg mb-4">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-[#6E54FF]" />
+          <span className="text-sm text-[#A1A1AA]">Betting Boost</span>
+        </div>
+        <span className="text-sm font-semibold text-[#6E54FF]">
+          {currentTier ? `${currentTier.bettingBoost}x` : "1x"} Max Bet
+        </span>
+      </div>
+      
+      {/* Progress to Next Tier */}
+      {nextTier && (
+        <div>
+          <div className="flex justify-between text-xs mb-2">
+            <span className="text-[#A1A1AA]">Progress to {nextTier.name}</span>
+            <span className={nextTier.colorClass}>{formatFullNumber(amountToNext)} more needed</span>
+          </div>
+          <div className={`h-1.5 ${currentTier ? currentTier.progressColor.replace('bg-', 'bg-opacity-30 bg-') : 'bg-gray-900/30'} rounded-full overflow-hidden`}>
+            <div 
+              className={`h-full ${progressColorClass} rounded-full transition-all duration-500`}
+              style={{ width: `${Math.min(progressToNext, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
-function StakeForm() {
-  const [amount, setAmount] = useState("");
-  const [isStaking, setIsStaking] = useState(false);
+function TierBenefitsTable({ address }: { address?: Address }) {
+  const { tier } = useUserStakeData(address);
+  const currentTier = tier;
+  
+  return (
+    <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-6">
+      <h2 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-4">Tier Benefits</h2>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[#27272A]">
+              <th className="text-left py-3 px-2 text-[#A1A1AA] font-medium">Tier</th>
+              <th className="text-right py-3 px-2 text-[#A1A1AA] font-medium">Min Stake</th>
+              <th className="text-right py-3 px-2 text-[#A1A1AA] font-medium">Bet Boost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {TIERS.map((t) => {
+              const isCurrentTier = currentTier?.name === t.name;
+              return (
+                <tr 
+                  key={t.name}
+                  className={`border-b border-[#27272A]/50 ${isCurrentTier ? 'bg-yellow-500/5' : ''}`}
+                >
+                  <td className="py-3 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className={t.colorClass}>● {t.name}</span>
+                      {isCurrentTier && (
+                        <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="text-right py-3 px-2 font-mono text-white">
+                    {formatFullNumber(t.minStake)}
+                  </td>
+                  <td className="text-right py-3 px-2 font-mono text-white">
+                    {t.bettingBoost}x
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-[#27272A]">
+        <p className="text-xs text-[#A1A1AA] mb-2">All tiers include:</p>
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs bg-[#0E100F] px-2 py-1 rounded text-white">MON rewards</span>
+          <span className="text-xs bg-[#0E100F] px-2 py-1 rounded text-white">PRESCIO from penalties</span>
+          <span className="text-xs bg-[#0E100F] px-2 py-1 rounded text-white">Governance voting</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const handleStake = async () => {
-    setIsStaking(true);
-    // TODO: Call contract
-    setTimeout(() => setIsStaking(false), 2000);
+function StakeUnstakeTabs({ address }: { address: Address }) {
+  const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
+  const [amount, setAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { stakedAmount, lockEnd, isLoading } = useUserStakeData(address);
+
+  const hasPendingUnstake = false; // TODO: Implement pending unstake tracking
+  const pendingUnstake = 0n;
+  const unstakeEndTime = Number(lockEnd) * 1000;
+
+  // Get user's PRESCIO balance from token contract
+  const { data: prescioBalanceData } = useReadContract({
+    address: PRESCIO_TOKEN_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [address],
+    chainId: MONAD_MAINNET_CHAIN_ID,
+  });
+  const prescioBalance = prescioBalanceData ?? 0n;
+
+  const handleAction = async () => {
+    setIsProcessing(true);
+    // TODO: Call contract stake/unstake
+    setTimeout(() => setIsProcessing(false), 2000);
   };
 
-  const presetAmounts = ["1000", "10000", "50000", "100000"];
+  const setPresetAmount = (value: number) => {
+    setAmount(value.toLocaleString());
+  };
 
   return (
-    <Card className="border-monad-border bg-monad-card/40">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <ArrowUpRight className="h-4 w-4 text-green-400" />
-          Stake PRESCIO
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Balance Display */}
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-400">Available Balance</span>
-          <span className="text-white font-mono">
-            {formatNumber(mockUserData.prescioBalance)} PRESCIO
-          </span>
-        </div>
-
-        {/* Amount Input */}
-        <div className="relative">
-          <Input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter amount"
-            className="pr-24 h-12 text-lg bg-monad-dark border-monad-border text-white font-mono"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setAmount(formatEther(mockUserData.prescioBalance))}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-monad-purple hover:text-monad-purple/80"
-          >
-            MAX
-          </Button>
-        </div>
-
-        {/* Preset Amounts */}
-        <div className="flex gap-2">
-          {presetAmounts.map((preset) => (
-            <Button
-              key={preset}
-              variant="outline"
-              size="sm"
-              onClick={() => setAmount(preset)}
-              className="flex-1 border-monad-border hover:border-monad-purple hover:bg-monad-purple/10 text-xs"
-            >
-              {parseInt(preset).toLocaleString()}
-            </Button>
-          ))}
-        </div>
-
-        {/* Stake Button */}
-        <Button
-          onClick={handleStake}
-          disabled={!amount || parseFloat(amount) <= 0 || isStaking}
-          className="w-full h-12 bg-gradient-to-r from-monad-purple to-purple-600 hover:from-monad-purple/90 hover:to-purple-600/90 text-white font-bold text-lg shadow-lg shadow-monad-purple/25"
+    <div className="bg-[#18181B] border border-[#27272A] rounded-xl">
+      {/* Tab Headers */}
+      <div className="flex border-b border-[#27272A]">
+        <button
+          onClick={() => setActiveTab("stake")}
+          className={`flex-1 py-3 text-sm font-medium text-center rounded-tl-xl transition-colors ${
+            activeTab === "stake" 
+              ? "tab-active" 
+              : "text-[#A1A1AA] hover:text-white"
+          }`}
         >
-          {isStaking ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              Staking...
-            </>
-          ) : (
-            <>
-              <Coins className="h-5 w-5 mr-2" />
-              Stake PRESCIO
-            </>
-          )}
-        </Button>
-
-        {/* Info Note */}
-        <p className="text-xs text-gray-500 text-center">
-          Staking is instant. Unstaking requires a 7-day waiting period.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function UnstakeForm() {
-  const [amount, setAmount] = useState("");
-  const [isUnstaking, setIsUnstaking] = useState(false);
-  const [showEarlyWithdraw, setShowEarlyWithdraw] = useState(false);
-
-  const unstakeEndTime = mockUserData.unstakeRequestTime + UNSTAKE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
-  const canWithdraw = Date.now() >= unstakeEndTime;
-  const hasPendingUnstake = mockUserData.pendingUnstake > 0n;
-
-  const handleUnstake = async () => {
-    setIsUnstaking(true);
-    setTimeout(() => setIsUnstaking(false), 2000);
-  };
-
-  const earlyWithdrawAmount = (mockUserData.pendingUnstake * BigInt(100 - EARLY_WITHDRAW_PENALTY)) / 100n;
-  const penaltyAmount = mockUserData.pendingUnstake - earlyWithdrawAmount;
-
-  return (
-    <Card className="border-monad-border bg-monad-card/40">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <ArrowDownRight className="h-4 w-4 text-orange-400" />
-          Unstake PRESCIO
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Pending Unstake Display */}
-        {hasPendingUnstake && (
-          <div className="rounded-xl bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/20 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Timer className="h-5 w-5 text-orange-400" />
-                <span className="text-sm text-gray-300">Pending Unstake</span>
-              </div>
-              <span className="font-bold text-white font-mono">
-                {formatNumber(mockUserData.pendingUnstake)} PRESCIO
-              </span>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">
-                {canWithdraw ? "Ready to withdraw!" : `Unlocks in ${formatCountdown(unstakeEndTime)}`}
-              </span>
-              <div className="flex gap-2">
-                {!canWithdraw && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowEarlyWithdraw(!showEarlyWithdraw)}
-                    className="border-orange-500/30 text-orange-400 hover:bg-orange-500/10 text-xs"
-                  >
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Early Withdraw
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  disabled={!canWithdraw}
-                  className={canWithdraw 
-                    ? "bg-green-500 hover:bg-green-600" 
-                    : "bg-gray-600 cursor-not-allowed"
-                  }
-                >
-                  {canWithdraw ? (
-                    <>
-                      <Check className="h-3 w-3 mr-1" />
-                      Withdraw
-                    </>
-                  ) : (
-                    "Locked"
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Early Withdraw Warning */}
-            {showEarlyWithdraw && !canWithdraw && (
-              <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-3 space-y-2">
-                <div className="flex items-center gap-2 text-red-400 text-sm">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="font-medium">5% Early Withdrawal Penalty</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-400">You will receive:</span>
-                  <span className="text-white font-mono">
-                    {formatNumber(earlyWithdrawAmount)} PRESCIO
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-400">Penalty (redistributed to stakers):</span>
-                  <span className="text-red-400 font-mono">
-                    -{formatNumber(penaltyAmount)} PRESCIO
-                  </span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="w-full mt-2 bg-red-600 hover:bg-red-700"
-                >
-                  Confirm Early Withdraw
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* New Unstake Request */}
-        <div className="space-y-3">
+          Stake
+        </button>
+        <button
+          onClick={() => setActiveTab("unstake")}
+          className={`flex-1 py-3 text-sm font-medium text-center rounded-tr-xl transition-colors ${
+            activeTab === "unstake" 
+              ? "tab-active" 
+              : "text-[#A1A1AA] hover:text-white"
+          }`}
+        >
+          Unstake
+        </button>
+      </div>
+      
+      {/* Stake Content */}
+      {activeTab === "stake" && (
+        <div className="p-4 space-y-4">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Currently Staked</span>
-            <span className="text-white font-mono">
-              {formatNumber(mockUserData.stakedAmount)} PRESCIO
-            </span>
+            <span className="text-[#A1A1AA]">Available</span>
+            <span className="font-mono text-white">{formatFullNumber(prescioBalance)} PRESCIO</span>
           </div>
-
+          
           <div className="relative">
             <Input
-              type="number"
+              type="text"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Amount to unstake"
-              className="pr-24 h-12 text-lg bg-monad-dark border-monad-border text-white font-mono"
+              placeholder="0.00"
+              className="w-full bg-[#0E100F] border-[#27272A] rounded-lg px-4 py-3 text-lg font-mono text-white focus:border-[#6E54FF] focus:ring-0"
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setAmount(formatEther(mockUserData.stakedAmount))}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-400 hover:text-orange-400/80"
+            <button 
+              onClick={() => setAmount(formatEther(prescioBalance))}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#6E54FF] font-medium hover:text-[#9B87FF]"
             >
               MAX
-            </Button>
+            </button>
           </div>
-
+          
+          <div className="flex gap-2">
+            <button onClick={() => setPresetAmount(5000000)} className="flex-1 py-1.5 text-xs border border-[#27272A] rounded hover:border-[#6E54FF]/50 text-white">5M</button>
+            <button onClick={() => setPresetAmount(20000000)} className="flex-1 py-1.5 text-xs border border-[#27272A] rounded hover:border-[#6E54FF]/50 text-white">20M</button>
+            <button onClick={() => setPresetAmount(50000000)} className="flex-1 py-1.5 text-xs border border-[#27272A] rounded hover:border-[#6E54FF]/50 text-white">50M</button>
+            <button onClick={() => setPresetAmount(100000000)} className="flex-1 py-1.5 text-xs border border-[#27272A] rounded hover:border-[#6E54FF]/50 text-white">100M</button>
+          </div>
+          
           <Button
-            onClick={handleUnstake}
-            disabled={!amount || parseFloat(amount) <= 0 || isUnstaking}
-            variant="outline"
-            className="w-full h-12 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 font-bold"
+            onClick={handleAction}
+            disabled={!amount || isProcessing}
+            className="w-full py-3 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white font-medium rounded-lg transition-colors"
           >
-            {isUnstaking ? (
+            {isProcessing ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Staking...
+              </>
+            ) : (
+              "Stake PRESCIO"
+            )}
+          </Button>
+          
+          <p className="text-xs text-[#A1A1AA] text-center">
+            Unstaking requires a 7-day waiting period
+          </p>
+        </div>
+      )}
+      
+      {/* Unstake Content */}
+      {activeTab === "unstake" && (
+        <div className="p-4 space-y-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-[#A1A1AA]">Staked</span>
+            <span className="font-mono text-white">
+              {isLoading ? "..." : formatFullNumber(stakedAmount)} PRESCIO
+            </span>
+          </div>
+          
+          {/* Pending Unstake */}
+          {hasPendingUnstake && (
+            <div className="p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-400" />
+                  <span className="text-sm text-[#A1A1AA]">Pending</span>
+                </div>
+                <span className="text-sm font-mono text-white">{formatFullNumber(pendingUnstake)} PRESCIO</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#A1A1AA]">Unlocks in {formatCountdown(unstakeEndTime)}</span>
+                <button className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Early withdraw (5% fee)
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="relative">
+            <Input
+              type="text"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-full bg-[#0E100F] border-[#27272A] rounded-lg px-4 py-3 text-lg font-mono text-white focus:border-[#6E54FF] focus:ring-0"
+            />
+            <button 
+              onClick={() => setAmount(formatEther(stakedAmount))}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-orange-400 font-medium hover:text-orange-300"
+            >
+              MAX
+            </button>
+          </div>
+          
+          <Button
+            onClick={handleAction}
+            disabled={!amount || isProcessing}
+            variant="outline"
+            className="w-full py-3 border-orange-500/30 text-orange-400 hover:bg-orange-500/10 font-medium rounded-lg transition-colors"
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 Processing...
               </>
             ) : (
-              <>
-                <Clock className="h-5 w-5 mr-2" />
-                Request Unstake (7 day lock)
-              </>
+              "Request Unstake"
             )}
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
-function RewardsCard() {
-  const [isClaiming, setIsClaiming] = useState<"mon" | "prescio" | null>(null);
+function RewardsCard({ address }: { address: Address }) {
+  const [isClaimingMON, setIsClaimingMON] = useState(false);
+  const [isClaimingPRESCIO, setIsClaimingPRESCIO] = useState(false);
+  
+  const { pendingMON, pendingPRESCIO, isLoading } = useUserStakeData(address);
 
-  const handleClaim = async (type: "mon" | "prescio") => {
-    setIsClaiming(type);
-    setTimeout(() => setIsClaiming(null), 2000);
+  const handleClaimMON = async () => {
+    setIsClaimingMON(true);
+    // TODO: Call contract claimMonRewards
+    setTimeout(() => setIsClaimingMON(false), 2000);
+  };
+
+  const handleClaimPRESCIO = async () => {
+    setIsClaimingPRESCIO(true);
+    // TODO: Call contract claimPrescioRewards
+    setTimeout(() => setIsClaimingPRESCIO(false), 2000);
   };
 
   return (
-    <Card className="border-monad-border bg-gradient-to-br from-monad-card/80 to-monad-card/40 overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-monad-purple to-cyan-400" />
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <Gift className="h-4 w-4 text-green-400" />
-          Dual Rewards
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* MON Rewards */}
-        <div className="rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
-                <span className="text-xs font-bold">M</span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">MON Rewards</p>
-                <p className="text-xs text-gray-400">From betting fees</p>
-              </div>
+    <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-4">
+      <h3 className="text-sm font-medium text-[#A1A1AA] uppercase tracking-wide mb-4">Rewards</h3>
+      
+      {/* MON Rewards */}
+      <div className="p-3 border border-[#27272A] rounded-lg mb-3">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <span className="text-xs font-bold text-blue-400">M</span>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-white font-mono">
-                {formatNumber(mockUserData.pendingRewardsMON, 4)}
-              </p>
-              <p className="text-xs text-gray-400">≈ $42.50</p>
+            <div>
+              <p className="text-sm font-medium text-white">MON</p>
+              <p className="text-xs text-[#A1A1AA]">From betting fees</p>
             </div>
           </div>
-          <Button
-            onClick={() => handleClaim("mon")}
-            disabled={mockUserData.pendingRewardsMON === 0n || isClaiming === "mon"}
-            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
-          >
-            {isClaiming === "mon" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="text-right">
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
             ) : (
-              "Claim MON"
-            )}
-          </Button>
-        </div>
-
-        {/* PRESCIO Rewards */}
-        <div className="rounded-xl bg-gradient-to-r from-monad-purple/10 to-pink-500/10 border border-monad-purple/20 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-monad-purple to-pink-500 flex items-center justify-center">
-                <span className="text-xs font-bold">P</span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">PRESCIO Rewards</p>
-                <p className="text-xs text-gray-400">From early withdrawal penalties</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-bold text-white font-mono">
-                {formatNumber(mockUserData.pendingRewardsPRESCIO, 2)}
+              <p className="text-sm font-mono font-medium text-white">
+                {parseFloat(formatEther(pendingMON)).toFixed(4)} MON
               </p>
-              <p className="text-xs text-gray-400">≈ $12.00</p>
+            )}
+          </div>
+        </div>
+        <Button
+          onClick={handleClaimMON}
+          disabled={isClaimingMON || pendingMON === 0n}
+          className="w-full py-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-sm font-medium rounded-lg transition-colors"
+          variant="ghost"
+        >
+          {isClaimingMON ? <Loader2 className="h-4 w-4 animate-spin" /> : "Claim MON"}
+        </Button>
+      </div>
+      
+      {/* PRESCIO Rewards */}
+      <div className="p-3 border border-[#27272A] rounded-lg">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-[#6E54FF]/20 flex items-center justify-center">
+              <span className="text-xs font-bold text-[#6E54FF]">P</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">PRESCIO</p>
+              <p className="text-xs text-[#A1A1AA]">From penalties</p>
             </div>
           </div>
-          <Button
-            onClick={() => handleClaim("prescio")}
-            disabled={mockUserData.pendingRewardsPRESCIO === 0n || isClaiming === "prescio"}
-            className="w-full bg-gradient-to-r from-monad-purple to-pink-500 hover:from-monad-purple/90 hover:to-pink-500/90"
-          >
-            {isClaiming === "prescio" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="text-right">
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[#A1A1AA]" />
             ) : (
-              "Claim PRESCIO"
+              <p className="text-sm font-mono font-medium text-white">
+                {Math.floor(parseFloat(formatEther(pendingPRESCIO))).toLocaleString()} PRESCIO
+              </p>
             )}
-          </Button>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        <Button
+          onClick={handleClaimPRESCIO}
+          disabled={isClaimingPRESCIO || pendingPRESCIO === 0n}
+          className="w-full py-2 bg-[#6E54FF]/10 text-[#6E54FF] hover:bg-[#6E54FF]/20 text-sm font-medium rounded-lg transition-colors"
+          variant="ghost"
+        >
+          {isClaimingPRESCIO ? <Loader2 className="h-4 w-4 animate-spin" /> : "Claim PRESCIO"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
-function TierComparison() {
-  const currentTier = getCurrentTier(mockUserData.stakedAmount);
-
+function WalletNotConnected({ onConnect }: { onConnect: () => void }) {
   return (
-    <Card className="border-monad-border bg-monad-card/40">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-gray-400 uppercase tracking-wider flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-monad-purple" />
-          Tier Benefits
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {TIERS.map((tier) => {
-            const isActive = currentTier?.name === tier.name;
-            const isLocked = !currentTier || TIERS.indexOf(tier) > TIERS.indexOf(currentTier);
-
-            return (
-              <div
-                key={tier.name}
-                className={`relative rounded-xl p-4 transition-all duration-300 ${
-                  isActive
-                    ? `bg-gradient-to-br ${tier.gradient} shadow-lg ${tier.glow}`
-                    : isLocked
-                    ? "bg-monad-dark/50 border border-monad-border opacity-60"
-                    : "bg-monad-dark border border-monad-border"
-                }`}
-              >
-                {isActive && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                )}
-                <div className={`flex items-center gap-2 mb-3 ${isActive ? "text-white" : tier.color}`}>
-                  {tier.icon}
-                  <span className="font-bold">{tier.name}</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-xs">
-                    <span className={isActive ? "text-white/70" : "text-gray-500"}>Min Stake</span>
-                    <p className={`font-mono font-bold ${isActive ? "text-white" : "text-gray-300"}`}>
-                      {formatNumber(tier.minStake, 0)}
-                    </p>
-                  </div>
-                  <div className="text-xs">
-                    <span className={isActive ? "text-white/70" : "text-gray-500"}>Bet Boost</span>
-                    <p className={`font-mono font-bold ${isActive ? "text-white" : "text-gray-300"}`}>
-                      {tier.bettingBoost}x
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Benefits Summary */}
-        <div className="mt-4 pt-4 border-t border-monad-border">
-          <h4 className="text-xs text-gray-400 uppercase tracking-wider mb-3">All Tiers Include</h4>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-center gap-2 text-gray-300">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>MON rewards from fees</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>PRESCIO from penalties</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>Governance voting</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Check className="h-3 w-3 text-green-400" />
-              <span>Early access features</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="bg-[#18181B] border border-[#27272A] rounded-xl p-8 text-center max-w-md mx-auto">
+      <div className="w-12 h-12 rounded-full bg-[#6E54FF]/10 flex items-center justify-center mx-auto mb-4">
+        <Wallet className="w-6 h-6 text-[#6E54FF]" />
+      </div>
+      <h3 className="font-medium text-white mb-2">Connect Wallet</h3>
+      <p className="text-sm text-[#A1A1AA] mb-4">Connect your wallet to stake and earn rewards</p>
+      <Button
+        onClick={onConnect}
+        className="px-6 py-2 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white text-sm font-medium rounded-lg"
+      >
+        Connect Wallet
+      </Button>
+    </div>
   );
 }
 
@@ -665,95 +780,56 @@ export function StakingPage() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
 
+  const handleConnect = () => {
+    connect({ connector: injected() });
+  };
+
   return (
-    <div className="min-h-screen bg-monad-dark">
-      {/* Header with gradient */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-monad-purple/20 via-transparent to-cyan-500/10" />
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-monad-purple/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        
-        <div className="relative max-w-6xl mx-auto px-4 py-12">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                <Coins className="h-10 w-10 text-monad-purple" />
-                Staking
-              </h1>
-              <p className="text-gray-400">
-                Stake PRESCIO to boost your betting limits and earn dual rewards
-              </p>
+    <>
+      {/* Inject tier styles */}
+      <style>{tierStyles}</style>
+      
+      <div className="bg-[#0E100F] text-white min-h-screen">
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-[#6E54FF]/10 flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#6E54FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold">Staking</h1>
             </div>
-            {!isConnected && (
-              <Button
-                onClick={() => connect({ connector: injected() })}
-                className="bg-monad-purple hover:bg-monad-purple/80"
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
-            )}
+            <p className="text-[#A1A1AA] text-sm">Stake PRESCIO to boost betting limits and earn rewards</p>
           </div>
 
           {/* Protocol Stats */}
-          <StakingStats />
+          <ProtocolStats />
+
+          {/* Main Grid */}
+          {isConnected && address ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left: Position & Tiers */}
+              <div className="lg:col-span-2 space-y-6">
+                <MyPositionCard address={address} />
+                <TierBenefitsTable address={address} />
+              </div>
+
+              {/* Right: Actions */}
+              <div className="space-y-6">
+                <StakeUnstakeTabs address={address} />
+                <RewardsCard address={address} />
+              </div>
+            </div>
+          ) : (
+            <WalletNotConnected onConnect={handleConnect} />
+          )}
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 pb-12">
-        {isConnected ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Position & Rewards */}
-            <div className="lg:col-span-2 space-y-6">
-              <CurrentStakeCard />
-              <TierComparison />
-            </div>
-
-            {/* Right Column - Actions */}
-            <div className="space-y-6">
-              <Tabs defaultValue="stake" className="w-full">
-                <TabsList className="w-full bg-monad-card/50 border border-monad-border">
-                  <TabsTrigger value="stake" className="flex-1 data-[state=active]:bg-monad-purple">
-                    Stake
-                  </TabsTrigger>
-                  <TabsTrigger value="unstake" className="flex-1 data-[state=active]:bg-monad-purple">
-                    Unstake
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="stake" className="mt-4">
-                  <StakeForm />
-                </TabsContent>
-                <TabsContent value="unstake" className="mt-4">
-                  <UnstakeForm />
-                </TabsContent>
-              </Tabs>
-              <RewardsCard />
-            </div>
-          </div>
-        ) : (
-          /* Not Connected State */
-          <Card className="border-monad-border bg-monad-card/40 max-w-md mx-auto">
-            <CardContent className="py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-monad-purple/20 flex items-center justify-center mx-auto mb-4">
-                <Wallet className="h-8 w-8 text-monad-purple" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Connect Your Wallet</h3>
-              <p className="text-gray-400 mb-6">
-                Connect your wallet to view your staking position and start earning rewards
-              </p>
-              <Button
-                onClick={() => connect({ connector: injected() })}
-                className="bg-monad-purple hover:bg-monad-purple/80"
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 
