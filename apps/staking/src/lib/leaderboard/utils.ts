@@ -42,10 +42,10 @@ export function calculateEstimatedRewards(
 // Generate FOMO message based on rank
 export function getFOMOMessage(rank: number): string {
   if (rank === 1) {
-    return "🏆 당신이 1등입니다!";
+    return "🏆 You're #1!";
   }
   const stakersAbove = rank - 1;
-  return `📊 당신보다 ${stakersAbove.toLocaleString()}명이 더 많이 스테이킹 중`;
+  return `📊 ${stakersAbove.toLocaleString()} stakers ahead of you`;
 }
 
 // Generate tier progress message
@@ -53,11 +53,11 @@ export function getTierProgressMessage(currentAmount: bigint): string | null {
   const nextTier = getNextTier(currentAmount);
   
   if (!nextTier) {
-    return "🎉 최고 티어 달성!";
+    return "🎉 Max tier reached!";
   }
   
   const amountNeeded = nextTier.minStake - currentAmount;
-  return `💎 ${nextTier.name} 티어까지 ${formatFullNumber(amountNeeded)} PRESCIO 남음`;
+  return `💎 ${formatFullNumber(amountNeeded)} PRESCIO to ${nextTier.name}`;
 }
 
 import { TIER_MAP } from "./constants";

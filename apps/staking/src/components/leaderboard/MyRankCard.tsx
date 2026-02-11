@@ -139,7 +139,7 @@ export function MyRankCard({
       {!nextTierProgress?.nextTier && (
         <div className="mt-4 p-3 bg-cyan-400/10 border border-cyan-400/20 rounded-lg">
           <p className="text-sm text-cyan-400 font-medium text-center">
-            🎉 최고 티어 달성!
+            🎉 Max tier reached!
           </p>
         </div>
       )}
