@@ -47,7 +47,7 @@ contract PrescioStaking is
     // Version
     // ============================================
     
-    uint256 public constant VERSION = 4;
+    uint256 public constant VERSION = 5;
 
     // ============================================
     // Types
@@ -197,6 +197,14 @@ contract PrescioStaking is
     // ============================================
 
     event Staked(address indexed user, uint256 amount, LockType lockType, Tier tier);
+    event StakeAdded(
+        address indexed user, 
+        uint256 addedAmount, 
+        uint256 newTotal, 
+        Tier newTier,
+        uint256 newWeight,
+        bool lockExtended
+    );
     event Unstaked(address indexed user, uint256 amount, uint256 penalty);
     event EmergencyUnstaked(address indexed user, uint256 amount, uint256 penalty, uint256 forfeitedRewards);
     event MonRewardsClaimed(address indexed user, uint256 fromEpoch, uint256 toEpoch, uint256 amount);
@@ -300,6 +308,15 @@ contract PrescioStaking is
         vaultContract = _vault;
     }
 
+    /**
+     * @notice Reinitializer for v5 upgrade - addStake feature
+     * @dev No state changes needed, just version bump
+     */
+    function initializeV5() public reinitializer(5) {
+        // V5: addStake feature added
+        // No additional state initialization required
+    }
+
     function _initializeTiers() internal {
         // Bronze: 5M PRESCIO, no auto-bet
         tierConfigs[Tier.BRONZE] = TierConfig({
@@ -384,6 +401,52 @@ contract PrescioStaking is
         }
 
         emit Staked(msg.sender, amount, lockType, getTier(msg.sender));
+    }
+
+    /**
+     * @notice Add tokens to existing stake
+     * @dev Tier and weight are recalculated automatically. CEI pattern enforced.
+     * @param amount Amount of PRESCIO tokens to add (must be > 0)
+     * @param extendLock If true, reset lockEnd based on lockType.
+     *                   If false, keep existing lockEnd (with minimum 7d if expired)
+     */
+    function addStake(uint256 amount, bool extendLock) external nonReentrant {
+        // ===== CHECKS =====
+        if (amount == 0) revert ZeroAmount();
+        
+        Stake storage userStake = stakes[msg.sender];
+        if (!userStake.exists) revert NoStakeFound();
+        
+        // ===== EFFECTS =====
+        // 1. Remove old weight from total
+        // [H-01 FIX] Use getUserWeight() to apply MIN_STAKE_DURATION_FOR_TIER anti-gaming logic
+        uint256 oldWeight = getUserWeight(msg.sender);
+        totalWeight -= oldWeight;
+        
+        // 2. Update amount
+        uint256 newAmount = userStake.amount + amount;
+        userStake.amount = newAmount;
+        totalStaked += amount;
+        
+        // 3. Handle lockEnd
+        if (extendLock) {
+            uint256 lockDuration = _getLockDuration(userStake.lockType);
+            userStake.lockEnd = block.timestamp + lockDuration;
+        } else if (block.timestamp >= userStake.lockEnd) {
+            // Lock expired → apply minimum lock (FLEXIBLE = 7 days)
+            userStake.lockEnd = block.timestamp + 7 days;
+        }
+        // else: keep existing lockEnd
+        
+        // 4. Calculate new tier and weight
+        Tier newTier = getTierForAmount(newAmount);
+        uint256 newWeight = _calculateWeight(newAmount, newTier, userStake.lockType);
+        totalWeight += newWeight;
+        
+        // ===== INTERACTIONS =====
+        prescioToken.safeTransferFrom(msg.sender, address(this), amount);
+        
+        emit StakeAdded(msg.sender, amount, newAmount, newTier, newWeight, extendLock);
     }
 
     function unstake() external nonReentrant {

@@ -199,6 +199,16 @@ const STAKING_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
+  {
+    inputs: [
+      { internalType: "uint256", name: "amount", type: "uint256" },
+      { internalType: "bool", name: "extendLock", type: "bool" },
+    ],
+    name: "addStake",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ] as const;
 
 // Lock type enum (matches contract)
@@ -971,7 +981,6 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
     if (!amount || amount.trim() === "") return "Enter an amount";
     if (parsedAmount === 0n) return "Amount must be greater than 0";
     if (parsedAmount > prescioBalance) return "Insufficient balance";
-    if (exists) return "Already staked. Unstake first.";
     return null;
   };
 
@@ -1059,13 +1068,25 @@ function StakeUnstakeTabs({ address }: { address: Address }) {
 
   const handleStakeAfterApproval = () => {
     setTxStatus("staking");
-    writeStake({
-      address: STAKING_CONTRACT_ADDRESS,
-      abi: STAKING_ABI,
-      functionName: "stake",
-      args: [parsedAmount, LockType.FLEXIBLE], // Default to flexible (7 days)
-      chainId: MONAD_MAINNET_CHAIN_ID,
-    });
+    if (exists) {
+      // Already staked - use addStake to add more
+      writeStake({
+        address: STAKING_CONTRACT_ADDRESS,
+        abi: STAKING_ABI,
+        functionName: "addStake",
+        args: [parsedAmount, false], // false = don't extend lock
+        chainId: MONAD_MAINNET_CHAIN_ID,
+      });
+    } else {
+      // New stake
+      writeStake({
+        address: STAKING_CONTRACT_ADDRESS,
+        abi: STAKING_ABI,
+        functionName: "stake",
+        args: [parsedAmount, LockType.FLEXIBLE], // Default to flexible (7 days)
+        chainId: MONAD_MAINNET_CHAIN_ID,
+      });
+    }
   };
 
   const handleStake = async () => {
