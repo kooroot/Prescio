@@ -36,8 +36,13 @@ export function useGame(gameId: string): UseGameReturn {
     queryKey: ["game", gameId],
     queryFn: async () => {
       const state = await fetchGame(gameId);
-      // Initialize chat messages from REST response
+      // Initialize chat messages and timeRemaining from REST response
       setChatMessages(state.chatMessages ?? []);
+      const tr = state.timeRemaining ?? 0;
+      console.log("[useGame] Loaded game, timeRemaining:", tr, "phase:", state.phase);
+      setTimeRemaining(tr);
+      setLivePhase(state.phase);
+      setLiveRound(state.round);
       return state;
     },
     enabled: !!gameId,

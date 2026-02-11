@@ -771,7 +771,7 @@ contract PrescioStaking is
             Tier lowerTier = Tier(uint8(tier) - 1);
             if (minStake < tierConfigs[lowerTier].minStake) revert InvalidTierOrder();
         }
-        if (tier < Tier.LEGENDARY) {
+        if (tier < Tier.DIAMOND) {
             Tier higherTier = Tier(uint8(tier) + 1);
             if (tierConfigs[higherTier].minStake > 0 && minStake > tierConfigs[higherTier].minStake) {
                 revert InvalidTierOrder();

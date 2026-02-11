@@ -548,9 +548,7 @@ function Header() {
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <a href="https://prescio.fun" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg bg-[#6E54FF] flex items-center justify-center">
-              <span className="text-sm font-bold text-white">P</span>
-            </div>
+            <img src="/prescio-icon.png" alt="Prescio" className="w-8 h-8 rounded-lg" />
             <span className="text-lg font-semibold text-white">Prescio</span>
           </a>
           <span className="text-[#A1A1AA] text-sm">/</span>
@@ -560,10 +558,10 @@ function Header() {
         <div className="flex items-center gap-3">
           <a 
             href="https://prescio.fun" 
-            className="text-sm text-[#A1A1AA] hover:text-white transition-colors flex items-center gap-1"
+            className="px-4 py-2 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
           >
+            <ExternalLink className="w-4 h-4" />
             Back to App
-            <ExternalLink className="w-3 h-3" />
           </a>
           
           {isConnected && address ? (
@@ -1329,12 +1327,8 @@ export default function App() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-[#6E54FF]/10 flex items-center justify-center">
-                <svg className="w-5 h-5 text-[#6E54FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <h1 className="text-2xl font-bold">Staking</h1>
+              <img src="/prescio-icon.png" alt="PRESCIO" className="w-10 h-10 rounded-xl" />
+              <h1 className="text-2xl font-bold">PRESCIO Staking</h1>
             </div>
             <p className="text-[#A1A1AA] text-sm">Stake PRESCIO to boost betting limits and earn rewards</p>
           </div>

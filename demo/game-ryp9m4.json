@@ -1,0 +1,405 @@
+{
+  "code": "RYP9M4",
+  "round": 3,
+  "players": [
+    {
+      "id": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "address": "0x0000000000000000000000000000000000000001",
+      "nickname": "Agent-Alpha",
+      "role": "IMPOSTOR",
+      "isAlive": true,
+      "isConnected": true
+    },
+    {
+      "id": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "address": "0x0000000000000000000000000000000000000002",
+      "nickname": "Agent-Bravo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "address": "0x0000000000000000000000000000000000000003",
+      "nickname": "Agent-Charlie",
+      "role": "CREW",
+      "isAlive": true,
+      "isConnected": true
+    },
+    {
+      "id": "78fd4007-db82-4c4d-a5c7-58da6af5d609",
+      "address": "0x0000000000000000000000000000000000000004",
+      "nickname": "Agent-Delta",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "address": "0x0000000000000000000000000000000000000005",
+      "nickname": "Agent-Echo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "15c0f177-68a8-4a6c-b135-6f964ab13c04",
+      "address": "0x0000000000000000000000000000000000000006",
+      "nickname": "Agent-Foxtrot",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "aac7296b-3b69-4b68-bdbe-ea99213425dc",
+      "address": "0x0000000000000000000000000000000000000007",
+      "nickname": "Agent-Golf",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    }
+  ],
+  "chatMessages": [
+    {
+      "id": "93d4b315-84ba-47fe-b431-7e8c138d3858",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "\ud83d\udc80 Agent-Golf's body was found!",
+      "timestamp": 1770290112655,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "8eb1da97-5733-4bcc-9d6f-0aaff741bf45",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Let me think about this for a moment...",
+      "timestamp": 1770290114335,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "7f99fe39-8ea0-46c4-b084-bb8b05e02c5c",
+      "playerId": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "playerNickname": "Agent-Echo",
+      "content": "Does anyone have any evidence?",
+      "timestamp": 1770290117000,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "ac7124e3-1cfc-4766-9842-755c8cd8934a",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "Oh no, not Agent-Golf! This is terrible. Agent-Echo, it's early but I agree, evidence is key. Agent-Bravo, let us know what you're thinking when you're ready. Let's try to work together and figure thi",
+      "timestamp": 1770290119925,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "19f64943-5978-4d8c-a289-3bb64b175f20",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "...Where was Agent-Golf found?",
+      "timestamp": 1770290123222,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f447bd9c-c347-44ae-924b-d69e79346c02",
+      "playerId": "78fd4007-db82-4c4d-a5c7-58da6af5d609",
+      "playerNickname": "Agent-Delta",
+      "content": "It's awful about Agent-Golf, hopefully we can figure this out together without jumping to conclusions. Agent-Charlie, that's a good question, knowing where the body was found could help us narrow thin",
+      "timestamp": 1770290126855,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "1a8e3add-5b49-49cb-ab6c-ffa069cd70e0",
+      "playerId": "15c0f177-68a8-4a6c-b135-6f964ab13c04",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Charlie asking the real questions here, lol, where *was* the body? Agent-Alpha's being awfully dramatic, just saying.",
+      "timestamp": 1770290129838,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "e80bd19b-d665-4ced-8bec-84f977f52c50",
+      "playerId": "78fd4007-db82-4c4d-a5c7-58da6af5d609",
+      "playerNickname": "Agent-Delta",
+      "content": "Agent-Foxtrot, I think Agent-Alpha is just upset about losing a friend, but I agree we should focus on facts first. It would be great if someone could tell us where Agent-Golf was found so we can star",
+      "timestamp": 1770290134860,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "1f72f140-5214-451f-b2df-edb0127ee474",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Foxtrot seems eager to point fingers at Agent-Alpha. Why?",
+      "timestamp": 1770290138220,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "82299b14-e393-477d-ba78-8b7b3cddb1df",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Charlie asking the real questions, or just trying to lead us on a wild goose chase? Maybe Agent-Golf just tripped and, you know, tragically landed on a knife, it happens. Let's not get our space",
+      "timestamp": 1770290143143,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "205ba74b-6b1e-47fc-9037-616b9de8b94f",
+      "playerId": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "playerNickname": "Agent-Echo",
+      "content": "I think Agent-Foxtrot is being a little harsh on Agent-Alpha, and Agent-Charlie makes a good point about that. Maybe Agent-Foxtrot knows more than they're letting on. Where *was* the body found?",
+      "timestamp": 1770290146297,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "7941456b-bd07-4f9e-b524-646c71bd804f",
+      "playerId": "15c0f177-68a8-4a6c-b135-6f964ab13c04",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Oh wait\u2014Agent-Charlie thinks I'm sus for calling out Agent-Alpha? LOL, pot meet kettle much? Someone tell us where the body was already!",
+      "timestamp": 1770290150041,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "6572ee11-8b75-434b-9053-7c94e0b54f41",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "Okay, okay, let's all calm down. I think Agent-Foxtrot is overreacting a bit, and Agent-Charlie is right to question that. But we *really* need to know where the body was before we start accusing each",
+      "timestamp": 1770290154319,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "108e1a63-d3ad-4018-a911-d0211dafedac",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "\ud83d\udc80 Agent-Delta's body was found!",
+      "timestamp": 1770290236188,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "4304cefa-dc73-4874-8093-7058dadadfb5",
+      "playerId": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "playerNickname": "Agent-Echo",
+      "content": "Two bodies in a row, this is getting serious. Agent-Bravo's joke about the knife is in bad taste, and Agent-Foxtrot was awful quiet after Agent-Charlie called them out. We need to keep an eye on both ",
+      "timestamp": 1770290238028,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "1acb0352-2836-403f-83c9-eb5ce930846d",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "...Where was Agent-Delta found?",
+      "timestamp": 1770290241595,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a732e86f-7d6b-46d4-8754-47268222fd44",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Okay, okay, two deaths, Agent-Echo's right, guess we can't just laugh this off anymore, unless... Agent-Delta also tripped?\nAnd Agent-Charlie, still playing detective I see, let's hope you find more t",
+      "timestamp": 1770290244735,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "88f23d2a-50fd-415c-acfa-b408800a2769",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "This is awful, two bodies already! Agent-Charlie is right to keep asking about locations, that's key. Agent-Echo, I agree, Agent-Foxtrot *was* awfully quiet after being called out. Let's all share whe",
+      "timestamp": 1770290248477,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "e9159c8a-3537-41b5-856d-44813cfb8628",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Does anyone have any evidence?",
+      "timestamp": 1770290252669,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "12397662-20a2-4084-9042-0de2b922f010",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "This is so stressful! Agent-Charlie, I think your questions are spot on, evidence is what we need. I was heading from Navigation to Cafeteria when I found Agent-Golf's body, and I was still in Cafeter",
+      "timestamp": 1770290256540,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "d7f4db07-92cf-4b31-a962-922fe9aca113",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Charlie, instead of asking about evidence, maybe you should just confess, it would save us all some time, or are you trying to find out where Agent-Delta's body was so you can go hide it better?",
+      "timestamp": 1770290271622,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "05c28c38-0cc2-462d-a895-3dc2ed7e7f1d",
+      "playerId": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "playerNickname": "Agent-Echo",
+      "content": "Agent-Bravo is really jumping on Agent-Charlie, and I don't like it one bit. Agent-Charlie is just trying to gather information, and Agent-Bravo is being way too aggressive. We should trust Agent-Char",
+      "timestamp": 1770290275000,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "9fc1e761-5dd3-4279-8ec2-3b355eb027d4",
+      "playerId": "f3e7b99a-23d9-4906-893c-d3e97b885397",
+      "playerNickname": "Agent-Echo",
+      "content": "This is getting suspicious...",
+      "timestamp": 1770290278757,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "b3245a83-f1ec-4375-aff6-6c0ee6bd21c5",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Bravo's accusation is too strong. Why are you so focused on me?",
+      "timestamp": 1770290282451,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "84619299-b9a2-4bce-99c0-394196608442",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Charlie, you wound me, thinking I'd be capable of such dastardly deeds when I'm just trying to lighten the mood during this oh-so-serious crisis... maybe Agent-Echo is the real culprit, trying t",
+      "timestamp": 1770290287137,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "834936a2-1edf-473c-b182-48b8c64fb572",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "Okay everyone, let's focus. Agent-Bravo and Agent-Charlie are going back and forth, but we need to solve this. Agent-Echo, I agree that Agent-Bravo is being awfully aggressive towards Agent-Charlie. H",
+      "timestamp": 1770290290866,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a7d24f67-4a79-4acd-9335-1b77abb36a18",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "\ud83d\udc80 Agent-Echo's body was found!",
+      "timestamp": 1770290351611,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "416e1ef0-6b2c-401a-adfb-e9f885125edb",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "Oh my gosh, another body? This is insane! Agent-Bravo's been deflecting a lot, and now Agent-Echo is gone... Agent-Charlie, let's work together to figure out what's going on, who agrees we need to kee",
+      "timestamp": 1770290354773,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "aacae8f5-540e-446a-9d88-60e3ebe44ae0",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Well, this is just getting ridiculous, isn't it? Agent-Alpha and Agent-Charlie teaming up already, how predictable, maybe they're just trying to frame poor old me for all this chaos.",
+      "timestamp": 1770290359403,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "bbb3b09d-a4ea-4aec-a419-19fa628b6e5e",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "...Agent-Bravo is a clear suspect. Agent-Alpha, I agree.",
+      "timestamp": 1770290361797,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "d6cc6eb8-6ff5-4174-9b73-dbbef2083274",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "I agree with Agent-Charlie, Agent-Bravo is looking very sus. It's convenient that Agent-Echo, who was suspicious of Agent-Bravo, is now dead. Let's vote Agent-Bravo out and see what happens. Who's wit",
+      "timestamp": 1770290366734,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "72ad7e98-491e-4e23-aab6-c7a8d1dc1f44",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Alright, alright, Agent-Alpha and Agent-Charlie think I'm the baddie, but maybe they're just jealous of my sparkling personality. It's a frame-up, I tell ya, a conspiracy of the highest order! Serious",
+      "timestamp": 1770290369773,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "edd5e9c1-c99c-49ac-83bb-376676a1511a",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Bravo has been deflecting, and now Agent-Echo is dead. It's too convenient.",
+      "timestamp": 1770290373602,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "40b3091d-2723-41ab-8f55-2d1cd54a8126",
+      "playerId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "playerNickname": "Agent-Bravo",
+      "content": "So, Agent-Alpha and Agent-Charlie, the dynamic duo, huh? Maybe they offed Agent-Echo to make me look bad, it's a bold strategy, Cotton, let's see if it pays off for 'em.",
+      "timestamp": 1770290379221,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "18759631-231a-4bfd-8541-68132df697bd",
+      "playerId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "playerNickname": "Agent-Alpha",
+      "content": "I'm with Agent-Charlie on this one, Agent-Bravo's defensiveness is really suspicious. It's strange that Agent-Bravo immediately jumped to being framed instead of mourning Agent-Echo. Let's vote Agent-",
+      "timestamp": 1770290382626,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "24a65668-a1dd-4902-b529-99b59d84254e",
+      "playerId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Bravo is trying too hard. Vote them.",
+      "timestamp": 1770290386893,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    }
+  ],
+  "votes": [
+    {
+      "voterId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "targetId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "timestamp": 1770290593559
+    },
+    {
+      "voterId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "targetId": "c1fcbae7-36db-488f-806e-6d3659073319",
+      "timestamp": 1770290595836
+    },
+    {
+      "voterId": "02ce6faa-690f-4917-9c86-6f4bfbcc39a5",
+      "targetId": "e95c8d6c-5322-4c5a-a5e7-c838acb3e22e",
+      "timestamp": 1770290598254
+    }
+  ]
+}

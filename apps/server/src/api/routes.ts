@@ -269,6 +269,7 @@ apiRouter.get(
       hostId: game.hostId,
       phase: game.phase,
       round: game.round,
+      timeRemaining: gameEngine.getTimeRemaining(game.id),
       players,
       playerCount: game.players.length,
       alivePlayers: game.alivePlayers,
@@ -470,14 +471,24 @@ apiRouter.get(
     const limit = Math.min(Number(String(req.query.limit)) || 50, 100);
     const offset = Number(String(req.query.offset)) || 0;
 
-    const slice = finishedGames
+    // Deduplicate by gameId (keep latest by finishedAt)
+    const seen = new Map<string, (typeof finishedGames)[0]>();
+    for (const g of finishedGames) {
+      const existing = seen.get(g.id);
+      if (!existing || g.finishedAt > existing.finishedAt) {
+        seen.set(g.id, g);
+      }
+    }
+    const deduped = Array.from(seen.values());
+
+    const slice = deduped
       .slice()
-      .reverse()
+      .sort((a, b) => b.finishedAt - a.finishedAt)
       .slice(offset, offset + limit);
 
     res.json({
       games: slice,
-      total: finishedGames.length,
+      total: deduped.length,
       limit,
       offset,
     });
@@ -842,8 +853,16 @@ apiRouter.get(
       }
     }
 
+    // Deduplicate by gameId (keep the first occurrence)
+    const seen = new Set<string>();
+    const dedupedResults = results.filter((r) => {
+      if (seen.has(r.gameId)) return false;
+      seen.add(r.gameId);
+      return true;
+    });
+
     // Sort by most recent first (active games first, then by finishedAt desc)
-    results.sort((a, b) => {
+    dedupedResults.sort((a, b) => {
       if (a.finishedAt === null && b.finishedAt !== null) return -1;
       if (a.finishedAt !== null && b.finishedAt === null) return 1;
       if (a.finishedAt !== null && b.finishedAt !== null) {
@@ -852,7 +871,7 @@ apiRouter.get(
       return 0;
     });
 
-    res.json({ bets: results, total: results.length });
+    res.json({ bets: dedupedResults, total: dedupedResults.length });
   })
 );
 

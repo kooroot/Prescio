@@ -44,3 +44,4 @@ coverage/
 scripts/distribute*.ts
 .bot-wallets.json
 .data/
+prescio-demo-video.mov

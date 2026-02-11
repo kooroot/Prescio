@@ -17,9 +17,11 @@ import {
   padHex,
 } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
-import { monadTestnet } from "@prescio/common";
-import { PRESCIO_MARKET_ABI } from "@prescio/common";
+import { monadTestnet, monadMainnet, MONAD_MAINNET_CHAIN_ID, PRESCIO_MARKET_ABI } from "@prescio/common";
 import { config } from "../config.js";
+
+// Select chain based on config
+const monadChain = config.monad.chainId === MONAD_MAINNET_CHAIN_ID ? monadMainnet : monadTestnet;
 
 // ============================================
 // Types
@@ -73,13 +75,13 @@ export function initOnChain(): boolean {
     contractAddress = marketAddress;
 
     publicClient = createPublicClient({
-      chain: monadTestnet,
+      chain: monadChain,
       transport: http(config.monad.rpcUrl),
     });
 
     walletClient = createWalletClient({
       account: serverAccount,
-      chain: monadTestnet,
+      chain: monadChain,
       transport: http(config.monad.rpcUrl),
     });
 
@@ -134,7 +136,7 @@ export async function createMarket(gameId: string, playerCount: number): Promise
       functionName: "createMarket",
       args: [gameIdBytes, playerCount],
       account,
-      chain: monadTestnet,
+      chain: monadChain,
     });
 
     console.log(`[OnChain] createMarket tx sent: ${hash} (game: ${gameId}, players: ${playerCount})`);
@@ -164,7 +166,7 @@ export async function closeMarket(gameId: string): Promise<Hash | null> {
       functionName: "closeMarket",
       args: [gameIdBytes],
       account,
-      chain: monadTestnet,
+      chain: monadChain,
     });
 
     console.log(`[OnChain] closeMarket tx sent: ${hash} (game: ${gameId})`);
@@ -193,7 +195,7 @@ export async function resolveMarket(gameId: string, impostorIndex: number): Prom
       functionName: "resolve",
       args: [gameIdBytes, impostorIndex],
       account,
-      chain: monadTestnet,
+      chain: monadChain,
     });
 
     console.log(`[OnChain] resolveMarket tx sent: ${hash} (game: ${gameId}, impostor: ${impostorIndex})`);
@@ -326,7 +328,7 @@ export async function pauseBetting(gameId: string): Promise<Hash | null> {
       functionName: "pauseBetting",
       args: [gameIdBytes],
       account,
-      chain: monadTestnet,
+      chain: monadChain,
     });
 
     console.log(`[OnChain] pauseBetting tx sent: ${hash} (game: ${gameId})`);
@@ -355,7 +357,7 @@ export async function resumeBetting(gameId: string): Promise<Hash | null> {
       functionName: "resumeBetting",
       args: [gameIdBytes],
       account,
-      chain: monadTestnet,
+      chain: monadChain,
     });
 
     console.log(`[OnChain] resumeBetting tx sent: ${hash} (game: ${gameId})`);

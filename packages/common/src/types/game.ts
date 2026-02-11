@@ -59,6 +59,8 @@ export interface GameState {
   players: Player[];
   phase: Phase;
   round: number;
+  /** Seconds remaining in current phase */
+  timeRemaining?: number;
   votes: Vote[];
   chatMessages: ChatMessage[];
   killEvents: KillEvent[];

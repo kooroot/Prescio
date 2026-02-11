@@ -51,11 +51,20 @@ export function useOdds(gameId: string) {
         const payload = event.payload as ServerPayloads["BETTING_UPDATE"];
         if (payload.gameId === gameId) {
           setTotalPool(payload.totalPool);
+          // Convert odds from server (strings) to proper bigint format
+          const convertedOdds: Odds[] = payload.odds.map((o: any) => ({
+            outcomeId: String(o.playerIndex),
+            label: o.playerNickname,
+            numerator: Math.round((o.impliedProbability ?? 0) * 100),
+            denominator: 100,
+            impliedProbability: o.impliedProbability ?? 0,
+            totalStaked: parseEther(String(o.totalStaked ?? "0")),
+          }));
           queryClient.setQueryData(
             ["odds", gameId],
             (prev: any) => {
-              if (!prev) return { oddsMap: { [payload.marketId]: payload.odds }, bettingEnabled: true, totalPool: payload.totalPool };
-              return { ...prev, oddsMap: { ...prev.oddsMap, [payload.marketId]: payload.odds }, totalPool: payload.totalPool };
+              if (!prev) return { oddsMap: { [payload.marketId]: convertedOdds }, bettingEnabled: true, totalPool: payload.totalPool };
+              return { ...prev, oddsMap: { ...prev.oddsMap, [payload.marketId]: convertedOdds }, totalPool: payload.totalPool };
             },
           );
         }

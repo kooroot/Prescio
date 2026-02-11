@@ -5,9 +5,9 @@ export const CONTRACT_ADDRESSES = {
   /** PrescioVault contract */
   PRESCIO_VAULT: "0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43" as `0x${string}`,
   /** PrescioStaking contract (Proxy) */
-  PRESCIO_STAKING: "0xB835F850E26809Ac18032dA45c207bB8859481a7" as `0x${string}`,
+  PRESCIO_STAKING: "0xa0742ffb1762FF3EA001793aCBA202f82244D983" as `0x${string}`,
   /** AutoBetController contract (Proxy) */
-  AUTOBET_CONTROLLER: "0xEd96846b9Df01294404E52eA6A646ED96aC6791C" as `0x${string}`,
+  AUTOBET_CONTROLLER: "0x75c13a16be34bc5882a1Dc466FaF9e603480Ba13" as `0x${string}`,
   /** PRESCIO Token */
   PRESCIO_TOKEN: "0xffC86Ab0C36B0728BbF52164f6319762DA867777" as `0x${string}`,
 } as const;

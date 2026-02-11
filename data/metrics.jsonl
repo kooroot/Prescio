@@ -1,0 +1,19 @@
+Fetching on-chain data...
+{
+  "timestamp": "2026-02-11 09:20:40 KST",
+  "date": "2026-02-11",
+  "balances": {
+    "market": 502.6726,
+    "vault": 427.9372,
+    "staking": 0,
+    "autobet": 0,
+    "treasury": 0,
+    "server": 18.6207
+  },
+  "transactions": {
+    "server_nonce": 10100
+  },
+  "totals": {
+    "tvl": 930.6098
+  }
+}
