@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAccount, useConnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useChainId } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useChainId } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { formatEther, parseEther, type Address, maxUint256 } from "viem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Wallet,
   Loader2,
@@ -13,6 +21,9 @@ import {
   ExternalLink,
   AlertCircle,
   CheckCircle2,
+  Copy,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 import { MONAD_MAINNET_CHAIN_ID, monadMainnet } from "@/lib/wagmi";
 
@@ -539,9 +550,29 @@ function TransactionStatus({
   );
 }
 
+// Monad Explorer URL (mainnet)
+const MONAD_EXPLORER_URL = "https://monadexplorer.com";
+
+function truncateAddress(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
 function Header() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const handleCopyAddress = () => {
+    if (address) {
+      navigator.clipboard.writeText(address);
+    }
+  };
+
+  const handleViewExplorer = () => {
+    if (address) {
+      window.open(`${MONAD_EXPLORER_URL}/address/${address}`, "_blank");
+    }
+  };
 
   return (
     <header className="border-b border-[#27272A] bg-[#0E100F]/80 backdrop-blur-sm sticky top-0 z-50">
@@ -565,11 +596,47 @@ function Header() {
           </a>
           
           {isConnected && address ? (
-            <div className="px-3 py-1.5 bg-[#18181B] border border-[#27272A] rounded-lg">
-              <span className="text-sm font-mono text-white">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-[#18181B] border-[#27272A] hover:bg-[#27272A] text-white"
+                >
+                  <Wallet className="w-4 h-4 mr-2 text-[#6E54FF]" />
+                  {truncateAddress(address)}
+                  <ChevronDown className="w-4 h-4 ml-2 text-[#A1A1AA]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-[#18181B] border-[#27272A]">
+                <DropdownMenuLabel className="text-[#A1A1AA]">
+                  Connected Wallet
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-[#27272A]" />
+                <DropdownMenuItem
+                  onClick={handleCopyAddress}
+                  className="cursor-pointer text-white focus:bg-[#27272A] focus:text-white"
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Address
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleViewExplorer}
+                  className="cursor-pointer text-white focus:bg-[#27272A] focus:text-white"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View on Explorer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-[#27272A]" />
+                <DropdownMenuItem
+                  onClick={() => disconnect()}
+                  className="cursor-pointer text-red-400 focus:bg-[#27272A] focus:text-red-300"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Disconnect
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Button
               onClick={() => connect({ connector: injected() })}
