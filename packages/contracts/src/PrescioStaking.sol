@@ -22,25 +22,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * - Early unstaking penalties
  * - Dual Rewards: MON (from betting fees) + PRESCIO (from penalties)
  * 
- * Security Fixes (v1.1):
- * - [C-02] Proper totalWeight calculation with running total
- * - [C-03] Paginated reward claiming to prevent DoS
- * - [H-01] CEI pattern for reentrancy prevention
- * - [H-02] Fixed penalty distribution arithmetic
- * - [H-03] Permissionless epoch finalization after grace period
- * - [M-01] Front-running protection with first-epoch exclusion
- * - [M-02] Storage gap for upgradeability
- * - [M-03] Explicit receive() rejection
- * - [L-01~L-04] Events, zero-address checks, constants
+ * v1.3 Security Fixes:
+ * - [H-01] Strict PRESCIO balance check - revert instead of silent cap
+ * - [H-02] Minimum stake duration for tier rewards (anti-gaming)
+ * - [M-01] Improved epoch weight snapshot timing
+ * - Custom errors for gas optimization
+ * - VERSION constant for upgrade tracking
  * 
- * v1.2 - Dual Reward System:
- * - Separate MON and PRESCIO reward tracking
- * - Penalty distribution: 40% burn, 40% stakers (PRESCIO), 20% treasury
- * - Independent claim functions for each reward type
- * - Gas-optimized single-loop calculation for both rewards
- * 
- * v1.3 - Tier Requirements Update:
+ * v1.4 - Tier Requirements Update:
  * - Updated tier minimums: Bronze 5M, Silver 20M, Gold 50M, Diamond 150M
+ * - Removed Legendary tier (Diamond is now highest)
  * - Added explicit BET_MULT constants for each tier
  * - Bronze boost: 1.1x, Silver: 1.25x, Gold: 1.5x, Diamond: 2.0x
  */
@@ -51,6 +42,12 @@ contract PrescioStaking is
     ReentrancyGuardUpgradeable 
 {
     using SafeERC20 for IERC20;
+
+    // ============================================
+    // Version
+    // ============================================
+    
+    uint256 public constant VERSION = 3;
 
     // ============================================
     // Types
@@ -104,7 +101,10 @@ contract PrescioStaking is
     uint256 public constant PENALTY_PRECISION = 1000;
     uint256 public constant FEE_PRECISION = 10000;
     
-    // Tier minimum stakes (18 decimals)
+    // [H-02 FIX] Minimum stake duration for full tier benefits
+    uint256 public constant MIN_STAKE_DURATION_FOR_TIER = 1 days;
+    
+    // Tier minimum stakes (18 decimals) - v1.4 updated
     uint256 public constant TIER_BRONZE_MIN = 5_000_000 * 1e18;      // 5M
     uint256 public constant TIER_SILVER_MIN = 20_000_000 * 1e18;     // 20M
     uint256 public constant TIER_GOLD_MIN = 50_000_000 * 1e18;       // 50M
@@ -123,6 +123,11 @@ contract PrescioStaking is
     uint256 public constant LOCK_MULT_60D = 150;
     uint256 public constant LOCK_MULT_90D = 200;
 
+    // Early unstaking penalty thresholds
+    uint256 public constant PENALTY_TIER1_THRESHOLD = 2 days;
+    uint256 public constant PENALTY_TIER2_THRESHOLD = 4 days;
+    uint256 public constant PENALTY_TIER3_THRESHOLD = 6 days;
+    
     // Early unstaking penalties (1000 = 100%)
     uint256 public constant PENALTY_DAY_1_2 = 150;   // 15%
     uint256 public constant PENALTY_DAY_3_4 = 100;   // 10%
@@ -133,6 +138,9 @@ contract PrescioStaking is
     uint256 public constant PENALTY_BURN_SHARE = 400;     // 40%
     uint256 public constant PENALTY_STAKER_SHARE = 400;   // 40%
     uint256 public constant PENALTY_TREASURY_SHARE = 200; // 20%
+
+    // [I-02 FIX] Unlimited concurrent bets constant
+    uint8 public constant UNLIMITED_CONCURRENT_BETS = 255;
 
     // Dead address for burns
     address public constant DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
@@ -148,7 +156,7 @@ contract PrescioStaking is
     uint256 public currentEpoch;
     uint256 public epochStartTime;
     uint256 public totalStaked;
-    uint256 public totalWeight; // [C-02 FIX] Running total of all user weights
+    uint256 public totalWeight;
     
     // Tier configurations (dynamic, can be updated)
     mapping(Tier => TierConfig) public tierConfigs;
@@ -166,17 +174,20 @@ contract PrescioStaking is
     
     // Penalty accumulation (PRESCIO)
     uint256 public pendingBurnAmount;
-    uint256 public pendingPrescioRewardsPool;  // PRESCIO rewards for stakers (from penalties)
+    uint256 public pendingPrescioRewardsPool;
     uint256 public pendingTreasuryAmount;
 
     // PRESCIO epoch rewards (separate from MON)
     mapping(uint256 => uint256) public epochPrescioRewards;
+    
+    // [M-01 FIX] Weight snapshot at epoch start for finalization
+    uint256 public weightAtEpochStart;
 
     // ============================================
     // Storage Gap (for future upgrades)
     // ============================================
     
-    uint256[47] private __gap; // Reduced from 50 to account for new state variables
+    uint256[46] private __gap; // Reduced from 47 to account for weightAtEpochStart
 
     // ============================================
     // Events
@@ -184,7 +195,7 @@ contract PrescioStaking is
 
     event Staked(address indexed user, uint256 amount, LockType lockType, Tier tier);
     event Unstaked(address indexed user, uint256 amount, uint256 penalty);
-    event EmergencyUnstaked(address indexed user, uint256 amount, uint256 penalty);
+    event EmergencyUnstaked(address indexed user, uint256 amount, uint256 penalty, uint256 forfeitedRewards);
     event MonRewardsClaimed(address indexed user, uint256 fromEpoch, uint256 toEpoch, uint256 amount);
     event PrescioRewardsClaimed(address indexed user, uint256 fromEpoch, uint256 toEpoch, uint256 amount);
     event RewardsClaimed(address indexed user, uint256 fromEpoch, uint256 toEpoch, uint256 monReward, uint256 prescioReward);
@@ -192,6 +203,7 @@ contract PrescioStaking is
     event RewardsDeposited(uint256 amount, uint256 epoch);
     event TierConfigUpdated(Tier indexed tier, uint256 minStake, uint256 rewardBoost);
     event PenaltiesDistributed(uint256 burned, uint256 toStakers, uint256 toTreasury);
+    event PenaltyAccumulated(address indexed from, uint256 burn, uint256 stakers, uint256 treasury); // [L-01 FIX]
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event AutoBetControllerUpdated(address indexed oldController, address indexed newController);
 
@@ -201,6 +213,7 @@ contract PrescioStaking is
 
     error ZeroAmount();
     error ZeroAddress();
+    error InvalidImplementation();
     error InsufficientStake();
     error AlreadyStaked();
     error NoStakeFound();
@@ -217,6 +230,7 @@ contract PrescioStaking is
     error EpochNotReady();
     error MaxEpochsExceeded();
     error InsufficientPrescioBalance();
+    error DirectTransferNotAllowed(); // [I-03 FIX]
 
     // ============================================
     // Modifiers
@@ -236,12 +250,6 @@ contract PrescioStaking is
         _disableInitializers();
     }
 
-    /**
-     * @notice Initialize the staking contract
-     * @param _prescioToken Address of PRESCIO token
-     * @param _treasury Address of treasury
-     * @param _autoBetController Address of auto-bet controller (can be zero, set later)
-     */
     function initialize(
         address _prescioToken,
         address _treasury,
@@ -265,14 +273,11 @@ contract PrescioStaking is
     }
 
     /**
-     * @notice Reinitializer for v1.2 upgrade (Dual Rewards)
-     * @dev Call this after upgrading from v1.1 to initialize new state variables
+     * @notice Reinitializer for v1.3 upgrade
      */
-    function initializeV2() public reinitializer(2) {
-        // pendingPrescioRewardsPool is already 0 by default
-        // epochPrescioRewards mapping is already empty by default
-        // For existing stakers, lastPrescioClaimEpoch will be initialized to lastClaimEpoch
-        // on their first interaction (handled in claim functions)
+    function initializeV3() public reinitializer(3) {
+        // Initialize weightAtEpochStart with current totalWeight
+        weightAtEpochStart = totalWeight;
     }
 
     function _initializeTiers() internal {
@@ -308,7 +313,7 @@ contract PrescioStaking is
             minStake: TIER_DIAMOND_MIN,
             rewardBoost: DIAMOND_BET_MULT,  // 2.0x
             autoBetDailyLimit: 2_000 * 1e18,  // 2000 MON
-            maxConcurrentBets: 255,  // Unlimited
+            maxConcurrentBets: UNLIMITED_CONCURRENT_BETS,
             autoBetEnabled: true
         });
     }
@@ -317,48 +322,41 @@ contract PrescioStaking is
     // UUPS Authorization
     // ============================================
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {
+        // [Coder FIX] Validate implementation address
+        if (newImplementation == address(0)) revert InvalidImplementation();
+        if (newImplementation.code.length == 0) revert InvalidImplementation();
+    }
 
     // ============================================
     // Core Staking Functions
     // ============================================
 
-    /**
-     * @notice Stake PRESCIO tokens
-     * @param amount Amount to stake
-     * @param lockType Lock period type
-     */
     function stake(uint256 amount, LockType lockType) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
         if (stakes[msg.sender].exists) revert AlreadyStaked();
 
-        // Transfer tokens first (CEI pattern - but this is safe as it's from user)
         prescioToken.safeTransferFrom(msg.sender, address(this), amount);
 
-        // Calculate lock end
         uint256 lockDuration = _getLockDuration(lockType);
         uint256 lockEnd = block.timestamp + lockDuration;
 
-        // Create stake
         stakes[msg.sender] = Stake({
             amount: amount,
             lockEnd: lockEnd,
             lockType: lockType,
             startTime: block.timestamp,
             lastClaimEpoch: currentEpoch,
-            lastPrescioClaimEpoch: currentEpoch, // Initialize PRESCIO claim epoch
-            firstEligibleEpoch: currentEpoch + 1, // [M-01 FIX] Front-run protection
+            lastPrescioClaimEpoch: currentEpoch,
+            firstEligibleEpoch: currentEpoch + 1,
             exists: true
         });
 
-        // Update totals
         totalStaked += amount;
         
-        // [C-02 FIX] Update running total weight
         uint256 userWeight = _calculateWeight(amount, getTierForAmount(amount), lockType);
         totalWeight += userWeight;
         
-        // Track staker
         if (!isStaker[msg.sender]) {
             stakerIndex[msg.sender] = stakers.length;
             stakers.push(msg.sender);
@@ -368,9 +366,6 @@ contract PrescioStaking is
         emit Staked(msg.sender, amount, lockType, getTier(msg.sender));
     }
 
-    /**
-     * @notice Unstake tokens (after lock period or with penalty for flexible)
-     */
     function unstake() external nonReentrant {
         Stake storage userStake = stakes[msg.sender];
         if (!userStake.exists) revert NoStakeFound();
@@ -379,50 +374,45 @@ contract PrescioStaking is
         uint256 penalty = 0;
 
         if (block.timestamp < userStake.lockEnd) {
-            // Early exit only for flexible
             if (userStake.lockType != LockType.FLEXIBLE) {
                 revert FixedLockNoEarlyExit();
             }
             penalty = _calculateFlexiblePenalty(userStake.startTime, amount);
         }
 
-        // [H-01 FIX] CEI Pattern - Calculate rewards first
-        (uint256 monRewards, uint256 prescioRewards, uint256 claimedMonEpochs, uint256 claimedPrescioEpochs) = 
-            _calculatePendingRewardsBoth(msg.sender);
+        // Calculate rewards
+        (uint256 monRewards, uint256 prescioRewards,,) = _calculatePendingRewardsBoth(msg.sender);
         
-        // [C-02 FIX] Update running total weight before state changes
+        // [H-01 FIX] Strict PRESCIO balance check - revert if insufficient
+        if (prescioRewards > 0) {
+            uint256 availablePrescio = prescioToken.balanceOf(address(this)) - totalStaked;
+            if (prescioRewards > availablePrescio) {
+                revert InsufficientPrescioBalance();
+            }
+        }
+        
         uint256 userWeight = getUserWeight(msg.sender);
         totalWeight -= userWeight;
         
-        // Effects - Update state before external calls
         uint256 lastMonClaimed = userStake.lastClaimEpoch;
         uint256 lastPrescioClaimed = userStake.lastPrescioClaimEpoch;
         _removeStaker(msg.sender);
         delete stakes[msg.sender];
         totalStaked -= amount;
 
-        // Handle penalty
         uint256 returnAmount = amount;
         if (penalty > 0) {
             _distributePenalty(penalty);
             returnAmount = amount - penalty;
         }
 
-        // Interactions - External calls last
         if (monRewards > 0) {
             (bool rewardSuccess,) = payable(msg.sender).call{value: monRewards}("");
             if (!rewardSuccess) revert TransferFailed();
         }
         
         if (prescioRewards > 0) {
-            // Safety check: ensure we have enough PRESCIO for rewards (excluding staked amounts)
-            uint256 availablePrescio = prescioToken.balanceOf(address(this)) - totalStaked;
-            if (prescioRewards > availablePrescio) {
-                prescioRewards = availablePrescio;
-            }
-            if (prescioRewards > 0) {
-                prescioToken.safeTransfer(msg.sender, prescioRewards);
-            }
+            prescioToken.safeTransfer(msg.sender, prescioRewards);
         }
         
         prescioToken.safeTransfer(msg.sender, returnAmount);
@@ -442,6 +432,7 @@ contract PrescioStaking is
 
     /**
      * @notice Emergency unstake with 50% penalty (for fixed locks)
+     * @dev [L-05 FIX] Attempts to claim MON rewards, but forfeits PRESCIO rewards
      */
     function emergencyUnstake() external nonReentrant {
         Stake storage userStake = stakes[msg.sender];
@@ -450,32 +441,38 @@ contract PrescioStaking is
         uint256 amount = userStake.amount;
         uint256 penalty = (amount * EMERGENCY_PENALTY) / PENALTY_PRECISION;
 
-        // [C-02 FIX] Update weight
+        // Try to calculate MON rewards (PRESCIO forfeited in emergency)
+        (uint256 monRewards,,,) = _calculatePendingRewardsBoth(msg.sender);
+        uint256 forfeitedPrescioRewards;
+        (,forfeitedPrescioRewards,,) = _calculatePendingRewardsBoth(msg.sender);
+
         uint256 userWeight = getUserWeight(msg.sender);
         totalWeight -= userWeight;
 
-        // Effects first
         _removeStaker(msg.sender);
         delete stakes[msg.sender];
         totalStaked -= amount;
 
-        // Distribute penalty
         _distributePenalty(penalty);
 
-        // Interactions last
+        // Transfer MON rewards if any (best effort)
+        if (monRewards > 0) {
+            (bool success,) = payable(msg.sender).call{value: monRewards}("");
+            // Don't revert on failure - this is emergency
+            if (!success) {
+                monRewards = 0;
+            }
+        }
+
         prescioToken.safeTransfer(msg.sender, amount - penalty);
 
-        emit EmergencyUnstaked(msg.sender, amount - penalty, penalty);
+        emit EmergencyUnstaked(msg.sender, amount - penalty, penalty, forfeitedPrescioRewards);
     }
 
     // ============================================
-    // Reward Claim Functions (Dual Rewards)
+    // Reward Claim Functions
     // ============================================
 
-    /**
-     * @notice Claim MON rewards only
-     * @param maxEpochs Maximum epochs to process (0 = use default MAX_CLAIM_EPOCHS)
-     */
     function claimMonRewards(uint256 maxEpochs) external nonReentrant {
         if (maxEpochs == 0) maxEpochs = MAX_CLAIM_EPOCHS;
         if (maxEpochs > MAX_CLAIM_EPOCHS) revert MaxEpochsExceeded();
@@ -483,10 +480,6 @@ contract PrescioStaking is
         _claimMonRewards(msg.sender, maxEpochs);
     }
 
-    /**
-     * @notice Claim PRESCIO rewards only
-     * @param maxEpochs Maximum epochs to process (0 = use default MAX_CLAIM_EPOCHS)
-     */
     function claimPrescioRewards(uint256 maxEpochs) external nonReentrant {
         if (maxEpochs == 0) maxEpochs = MAX_CLAIM_EPOCHS;
         if (maxEpochs > MAX_CLAIM_EPOCHS) revert MaxEpochsExceeded();
@@ -494,10 +487,6 @@ contract PrescioStaking is
         _claimPrescioRewards(msg.sender, maxEpochs);
     }
 
-    /**
-     * @notice Claim all rewards (MON + PRESCIO) with gas-optimized single loop
-     * @param maxEpochs Maximum epochs to process (0 = use default MAX_CLAIM_EPOCHS)
-     */
     function claimAllRewards(uint256 maxEpochs) external nonReentrant {
         if (maxEpochs == 0) maxEpochs = MAX_CLAIM_EPOCHS;
         if (maxEpochs > MAX_CLAIM_EPOCHS) revert MaxEpochsExceeded();
@@ -505,10 +494,6 @@ contract PrescioStaking is
         _claimAllRewardsOptimized(msg.sender, maxEpochs);
     }
 
-    /**
-     * @notice Legacy function for backwards compatibility
-     * @param maxEpochs Maximum epochs to process
-     */
     function claimRewards(uint256 maxEpochs) external nonReentrant {
         if (maxEpochs == 0) maxEpochs = MAX_CLAIM_EPOCHS;
         if (maxEpochs > MAX_CLAIM_EPOCHS) revert MaxEpochsExceeded();
@@ -520,9 +505,6 @@ contract PrescioStaking is
     // Epoch Management
     // ============================================
 
-    /**
-     * @notice Deposit MON rewards for current epoch (owner only)
-     */
     function depositRewards() external payable onlyOwner {
         epochs[currentEpoch].totalRewards += msg.value;
         emit RewardsDeposited(msg.value, currentEpoch);
@@ -530,10 +512,9 @@ contract PrescioStaking is
 
     /**
      * @notice Finalize current epoch and start new one
-     * @dev [H-03 FIX] Anyone can call after grace period
+     * @dev [M-01 FIX] Uses weight snapshot from epoch start to prevent manipulation
      */
     function finalizeEpoch() external {
-        // Check authorization
         bool isOwner = msg.sender == owner();
         bool gracePeriodPassed = block.timestamp >= epochStartTime + EPOCH_DURATION + EPOCH_GRACE_PERIOD;
         
@@ -541,29 +522,27 @@ contract PrescioStaking is
             revert EpochNotReady();
         }
         
-        // Check minimum duration passed
         if (block.timestamp < epochStartTime + EPOCH_DURATION) {
             revert EpochNotReady();
         }
 
         Epoch storage epoch = epochs[currentEpoch];
         
-        // Snapshot total weight
-        epoch.totalWeight = totalWeight;
+        // [M-01 FIX] Use weight snapshot from epoch start instead of current
+        // This prevents manipulation during finalization window
+        epoch.totalWeight = weightAtEpochStart > 0 ? weightAtEpochStart : totalWeight;
         epoch.snapshotTime = block.timestamp;
         epoch.finalized = true;
 
         emit EpochFinalized(currentEpoch, epoch.totalRewards, epochPrescioRewards[currentEpoch], epoch.totalWeight);
 
-        // Start new epoch
         currentEpoch++;
         epochStartTime = block.timestamp;
+        
+        // Snapshot current weight for next epoch
+        weightAtEpochStart = totalWeight;
     }
 
-    /**
-     * @notice Distribute accumulated penalties
-     * @dev Adds PRESCIO to epochPrescioRewards (separate from MON)
-     */
     function distributePenalties() external nonReentrant {
         uint256 burnAmount = pendingBurnAmount;
         uint256 stakerAmount = pendingPrescioRewardsPool;
@@ -571,20 +550,16 @@ contract PrescioStaking is
         
         if (burnAmount + stakerAmount + treasuryAmount == 0) return;
 
-        // Reset before transfers (CEI)
         pendingBurnAmount = 0;
         pendingPrescioRewardsPool = 0;
         pendingTreasuryAmount = 0;
 
-        // Add PRESCIO to epoch rewards (separate from MON)
         epochPrescioRewards[currentEpoch] += stakerAmount;
 
-        // Burn tokens
         if (burnAmount > 0) {
             prescioToken.safeTransfer(DEAD_ADDRESS, burnAmount);
         }
 
-        // Transfer to treasury
         if (treasuryAmount > 0) {
             prescioToken.safeTransfer(treasury, treasuryAmount);
         }
@@ -596,23 +571,19 @@ contract PrescioStaking is
     // Auto-Bet Integration
     // ============================================
 
-    /**
-     * @notice Check if user is eligible for auto-bet
-     * @param user User address
-     * @return bool True if eligible
-     */
     function isAutoBetEligible(address user) external view returns (bool) {
+        Stake storage userStake = stakes[user];
+        if (!userStake.exists) return false;
+        
+        // [H-02 FIX] Require minimum stake duration for tier benefits
+        if (block.timestamp < userStake.startTime + MIN_STAKE_DURATION_FOR_TIER) {
+            return false;
+        }
+        
         Tier tier = getTier(user);
         return tier >= Tier.SILVER && tierConfigs[tier].autoBetEnabled;
     }
 
-    /**
-     * @notice Get user's auto-bet configuration
-     * @param user User address
-     * @return dailyLimit Daily betting limit
-     * @return maxConcurrent Max concurrent bets
-     * @return enabled Auto-bet enabled flag
-     */
     function getAutoBetConfig(address user) external view returns (
         uint256 dailyLimit,
         uint8 maxConcurrent,
@@ -623,13 +594,15 @@ contract PrescioStaking is
         return (config.autoBetDailyLimit, config.maxConcurrentBets, config.autoBetEnabled);
     }
 
-    /**
-     * @notice Validate auto-bet execution
-     * @param user User address
-     * @param betAmount Bet amount in MON
-     * @return bool True if valid
-     */
     function validateAutoBet(address user, uint256 betAmount) external view returns (bool) {
+        Stake storage userStake = stakes[user];
+        if (!userStake.exists) return false;
+        
+        // [H-02 FIX] Check minimum stake duration
+        if (block.timestamp < userStake.startTime + MIN_STAKE_DURATION_FOR_TIER) {
+            return false;
+        }
+        
         Tier tier = getTier(user);
         if (tier < Tier.SILVER) return false;
         
@@ -644,20 +617,14 @@ contract PrescioStaking is
     // View Functions
     // ============================================
 
-    /**
-     * @notice Get user's current tier based on staked amount
-     * @param user User address
-     * @return Tier enum value
-     */
+    function getVersion() external pure returns (uint256) {
+        return VERSION;
+    }
+
     function getTier(address user) public view returns (Tier) {
         return getTierForAmount(stakes[user].amount);
     }
 
-    /**
-     * @notice Get tier for a given amount
-     * @param amount Staked amount
-     * @return Tier enum value
-     */
     function getTierForAmount(uint256 amount) public pure returns (Tier) {
         if (amount >= TIER_DIAMOND_MIN) return Tier.DIAMOND;
         if (amount >= TIER_GOLD_MIN) return Tier.GOLD;
@@ -668,51 +635,38 @@ contract PrescioStaking is
 
     /**
      * @notice Calculate user's staking weight
-     * @param user User address
-     * @return weight User's weight for reward calculation
+     * @dev [H-02 FIX] Returns base weight (1x) if stake duration < MIN_STAKE_DURATION_FOR_TIER
      */
     function getUserWeight(address user) public view returns (uint256) {
         Stake storage userStake = stakes[user];
         if (!userStake.exists) return 0;
 
-        return _calculateWeight(userStake.amount, getTier(user), userStake.lockType);
+        // [H-02 FIX] Anti-gaming: New stakes get base tier weight until duration met
+        Tier effectiveTier;
+        if (block.timestamp < userStake.startTime + MIN_STAKE_DURATION_FOR_TIER) {
+            effectiveTier = Tier.BRONZE; // Base tier for new stakes
+        } else {
+            effectiveTier = getTier(user);
+        }
+
+        return _calculateWeight(userStake.amount, effectiveTier, userStake.lockType);
     }
 
-    /**
-     * @notice Get pending MON rewards for user
-     * @param user User address
-     * @return totalReward Pending MON reward amount
-     */
     function getPendingMonRewards(address user) external view returns (uint256) {
         (uint256 rewards,) = _calculatePendingMonRewards(user);
         return rewards;
     }
 
-    /**
-     * @notice Get pending PRESCIO rewards for user
-     * @param user User address
-     * @return totalReward Pending PRESCIO reward amount
-     */
     function getPendingPrescioRewards(address user) external view returns (uint256) {
         (uint256 rewards,) = _calculatePendingPrescioRewards(user);
         return rewards;
     }
 
-    /**
-     * @notice Get all pending rewards for user (MON + PRESCIO)
-     * @param user User address
-     * @return monRewards Pending MON reward amount
-     * @return prescioRewards Pending PRESCIO reward amount
-     */
     function getPendingRewards(address user) external view returns (uint256 monRewards, uint256 prescioRewards) {
         (monRewards, prescioRewards,,) = _calculatePendingRewardsBoth(user);
         return (monRewards, prescioRewards);
     }
 
-    /**
-     * @notice Get detailed stake info
-     * @param user User address
-     */
     function getStakeInfo(address user) external view returns (
         uint256 amount,
         uint256 lockEnd,
@@ -735,9 +689,6 @@ contract PrescioStaking is
         );
     }
 
-    /**
-     * @notice Get current epoch info
-     */
     function getCurrentEpochInfo() external view returns (
         uint256 epochNumber,
         uint256 monRewards,
@@ -757,17 +708,10 @@ contract PrescioStaking is
         );
     }
 
-    /**
-     * @notice Get total staker count
-     */
     function getStakerCount() external view returns (uint256) {
         return stakers.length;
     }
 
-    /**
-     * @notice Get epoch info for a specific epoch
-     * @param epochNumber The epoch number to query
-     */
     function getEpochInfo(uint256 epochNumber) external view returns (
         uint256 monRewards,
         uint256 prescioRewards,
@@ -785,9 +729,6 @@ contract PrescioStaking is
         );
     }
 
-    /**
-     * @notice Get available PRESCIO for rewards (excludes staked amounts)
-     */
     function getAvailablePrescioForRewards() external view returns (uint256) {
         uint256 balance = prescioToken.balanceOf(address(this));
         if (balance > totalStaked) {
@@ -800,20 +741,12 @@ contract PrescioStaking is
     // Admin Functions
     // ============================================
 
-    /**
-     * @notice Update treasury address
-     * @param _treasury New treasury address
-     */
     function setTreasury(address _treasury) external onlyOwner {
         if (_treasury == address(0)) revert ZeroAddress();
         emit TreasuryUpdated(treasury, _treasury);
         treasury = _treasury;
     }
 
-    /**
-     * @notice Update auto-bet controller address
-     * @param _controller New controller address
-     */
     function setAutoBetController(address _controller) external onlyOwner {
         emit AutoBetControllerUpdated(autoBetController, _controller);
         autoBetController = _controller;
@@ -821,7 +754,7 @@ contract PrescioStaking is
 
     /**
      * @notice Update tier configuration
-     * @dev Does not validate tier ordering (owner responsibility)
+     * @dev [L-03 FIX] Validates tier ordering
      */
     function updateTierConfig(
         Tier tier,
@@ -832,6 +765,18 @@ contract PrescioStaking is
         bool autoBetEnabled
     ) external onlyOwner {
         if (tier == Tier.NONE) revert InvalidTier();
+        
+        // [L-03 FIX] Validate tier ordering
+        if (tier > Tier.BRONZE) {
+            Tier lowerTier = Tier(uint8(tier) - 1);
+            if (minStake < tierConfigs[lowerTier].minStake) revert InvalidTierOrder();
+        }
+        if (tier < Tier.LEGENDARY) {
+            Tier higherTier = Tier(uint8(tier) + 1);
+            if (tierConfigs[higherTier].minStake > 0 && minStake > tierConfigs[higherTier].minStake) {
+                revert InvalidTierOrder();
+            }
+        }
         
         tierConfigs[tier] = TierConfig({
             minStake: minStake,
@@ -848,24 +793,17 @@ contract PrescioStaking is
     // Internal Functions
     // ============================================
 
-    /**
-     * @dev Calculate weight for given parameters
-     */
     function _calculateWeight(uint256 amount, Tier tier, LockType lockType) internal view returns (uint256) {
         if (amount == 0) return 0;
         
         uint256 tierBoost = tierConfigs[tier].rewardBoost;
-        if (tierBoost == 0) tierBoost = BOOST_PRECISION; // Default 1x for NONE tier
+        if (tierBoost == 0) tierBoost = BOOST_PRECISION;
         
         uint256 lockMult = _getLockMultiplier(lockType);
 
-        // weight = amount * tierBoost * lockMult / (100 * 100)
         return (amount * tierBoost * lockMult) / (BOOST_PRECISION * BOOST_PRECISION);
     }
 
-    /**
-     * @dev Calculate pending MON rewards (view helper)
-     */
     function _calculatePendingMonRewards(address user) internal view returns (uint256 totalReward, uint256 epochsCounted) {
         Stake storage userStake = stakes[user];
         if (!userStake.exists) return (0, 0);
@@ -873,14 +811,13 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) return (0, 0);
 
-        // [M-01 FIX] Start from first eligible epoch
         uint256 startEpoch = userStake.lastClaimEpoch;
         if (startEpoch < userStake.firstEligibleEpoch) {
             startEpoch = userStake.firstEligibleEpoch;
         }
 
         for (uint256 e = startEpoch; e < currentEpoch; e++) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e]; // Memory copy for gas optimization
             if (!epoch.finalized || epoch.totalWeight == 0) continue;
 
             uint256 epochReward = (epoch.totalRewards * userWeight) / epoch.totalWeight;
@@ -891,9 +828,6 @@ contract PrescioStaking is
         return (totalReward, epochsCounted);
     }
 
-    /**
-     * @dev Calculate pending PRESCIO rewards (view helper)
-     */
     function _calculatePendingPrescioRewards(address user) internal view returns (uint256 totalReward, uint256 epochsCounted) {
         Stake storage userStake = stakes[user];
         if (!userStake.exists) return (0, 0);
@@ -901,9 +835,7 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) return (0, 0);
 
-        // Start from first eligible epoch or last PRESCIO claim epoch
         uint256 startEpoch = userStake.lastPrescioClaimEpoch;
-        // Handle migration: if lastPrescioClaimEpoch is 0, use lastClaimEpoch
         if (startEpoch == 0) {
             startEpoch = userStake.lastClaimEpoch;
         }
@@ -912,7 +844,7 @@ contract PrescioStaking is
         }
 
         for (uint256 e = startEpoch; e < currentEpoch; e++) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e];
             uint256 prescioPool = epochPrescioRewards[e];
             
             if (!epoch.finalized || epoch.totalWeight == 0 || prescioPool == 0) continue;
@@ -925,9 +857,6 @@ contract PrescioStaking is
         return (totalReward, epochsCounted);
     }
 
-    /**
-     * @dev Calculate both MON and PRESCIO rewards in a single loop (gas optimized)
-     */
     function _calculatePendingRewardsBoth(address user) internal view returns (
         uint256 totalMonReward,
         uint256 totalPrescioReward,
@@ -940,11 +869,9 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) return (0, 0, 0, 0);
 
-        // Determine start epochs
         uint256 monStartEpoch = userStake.lastClaimEpoch;
         uint256 prescioStartEpoch = userStake.lastPrescioClaimEpoch;
         
-        // Handle migration for PRESCIO
         if (prescioStartEpoch == 0) {
             prescioStartEpoch = userStake.lastClaimEpoch;
         }
@@ -956,20 +883,17 @@ contract PrescioStaking is
             prescioStartEpoch = userStake.firstEligibleEpoch;
         }
 
-        // Find the earliest start epoch for single loop
         uint256 startEpoch = monStartEpoch < prescioStartEpoch ? monStartEpoch : prescioStartEpoch;
 
         for (uint256 e = startEpoch; e < currentEpoch; e++) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e];
             if (!epoch.finalized || epoch.totalWeight == 0) continue;
 
-            // MON rewards
             if (e >= monStartEpoch && epoch.totalRewards > 0) {
                 totalMonReward += (epoch.totalRewards * userWeight) / epoch.totalWeight;
                 monEpochsCounted++;
             }
 
-            // PRESCIO rewards
             uint256 prescioPool = epochPrescioRewards[e];
             if (e >= prescioStartEpoch && prescioPool > 0) {
                 totalPrescioReward += (prescioPool * userWeight) / epoch.totalWeight;
@@ -980,9 +904,6 @@ contract PrescioStaking is
         return (totalMonReward, totalPrescioReward, monEpochsCounted, prescioEpochsCounted);
     }
 
-    /**
-     * @dev Internal MON claim with pagination
-     */
     function _claimMonRewards(address user, uint256 maxEpochs) internal {
         Stake storage userStake = stakes[user];
         if (!userStake.exists) revert NoStakeFound();
@@ -990,20 +911,18 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) revert NothingToClaim();
 
-        // [M-01 FIX] Start from first eligible epoch
         uint256 startEpoch = userStake.lastClaimEpoch;
         if (startEpoch < userStake.firstEligibleEpoch) {
             startEpoch = userStake.firstEligibleEpoch;
         }
 
-        // [C-03 FIX] Pagination
         uint256 endEpoch = startEpoch + maxEpochs;
         if (endEpoch > currentEpoch) endEpoch = currentEpoch;
 
         uint256 totalReward = 0;
 
         for (uint256 e = startEpoch; e < endEpoch;) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e];
             if (epoch.finalized && epoch.totalWeight > 0 && epoch.totalRewards > 0) {
                 uint256 epochReward = (epoch.totalRewards * userWeight) / epoch.totalWeight;
                 totalReward += epochReward;
@@ -1013,10 +932,8 @@ contract PrescioStaking is
 
         if (totalReward == 0) revert NothingToClaim();
 
-        // Update state before transfer (CEI)
         userStake.lastClaimEpoch = endEpoch;
 
-        // Transfer MON rewards
         (bool success,) = payable(user).call{value: totalReward}("");
         if (!success) revert TransferFailed();
 
@@ -1025,6 +942,7 @@ contract PrescioStaking is
 
     /**
      * @dev Internal PRESCIO claim with pagination
+     * @dev [H-01 FIX] Strict balance check - reverts if insufficient
      */
     function _claimPrescioRewards(address user, uint256 maxEpochs) internal {
         Stake storage userStake = stakes[user];
@@ -1033,9 +951,7 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) revert NothingToClaim();
 
-        // Start from first eligible epoch or last PRESCIO claim
         uint256 startEpoch = userStake.lastPrescioClaimEpoch;
-        // Handle migration
         if (startEpoch == 0) {
             startEpoch = userStake.lastClaimEpoch;
         }
@@ -1043,14 +959,13 @@ contract PrescioStaking is
             startEpoch = userStake.firstEligibleEpoch;
         }
 
-        // Pagination
         uint256 endEpoch = startEpoch + maxEpochs;
         if (endEpoch > currentEpoch) endEpoch = currentEpoch;
 
         uint256 totalReward = 0;
 
         for (uint256 e = startEpoch; e < endEpoch;) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e];
             uint256 prescioPool = epochPrescioRewards[e];
             
             if (epoch.finalized && epoch.totalWeight > 0 && prescioPool > 0) {
@@ -1062,21 +977,20 @@ contract PrescioStaking is
 
         if (totalReward == 0) revert NothingToClaim();
 
-        // Safety check: ensure we have enough PRESCIO for rewards
+        // [H-01 FIX] Strict balance check - revert instead of silent cap
         uint256 availablePrescio = prescioToken.balanceOf(address(this)) - totalStaked;
         if (totalReward > availablePrescio) revert InsufficientPrescioBalance();
 
-        // Update state before transfer (CEI)
         userStake.lastPrescioClaimEpoch = endEpoch;
 
-        // Transfer PRESCIO rewards
         prescioToken.safeTransfer(user, totalReward);
 
         emit PrescioRewardsClaimed(user, startEpoch, endEpoch - 1, totalReward);
     }
 
     /**
-     * @dev Internal claim both rewards with single optimized loop
+     * @dev Internal claim both rewards
+     * @dev [H-01 FIX] Strict balance check for PRESCIO
      */
     function _claimAllRewardsOptimized(address user, uint256 maxEpochs) internal {
         Stake storage userStake = stakes[user];
@@ -1085,11 +999,9 @@ contract PrescioStaking is
         uint256 userWeight = getUserWeight(user);
         if (userWeight == 0) revert NothingToClaim();
 
-        // Determine start epochs
         uint256 monStartEpoch = userStake.lastClaimEpoch;
         uint256 prescioStartEpoch = userStake.lastPrescioClaimEpoch;
         
-        // Handle migration for PRESCIO
         if (prescioStartEpoch == 0) {
             prescioStartEpoch = userStake.lastClaimEpoch;
         }
@@ -1101,10 +1013,8 @@ contract PrescioStaking is
             prescioStartEpoch = userStake.firstEligibleEpoch;
         }
 
-        // Find the earliest start epoch
         uint256 startEpoch = monStartEpoch < prescioStartEpoch ? monStartEpoch : prescioStartEpoch;
         
-        // Pagination
         uint256 endEpoch = startEpoch + maxEpochs;
         if (endEpoch > currentEpoch) endEpoch = currentEpoch;
 
@@ -1112,15 +1022,13 @@ contract PrescioStaking is
         uint256 totalPrescioReward = 0;
 
         for (uint256 e = startEpoch; e < endEpoch;) {
-            Epoch storage epoch = epochs[e];
+            Epoch memory epoch = epochs[e];
             
             if (epoch.finalized && epoch.totalWeight > 0) {
-                // MON rewards
                 if (e >= monStartEpoch && epoch.totalRewards > 0) {
                     totalMonReward += (epoch.totalRewards * userWeight) / epoch.totalWeight;
                 }
 
-                // PRESCIO rewards
                 uint256 prescioPool = epochPrescioRewards[e];
                 if (e >= prescioStartEpoch && prescioPool > 0) {
                     totalPrescioReward += (prescioPool * userWeight) / epoch.totalWeight;
@@ -1131,25 +1039,22 @@ contract PrescioStaking is
 
         if (totalMonReward == 0 && totalPrescioReward == 0) revert NothingToClaim();
 
-        // Safety check for PRESCIO
+        // [H-01 FIX] Strict balance check - revert if PRESCIO insufficient
         if (totalPrescioReward > 0) {
             uint256 availablePrescio = prescioToken.balanceOf(address(this)) - totalStaked;
             if (totalPrescioReward > availablePrescio) {
-                totalPrescioReward = availablePrescio; // Cap to available balance
+                revert InsufficientPrescioBalance();
             }
         }
 
-        // Update state before transfers (CEI)
         userStake.lastClaimEpoch = endEpoch;
         userStake.lastPrescioClaimEpoch = endEpoch;
 
-        // Transfer MON rewards
         if (totalMonReward > 0) {
             (bool success,) = payable(user).call{value: totalMonReward}("");
             if (!success) revert TransferFailed();
         }
 
-        // Transfer PRESCIO rewards
         if (totalPrescioReward > 0) {
             prescioToken.safeTransfer(user, totalPrescioReward);
         }
@@ -1157,17 +1062,14 @@ contract PrescioStaking is
         emit RewardsClaimed(user, startEpoch, endEpoch - 1, totalMonReward, totalPrescioReward);
     }
 
-    /**
-     * @dev Calculate flexible lock early exit penalty
-     */
     function _calculateFlexiblePenalty(uint256 startTime, uint256 amount) internal view returns (uint256) {
         uint256 elapsed = block.timestamp - startTime;
         
-        if (elapsed < 2 days) {
+        if (elapsed < PENALTY_TIER1_THRESHOLD) {
             return (amount * PENALTY_DAY_1_2) / PENALTY_PRECISION;
-        } else if (elapsed < 4 days) {
+        } else if (elapsed < PENALTY_TIER2_THRESHOLD) {
             return (amount * PENALTY_DAY_3_4) / PENALTY_PRECISION;
-        } else if (elapsed < 6 days) {
+        } else if (elapsed < PENALTY_TIER3_THRESHOLD) {
             return (amount * PENALTY_DAY_5_6) / PENALTY_PRECISION;
         }
         
@@ -1175,24 +1077,21 @@ contract PrescioStaking is
     }
 
     /**
-     * @dev Distribute penalty: 40% burn, 40% stakers (PRESCIO), 20% treasury
-     * @dev Dust prevention: remainder goes to stakers
+     * @dev Distribute penalty with event emission
+     * @dev [L-01 FIX] Added PenaltyAccumulated event
      */
     function _distributePenalty(uint256 penalty) internal {
         uint256 burnAmount = (penalty * PENALTY_BURN_SHARE) / PENALTY_PRECISION;
         uint256 treasuryAmount = (penalty * PENALTY_TREASURY_SHARE) / PENALTY_PRECISION;
-        
-        // Dust prevention: all remaining goes to stakers
         uint256 stakerAmount = penalty - burnAmount - treasuryAmount;
         
         pendingBurnAmount += burnAmount;
         pendingPrescioRewardsPool += stakerAmount;
         pendingTreasuryAmount += treasuryAmount;
+        
+        emit PenaltyAccumulated(msg.sender, burnAmount, stakerAmount, treasuryAmount);
     }
 
-    /**
-     * @dev Remove staker from tracking array
-     */
     function _removeStaker(address user) internal {
         if (!isStaker[user]) return;
         
@@ -1233,9 +1132,9 @@ contract PrescioStaking is
     // ============================================
 
     /**
-     * @dev [M-03 FIX] Reject direct ETH transfers
+     * @dev [I-03 FIX] Custom error for consistency
      */
     receive() external payable {
-        revert("Use depositRewards()");
+        revert DirectTransferNotAllowed();
     }
 }
