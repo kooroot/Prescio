@@ -658,6 +658,13 @@ function Header() {
         
         <div className="flex items-center gap-3">
           <a 
+            href="#leaderboard"
+            className="px-4 py-2 bg-[#18181B] hover:bg-[#27272A] border border-[#27272A] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            Leaderboard
+          </a>
+          <a 
             href="https://prescio.fun" 
             className="px-4 py-2 bg-[#6E54FF] hover:bg-[#6E54FF]/90 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
           >
@@ -1646,11 +1653,28 @@ function StakingContent({ address }: { address: Address }) {
 export default function App() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
-  const [activeTab, setActiveTab] = useState<AppTab>("staking");
+  const [currentPage, setCurrentPage] = useState<"staking" | "leaderboard">(() => {
+    return window.location.hash === "#leaderboard" ? "leaderboard" : "staking";
+  });
+
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentPage(window.location.hash === "#leaderboard" ? "leaderboard" : "staking");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const handleConnect = () => {
     connect({ connector: injected() });
   };
+
+  const isLeaderboard = currentPage === "leaderboard";
+  const pageTitle = isLeaderboard ? "Leaderboard" : "Staking";
+  const pageDescription = isLeaderboard 
+    ? "See top stakers and your ranking" 
+    : "Stake PRESCIO to boost betting limits and earn rewards";
 
   return (
     <>
@@ -1665,25 +1689,28 @@ export default function App() {
           {/* Network Switch Banner */}
           {isConnected && <NetworkSwitchBanner />}
           
-          {/* Header */}
+          {/* Page Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               <img src="/prescio-icon.png" alt="PRESCIO" className="w-10 h-10 rounded-xl" />
-              <h1 className="text-2xl font-bold">PRESCIO Staking</h1>
+              <h1 className="text-2xl font-bold">PRESCIO {pageTitle}</h1>
             </div>
-            <p className="text-[#A1A1AA] text-sm">Stake PRESCIO to boost betting limits and earn rewards</p>
+            <p className="text-[#A1A1AA] text-sm">{pageDescription}</p>
+            {isLeaderboard && (
+              <a 
+                href="#" 
+                className="inline-flex items-center gap-2 mt-3 text-[#6E54FF] hover:text-[#6E54FF]/80 text-sm font-medium transition-colors"
+              >
+                ← Back to Staking
+              </a>
+            )}
           </div>
 
-          {/* Tab Navigation */}
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-
-          {/* Tab Content */}
-          {isConnected && address ? (
-            activeTab === "staking" ? (
-              <StakingContent address={address} />
-            ) : (
-              <LeaderboardPage />
-            )
+          {/* Page Content */}
+          {isLeaderboard ? (
+            <LeaderboardPage />
+          ) : isConnected && address ? (
+            <StakingContent address={address} />
           ) : (
             <WalletNotConnected onConnect={handleConnect} />
           )}
