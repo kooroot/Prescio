@@ -1285,9 +1285,7 @@ function RewardsCard({ address }: { address: Address }) {
       <div className="p-3 border border-[#27272A] rounded-lg mb-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-blue-400">M</span>
-            </div>
+            <img src="/monad-icon.png" alt="MON" className="w-6 h-6 rounded-full" />
             <div>
               <p className="text-sm font-medium text-white">MON</p>
               <p className="text-xs text-[#A1A1AA]">From betting fees</p>
@@ -1317,9 +1315,7 @@ function RewardsCard({ address }: { address: Address }) {
       <div className="p-3 border border-[#27272A] rounded-lg">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[#6E54FF]/20 flex items-center justify-center">
-              <span className="text-xs font-bold text-[#6E54FF]">P</span>
-            </div>
+            <img src="/prescio-icon.png" alt="PRESCIO" className="w-6 h-6 rounded-full" />
             <div>
               <p className="text-sm font-medium text-white">PRESCIO</p>
               <p className="text-xs text-[#A1A1AA]">From penalties</p>
