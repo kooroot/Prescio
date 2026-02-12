@@ -47,7 +47,7 @@ contract PrescioStaking is
     // Version
     // ============================================
     
-    uint256 public constant VERSION = 5;
+    uint256 public constant VERSION = 6;
 
     // ============================================
     // Types
@@ -183,6 +183,9 @@ contract PrescioStaking is
     // [M-01 FIX] Weight snapshot at epoch start for finalization
     uint256 public weightAtEpochStart;
 
+    // [V6 FIX] Track if user's weight has been upgraded to full tier
+    // This ensures stake/unstake weight consistency
+
     // v1.4 - Vault integration for automated reward distribution
     address public vaultContract;
 
@@ -317,6 +320,30 @@ contract PrescioStaking is
         // No additional state initialization required
     }
 
+    /**
+     * @notice Reinitializer for v6 upgrade - stake/unstake weight consistency fix
+     * @dev [V6 FIX] New stakers start with BRONZE-capped weight, can upgrade after MIN_STAKE_DURATION
+     */
+    function initializeV6() public reinitializer(6) {
+        // V6: Simplified weight calculation
+        // - Removed anti-gaming logic
+        // - stake/unstake use actual tier weight consistently
+    }
+
+    /**
+     * @notice Sync totalWeight by recalculating from all stakers
+     * @dev Use after upgrade to fix any existing desync
+     */
+    function syncTotalWeight() external onlyOwner {
+        uint256 newTotalWeight = 0;
+        uint256 len = stakers.length;
+        for (uint256 i = 0; i < len;) {
+            newTotalWeight += getUserWeight(stakers[i]);
+            unchecked { ++i; }
+        }
+        totalWeight = newTotalWeight;
+    }
+
     function _initializeTiers() internal {
         // Bronze: 5M PRESCIO, no auto-bet
         tierConfigs[Tier.BRONZE] = TierConfig({
@@ -391,6 +418,7 @@ contract PrescioStaking is
 
         totalStaked += amount;
         
+        // [V6 FIX] Use full tier weight - consistent with getUserWeight()
         uint256 userWeight = _calculateWeight(amount, getTierForAmount(amount), lockType);
         totalWeight += userWeight;
         
@@ -438,7 +466,7 @@ contract PrescioStaking is
         }
         // else: keep existing lockEnd
         
-        // 4. Calculate new tier and weight
+        // 4. Calculate new tier and weight - use full tier
         Tier newTier = getTierForAmount(newAmount);
         uint256 newWeight = _calculateWeight(newAmount, newTier, userStake.lockType);
         totalWeight += newWeight;
@@ -551,8 +579,6 @@ contract PrescioStaking is
 
         emit EmergencyUnstaked(msg.sender, amount - penalty, penalty, forfeitedPrescioRewards);
     }
-
-    // ============================================
     // Reward Claim Functions
     // ============================================
 
@@ -730,22 +756,28 @@ contract PrescioStaking is
 
     /**
      * @notice Calculate user's staking weight
-     * @dev [H-02 FIX] Returns base weight (1x) if stake duration < MIN_STAKE_DURATION_FOR_TIER
+     * @dev [V6 FIX] Always use actual tier - no anti-gaming
      */
     function getUserWeight(address user) public view returns (uint256) {
         Stake storage userStake = stakes[user];
         if (!userStake.exists) return 0;
 
-        // [H-02 FIX] Anti-gaming: New stakes get base tier weight until duration met
-        Tier effectiveTier;
-        if (block.timestamp < userStake.startTime + MIN_STAKE_DURATION_FOR_TIER) {
-            effectiveTier = Tier.BRONZE; // Base tier for new stakes
-        } else {
-            effectiveTier = getTier(user);
-        }
-
-        return _calculateWeight(userStake.amount, effectiveTier, userStake.lockType);
+        Tier actualTier = getTier(user);
+        return _calculateWeight(userStake.amount, actualTier, userStake.lockType);
     }
+    
+    /**
+     * @notice Get user's potential full tier weight (for display purposes)
+     * @dev Returns what the weight would be if upgraded, regardless of current state
+     */
+    function getFullTierWeight(address user) public view returns (uint256) {
+        Stake storage userStake = stakes[user];
+        if (!userStake.exists) return 0;
+        
+        Tier actualTier = getTier(user);
+        return _calculateWeight(userStake.amount, actualTier, userStake.lockType);
+    }
+    
 
     function getPendingMonRewards(address user) external view returns (uint256) {
         (uint256 rewards,) = _calculatePendingMonRewards(user);

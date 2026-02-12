@@ -2,8 +2,8 @@
 export const CONTRACT_ADDRESSES = {
   /** PrescioMarket contract (Proxy) */
   PRESCIO_MARKET: "0x6ba44357D3A1693aFe72ABa204b01fb8F8B36F6C" as `0x${string}`,
-  /** PrescioVault contract */
-  PRESCIO_VAULT: "0xbCAad29d9a2Dd64a8b8F1B9fD2e1C59D2b6a3E43" as `0x${string}`,
+  /** PrescioVault contract (V2 - Staking integrated) */
+  PRESCIO_VAULT: "0xc8671dFD067F31e6CD08B42dd0Fe7Ba565901A96" as `0x${string}`,
   /** PrescioStaking contract (Proxy) */
   PRESCIO_STAKING: "0xa0742ffb1762FF3EA001793aCBA202f82244D983" as `0x${string}`,
   /** AutoBetController contract (Proxy) */

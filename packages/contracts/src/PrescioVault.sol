@@ -15,39 +15,51 @@ interface IPrescioStaking {
 /**
  * @title PrescioVault
  * @author Prescio Team
- * @notice Collects protocol fees from PrescioMarket and distributes to Staking
- * @dev Owner can withdraw accumulated fees or distribute to staking contract
+ * @notice Collects protocol fees from PrescioMarket and distributes to Treasury, Staking, and Development
+ * @dev 3-way fee distribution with configurable ratios
  * 
  * Security Features:
- * - Zero address validation in withdrawFeesTo
- * - Code deduplication with internal _withdraw function
- * - ReentrancyGuard protection
- * - Staking integration for automated reward distribution
+ * - Zero address validation on all address setters
+ * - ReentrancyGuard protection on all distribution functions
+ * - Ratio sum validation (must equal 100%)
+ * - Staking integration via depositRewardsFromVault
  * 
- * v2.0 - Staking Integration:
- * - Added stakingContract address storage
- * - distributeToStaking(amount) for partial distribution
- * - distributeAllToStaking() for full distribution
- * - Distribution ratio support for flexible treasury management
+ * v3.0 - 3-Way Distribution:
+ * - Treasury address for protocol reserve
+ * - Staking contract for user rewards
+ * - Development address for ongoing development
+ * - Configurable ratios that must sum to 100%
+ * - Backward compatible with V2 receive() and withdrawFees()
  */
 contract PrescioVault is Ownable, ReentrancyGuard {
     // ============================================
     // Constants
     // ============================================
 
-    uint256 public constant VERSION = 2;
+    uint256 public constant VERSION = 3;
     uint256 public constant RATIO_PRECISION = 10000; // 100% = 10000
 
     // ============================================
     // State Variables
     // ============================================
 
+    /// @notice Treasury address for protocol reserve
+    address public treasuryAddress;
+    
     /// @notice Staking contract address for reward distribution
     address public stakingContract;
     
-    /// @notice Distribution ratio to staking (default 10000 = 100%)
-    /// @dev Remaining goes to treasury (owner withdrawal)
-    uint256 public stakingDistributionRatio;
+    /// @notice Development address for ongoing development funding
+    address public developmentAddress;
+
+    /// @notice Distribution ratio to treasury (5000 = 50%)
+    uint256 public treasuryRatio;
+    
+    /// @notice Distribution ratio to staking (3000 = 30%)
+    uint256 public stakingRatio;
+    
+    /// @notice Distribution ratio to development (2000 = 20%)
+    uint256 public developmentRatio;
 
     // ============================================
     // Events
@@ -55,9 +67,11 @@ contract PrescioVault is Ownable, ReentrancyGuard {
 
     event FeesReceived(address indexed from, uint256 amount);
     event FeesWithdrawn(address indexed to, uint256 amount);
-    event StakingContractUpdated(address indexed oldStaking, address indexed newStaking);
-    event DistributedToStaking(address indexed staking, uint256 amount);
-    event DistributionRatioUpdated(uint256 oldRatio, uint256 newRatio);
+    event FeesDistributed(uint256 toTreasury, uint256 toStaking, uint256 toDevelopment);
+    event DistributionRatiosUpdated(uint256 treasuryRatio, uint256 stakingRatio, uint256 developmentRatio);
+    event TreasuryAddressUpdated(address indexed oldAddress, address indexed newAddress);
+    event StakingContractUpdated(address indexed oldAddress, address indexed newAddress);
+    event DevelopmentAddressUpdated(address indexed oldAddress, address indexed newAddress);
 
     // ============================================
     // Errors
@@ -66,124 +80,167 @@ contract PrescioVault is Ownable, ReentrancyGuard {
     error TransferFailed();
     error NoFees();
     error ZeroAddress();
-    error StakingNotSet();
-    error InsufficientBalance();
-    error InvalidRatio();
+    error InvalidRatioSum();
+    error AddressNotSet();
 
     // ============================================
     // Constructor
     // ============================================
 
-    constructor() Ownable(msg.sender) {
-        stakingDistributionRatio = RATIO_PRECISION; // Default 100% to staking
+    /**
+     * @notice Initialize the vault with default addresses and ratios
+     * @param _treasury Treasury address (50%)
+     * @param _staking Staking contract address (30%)
+     * @param _development Development address (20%)
+     */
+    constructor(
+        address _treasury,
+        address _staking,
+        address _development
+    ) Ownable(msg.sender) {
+        if (_treasury == address(0)) revert ZeroAddress();
+        if (_staking == address(0)) revert ZeroAddress();
+        if (_development == address(0)) revert ZeroAddress();
+
+        treasuryAddress = _treasury;
+        stakingContract = _staking;
+        developmentAddress = _development;
+
+        // Default ratios as per spec: 50/30/20
+        treasuryRatio = 5000;
+        stakingRatio = 3000;
+        developmentRatio = 2000;
+
+        emit TreasuryAddressUpdated(address(0), _treasury);
+        emit StakingContractUpdated(address(0), _staking);
+        emit DevelopmentAddressUpdated(address(0), _development);
+        emit DistributionRatiosUpdated(5000, 3000, 2000);
     }
 
     // ============================================
-    // Staking Distribution Functions
+    // Distribution Functions
     // ============================================
+
+    /**
+     * @notice Distribute all accumulated fees according to configured ratios
+     * @dev Splits balance: Treasury -> Staking -> Development (remainder)
+     */
+    function distributeAll() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert NoFees();
+        if (treasuryAddress == address(0)) revert AddressNotSet();
+        if (stakingContract == address(0)) revert AddressNotSet();
+        if (developmentAddress == address(0)) revert AddressNotSet();
+
+        uint256 toTreasury = (balance * treasuryRatio) / RATIO_PRECISION;
+        uint256 toStaking = (balance * stakingRatio) / RATIO_PRECISION;
+        uint256 toDevelopment = balance - toTreasury - toStaking; // Remainder to avoid rounding loss
+
+        // Transfer to Treasury
+        if (toTreasury > 0) {
+            (bool success,) = payable(treasuryAddress).call{value: toTreasury}("");
+            if (!success) revert TransferFailed();
+        }
+
+        // Transfer to Staking via depositRewardsFromVault
+        if (toStaking > 0) {
+            IPrescioStaking(stakingContract).depositRewardsFromVault{value: toStaking}();
+        }
+
+        // Transfer to Development
+        if (toDevelopment > 0) {
+            (bool success,) = payable(developmentAddress).call{value: toDevelopment}("");
+            if (!success) revert TransferFailed();
+        }
+
+        emit FeesDistributed(toTreasury, toStaking, toDevelopment);
+    }
+
+    // ============================================
+    // Address Setters
+    // ============================================
+
+    /**
+     * @notice Set the treasury address
+     * @param _treasury New treasury address
+     */
+    function setTreasuryAddress(address _treasury) external onlyOwner {
+        if (_treasury == address(0)) revert ZeroAddress();
+        emit TreasuryAddressUpdated(treasuryAddress, _treasury);
+        treasuryAddress = _treasury;
+    }
 
     /**
      * @notice Set the staking contract address
-     * @param _stakingContract Address of the staking contract
+     * @param _staking New staking contract address
      */
-    function setStakingContract(address _stakingContract) external onlyOwner {
-        if (_stakingContract == address(0)) revert ZeroAddress();
-        emit StakingContractUpdated(stakingContract, _stakingContract);
-        stakingContract = _stakingContract;
+    function setStakingContract(address _staking) external onlyOwner {
+        if (_staking == address(0)) revert ZeroAddress();
+        emit StakingContractUpdated(stakingContract, _staking);
+        stakingContract = _staking;
     }
 
     /**
-     * @notice Set the distribution ratio to staking
-     * @param _ratio Ratio in basis points (10000 = 100%)
-     * @dev Remaining balance can be withdrawn to treasury via withdrawFees
+     * @notice Set the development address
+     * @param _development New development address
      */
-    function setDistributionRatio(uint256 _ratio) external onlyOwner {
-        if (_ratio > RATIO_PRECISION) revert InvalidRatio();
-        emit DistributionRatioUpdated(stakingDistributionRatio, _ratio);
-        stakingDistributionRatio = _ratio;
-    }
-
-    /**
-     * @notice Distribute a specific amount to staking contract
-     * @param amount Amount to distribute (in wei)
-     */
-    function distributeToStaking(uint256 amount) external onlyOwner nonReentrant {
-        if (stakingContract == address(0)) revert StakingNotSet();
-        if (amount == 0) revert NoFees();
-        if (amount > address(this).balance) revert InsufficientBalance();
-
-        IPrescioStaking(stakingContract).depositRewardsFromVault{value: amount}();
-        
-        emit DistributedToStaking(stakingContract, amount);
-    }
-
-    /**
-     * @notice Distribute all balance to staking contract
-     * @dev Uses stakingDistributionRatio to determine actual amount
-     */
-    function distributeAllToStaking() external onlyOwner nonReentrant {
-        if (stakingContract == address(0)) revert StakingNotSet();
-        
-        uint256 balance = address(this).balance;
-        if (balance == 0) revert NoFees();
-
-        uint256 toStaking = (balance * stakingDistributionRatio) / RATIO_PRECISION;
-        if (toStaking == 0) revert NoFees();
-
-        IPrescioStaking(stakingContract).depositRewardsFromVault{value: toStaking}();
-        
-        emit DistributedToStaking(stakingContract, toStaking);
-    }
-
-    /**
-     * @notice Distribute based on ratio and withdraw remainder to treasury
-     * @dev Convenience function: distribute to staking + withdraw remainder in one TX
-     */
-    function distributeAndWithdraw() external onlyOwner nonReentrant {
-        uint256 balance = address(this).balance;
-        if (balance == 0) revert NoFees();
-
-        uint256 toStaking = 0;
-        uint256 toTreasury = balance;
-
-        // Distribute to staking if configured
-        if (stakingContract != address(0) && stakingDistributionRatio > 0) {
-            toStaking = (balance * stakingDistributionRatio) / RATIO_PRECISION;
-            toTreasury = balance - toStaking;
-
-            if (toStaking > 0) {
-                IPrescioStaking(stakingContract).depositRewardsFromVault{value: toStaking}();
-                emit DistributedToStaking(stakingContract, toStaking);
-            }
-        }
-
-        // Withdraw remainder to owner
-        if (toTreasury > 0) {
-            (bool success,) = payable(owner()).call{value: toTreasury}("");
-            if (!success) revert TransferFailed();
-            emit FeesWithdrawn(owner(), toTreasury);
-        }
+    function setDevelopmentAddress(address _development) external onlyOwner {
+        if (_development == address(0)) revert ZeroAddress();
+        emit DevelopmentAddressUpdated(developmentAddress, _development);
+        developmentAddress = _development;
     }
 
     // ============================================
-    // Core Functions
+    // Ratio Setters
     // ============================================
 
     /**
-     * @notice Withdraw all accumulated fees to owner
+     * @notice Set all distribution ratios at once
+     * @param _treasuryRatio Treasury ratio (basis points)
+     * @param _stakingRatio Staking ratio (basis points)
+     * @param _developmentRatio Development ratio (basis points)
+     * @dev Sum of all ratios must equal RATIO_PRECISION (10000)
+     */
+    function setDistributionRatios(
+        uint256 _treasuryRatio,
+        uint256 _stakingRatio,
+        uint256 _developmentRatio
+    ) external onlyOwner {
+        if (_treasuryRatio + _stakingRatio + _developmentRatio != RATIO_PRECISION) {
+            revert InvalidRatioSum();
+        }
+
+        treasuryRatio = _treasuryRatio;
+        stakingRatio = _stakingRatio;
+        developmentRatio = _developmentRatio;
+
+        emit DistributionRatiosUpdated(_treasuryRatio, _stakingRatio, _developmentRatio);
+    }
+
+    // ============================================
+    // V2 Compatibility Functions
+    // ============================================
+
+    /**
+     * @notice Withdraw all accumulated fees to owner (V2 compatibility)
+     * @dev For emergency use or migration
      */
     function withdrawFees() external onlyOwner nonReentrant {
         _withdrawTo(owner());
     }
 
     /**
-     * @notice Withdraw fees to a specific address
+     * @notice Withdraw fees to a specific address (V2 compatibility)
      * @param to Destination address
      */
     function withdrawFeesTo(address to) external onlyOwner nonReentrant {
         if (to == address(0)) revert ZeroAddress();
         _withdrawTo(to);
     }
+
+    // ============================================
+    // View Functions
+    // ============================================
 
     /**
      * @notice Get current fee balance
@@ -199,6 +256,51 @@ contract PrescioVault is Ownable, ReentrancyGuard {
      */
     function getVersion() external pure returns (uint256) {
         return VERSION;
+    }
+
+    /**
+     * @notice Get all distribution ratios
+     * @return treasury Treasury ratio
+     * @return staking Staking ratio
+     * @return development Development ratio
+     */
+    function getDistributionRatios() external view returns (
+        uint256 treasury,
+        uint256 staking,
+        uint256 development
+    ) {
+        return (treasuryRatio, stakingRatio, developmentRatio);
+    }
+
+    /**
+     * @notice Get all distribution addresses
+     * @return treasury Treasury address
+     * @return staking Staking contract address
+     * @return development Development address
+     */
+    function getDistributionAddresses() external view returns (
+        address treasury,
+        address staking,
+        address development
+    ) {
+        return (treasuryAddress, stakingContract, developmentAddress);
+    }
+
+    /**
+     * @notice Preview distribution amounts for current balance
+     * @return toTreasury Amount that would go to treasury
+     * @return toStaking Amount that would go to staking
+     * @return toDevelopment Amount that would go to development
+     */
+    function previewDistribution() external view returns (
+        uint256 toTreasury,
+        uint256 toStaking,
+        uint256 toDevelopment
+    ) {
+        uint256 balance = address(this).balance;
+        toTreasury = (balance * treasuryRatio) / RATIO_PRECISION;
+        toStaking = (balance * stakingRatio) / RATIO_PRECISION;
+        toDevelopment = balance - toTreasury - toStaking;
     }
 
     // ============================================
