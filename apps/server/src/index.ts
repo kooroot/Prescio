@@ -17,6 +17,7 @@ import {
 } from "./game/index.js";
 import { agentManager } from "./agents/manager.js";
 import { apiRouter } from "./api/routes.js";
+import { statsRouter } from "./api/stats.js";
 import { requestLogger, corsMiddleware, errorHandler } from "./api/middleware.js";
 import { handleClientEvent } from "./ws/handler.js";
 import {
@@ -29,6 +30,7 @@ import {
 } from "./ws/broadcast.js";
 import { initOnChain, isOnChainEnabled, stopAllPolling, getOdds } from "./betting/index.js";
 import { startOrchestrator, stopOrchestrator } from "./orchestrator.js";
+import { invalidateStatsCache } from "./stats/index.js";
 import { processAutoBets, cleanupGame as cleanupAutoBetGame } from "./betting/user-agent.js";
 
 // ============================================
@@ -61,6 +63,7 @@ app.get("/health", (_req, res) => {
 
 // REST API routes
 app.use("/api", apiRouter);
+app.use("/api/stats", statsRouter);
 
 // Legacy market endpoint
 app.get("/api/markets", (_req, res) => {
@@ -246,6 +249,9 @@ gameEngine.on("gameOver", (gameId, winner, game) => {
 
   // Cleanup auto-bet game tracking
   cleanupAutoBetGame(gameId);
+
+  // Invalidate stats cache on game end
+  invalidateStatsCache();
 });
 
 gameEngine.on("engineError", (gameId, error) => {
