@@ -1,0 +1,667 @@
+{
+  "id": "9b7f4a58-2b0c-4856-ad9e-346140198aee",
+  "code": "46ESJD",
+  "hostId": "a15556f7-af8d-446d-95bb-6cf95c3c2e5b",
+  "players": [
+    {
+      "id": "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+      "address": "0x0000000000000000000000000000000000000001",
+      "nickname": "Agent-Alpha",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "6c693d2f-4103-45af-8f88-5e6a517ebd00",
+      "address": "0x0000000000000000000000000000000000000002",
+      "nickname": "Agent-Bravo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "address": "0x0000000000000000000000000000000000000003",
+      "nickname": "Agent-Charlie",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+      "address": "0x0000000000000000000000000000000000000004",
+      "nickname": "Agent-Delta",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+      "address": "0x0000000000000000000000000000000000000005",
+      "nickname": "Agent-Echo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "address": "0x0000000000000000000000000000000000000006",
+      "nickname": "Agent-Foxtrot",
+      "role": "IMPOSTOR",
+      "isAlive": true,
+      "isConnected": true
+    },
+    {
+      "id": "909dd596-f424-4309-a43d-875302e5651a",
+      "address": "0x0000000000000000000000000000000000000007",
+      "nickname": "Agent-Golf",
+      "role": "CREW",
+      "isAlive": true,
+      "isConnected": true
+    }
+  ],
+  "phase": "RESULT",
+  "round": 3,
+  "votes": [],
+  "chatMessages": [
+    {
+      "id": "3f644ae5-0b53-4614-8565-96a0e639566d",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "💀 Agent-Bravo's body was found!",
+      "timestamp": 1771109520204,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "0af3d7c4-ac05-43ef-8e39-e1d5136e9a88",
+      "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "playerNickname": "Agent-Charlie",
+      "content": "Okay, everyone, where were you just before Agent-Bravo was found? I was in admin with Agent-Alpha and Agent-Delta, so can you both confirm that? Agent-Echo and Agent-Golf, you were both in weapons, co",
+      "timestamp": 1771109521922,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "2e2b0556-9200-45ef-b7f1-1a95abb9f746",
+      "playerId": "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+      "playerNickname": "Agent-Alpha",
+      "content": "Agent-Charlie, you're trying too hard. Why is it so important to clear yourself first? Agent-Alpha and Agent-Delta can back me up; you're the one acting sus right now.",
+      "timestamp": 1771109525161,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "32499fed-bdd4-4bd6-9ba5-9b25a90ecd0a",
+      "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+      "playerNickname": "Agent-Golf",
+      "content": "Agent-Charlie, I can confirm I was in weapons with Agent-Echo, but Agent-Alpha, you're being pretty aggressive towards Agent-Charlie for just asking a question. What's your deal?",
+      "timestamp": 1771109528400,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "e84698e6-fdf9-4a81-9e31-5d165c969960",
+      "playerId": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+      "playerNickname": "Agent-Delta",
+      "content": "To summarize, Agent-Charlie, I can confirm I was in admin with you and Agent-Alpha, as you stated. Agent-Alpha, your reaction to Agent-Charlie does seem disproportionate, which I agree is suspicious. ",
+      "timestamp": 1771109531501,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "04a7bc16-c7af-4e5b-b134-05957633bb08",
+      "playerId": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+      "playerNickname": "Agent-Echo",
+      "content": "Based on the evidence, Agent-Bravo's body was found and Agent-Charlie was trying to establish alibis. It's interesting that Agent-Alpha reacted so strongly to Agent-Charlie's question about locations,",
+      "timestamp": 1771109534778,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a5861ad7-60a3-4b81-b5ae-edba9b1583cf",
+      "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "I was in storage. Agent-Alpha's reaction is a bit much.",
+      "timestamp": 1771109537416,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f61cbf9f-4ab0-4250-a8ca-4ce94ba5b607",
+      "playerId": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+      "playerNickname": "Agent-Echo",
+      "content": "And it's also worth noting that Agent-Golf also found Agent-Alpha's reaction suspicious, so perhaps Agent-Alpha could explain why they were so quick to accuse Agent-Charlie of being \"sus\"? Could Agent",
+      "timestamp": 1771109543212,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a8898397-08f1-4256-920b-7903564a4ad4",
+      "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Alpha, your defensiveness is statistically improbable for an innocent crew member; what were you doing before you arrived in admin?",
+      "timestamp": 1771109546554,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a8e6ebab-af78-4e8d-92bf-acc9889026fc",
+      "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+      "playerNickname": "Agent-Golf",
+      "content": "Agent-Alpha, why are you dodging the question and changing the subject like that? It makes you look even more guilty. Maybe you should tell us what you were doing before admin.",
+      "timestamp": 1771109549476,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "10f6f621-9d69-43d8-bcad-502eb2a83732",
+      "playerId": "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+      "playerNickname": "Agent-Alpha",
+      "content": "Enough with the questions, Agent-Charlie and Agent-Golf; I was heading to admin from navigation when I saw Agent-Bravo dead, so back off. Clearly, one of you is trying to cover for the real killer, so",
+      "timestamp": 1771109553055,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "38d59838-3391-45e5-a6c6-179df3479c23",
+      "playerId": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+      "playerNickname": "Agent-Delta",
+      "content": "Logically, Agent-Alpha claiming to have found the body in navigation directly contradicts Agent-Charlie's statement that the body was found before Agent-Alpha arrived in admin. Agent-Alpha, can you cl",
+      "timestamp": 1771109556487,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "79c043cb-390a-4981-8e28-ed3b7e0b3d78",
+      "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Alpha is contradicting themself. Perhaps they are confused.",
+      "timestamp": 1771109560073,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f3756cb9-86dc-4770-9997-f216c6812ae3",
+      "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Alpha's story doesn't quite add up. Maybe we should keep a closer eye on them.",
+      "timestamp": 1771109565823,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "916b770e-2821-4fe3-9bf0-86fe45802ad3",
+      "playerId": "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+      "playerNickname": "Agent-Alpha",
+      "content": "Agent-Delta, you're trying to twist my words; I said I was *heading* to admin when I saw the body, not that I found it *in* admin. Now, Agent-Charlie, explain why you were so quick to ask for alibis; ",
+      "timestamp": 1771109569390,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "4390fb1b-f4ba-4436-9956-88c871de956b",
+      "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+      "playerNickname": "Agent-Golf",
+      "content": "Agent-Alpha, that's not how anyone would phrase it; you're still being sus and now you're trying to weasel out of it. Agent-Charlie was just trying to get information.",
+      "timestamp": 1771109572257,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "503004f8-3414-4de7-aed7-cc6dd4816736",
+      "playerId": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+      "playerNickname": "Agent-Delta",
+      "content": "To summarize, Agent-Alpha claims to have seen the body while heading to admin from navigation, but even with the clarification, the timing seems inconsistent with Agent-Charlie's initial statement. Ag",
+      "timestamp": 1771109576560,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "c2af65e7-6d54-4571-816f-8457a87b3b7c",
+      "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Alpha, the probability of your innocence decreases with each increasingly desperate explanation. Agent-Delta's summary correctly highlights the timing inconsistencies, suggesting deception or mi",
+      "timestamp": 1771109580197,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "891da7ab-06f5-41eb-b320-59f8e1e3d749",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "💀 Agent-Delta's body was found!",
+      "timestamp": 1771109638069,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "2efacbc9-a6ee-465a-913a-95259f34c81b",
+      "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Alpha, your continued attempts to deflect are statistically unlikely for someone innocent; given the current state of affairs, the optimal play is to vote for you.",
+      "timestamp": 1771109639765,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "9e171c82-eb49-45cc-b7cc-802f1c1c0ee2",
+      "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Alpha was acting weird. Maybe they got nervous.",
+      "timestamp": 1771109643601,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "7ee58ac7-9f01-405b-bd33-6a4e5b2a0aec",
+      "playerId": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+      "playerNickname": "Agent-Echo",
+      "content": "Agent-Foxtrot, your observation that Agent-Alpha \"got nervous\" after being questioned is insightful. Where exactly were you when you found Agent-Delta's body, and did you see anyone else nearby? Perha",
+      "timestamp": 1771109647361,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f4cab0fd-e894-4460-9da3-0df37597866c",
+      "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+      "playerNickname": "Agent-Golf",
+      "content": "Agent-Alpha, you were already looking guilty, but now that Agent-Delta is dead, I'm certain it's you. Agent-Charlie is right, statistically it has to be you at this point. Let's vote them out now.",
+      "timestamp": 1771109650305,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "8529f8b6-b1e0-48bd-b3c8-270e304bb392",
+      "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "playerNickname": "Agent-Charlie",
+      "content": "Agent-Echo, your focus on Agent-Foxtrot is a level deeper than expected; however, let's eliminate the highest probability target first and then reassess the situation, so let's vote for Agent-Alpha, t",
+      "timestamp": 1771109654331,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f4e3747f-20db-42a5-842c-c80ed167fa30",
+      "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "I was in the cafeteria. Agent-Echo, why are you focused on me?",
+      "timestamp": 1771109657864,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "b65236e0-d8a1-40e6-b844-97169b8eae36",
+      "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+      "playerNickname": "Agent-Golf",
+      "content": "Agent-Echo is trying to shift the blame, but Agent-Alpha is the clear target here after Agent-Delta's death. Agent-Charlie and I both agree, let's get Agent-Alpha voted out.",
+      "timestamp": 1771109661042,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "a07fc96a-e8f8-4d0c-957a-465a975878b8",
+      "playerId": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+      "playerNickname": "Agent-Echo",
+      "content": "Agent-Foxtrot, I'm trying to understand your perspective, especially since you were in the cafeteria when Agent-Delta's body was discovered. Given that Agent-Alpha was heading towards admin, could you",
+      "timestamp": 1771109665237,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    }
+  ],
+  "killEvents": [
+    {
+      "killerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "targetId": "6c693d2f-4103-45af-8f88-5e6a517ebd00",
+      "round": 1,
+      "timestamp": 1771109510202
+    },
+    {
+      "killerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "targetId": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+      "round": 2,
+      "timestamp": 1771109628067
+    },
+    {
+      "killerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+      "targetId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+      "round": 3,
+      "timestamp": 1771109742738
+    }
+  ],
+  "alivePlayers": [
+    "a15556f7-af8d-446d-95bb-6cf95c3c2e5b",
+    "bcac1286-b464-493f-8649-9f7c9572f51a",
+    "909dd596-f424-4309-a43d-875302e5651a"
+  ],
+  "eliminatedPlayers": [
+    "6c693d2f-4103-45af-8f88-5e6a517ebd00",
+    "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+    "4effff9e-9435-4c72-bef1-168d65fa33b3",
+    "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+    "f8f23308-1f39-4ac1-b120-f8b2bc83c342"
+  ],
+  "winner": "IMPOSTOR",
+  "createdAt": 1771109487005,
+  "updatedAt": 1771109742738,
+  "settings": {
+    "maxPlayers": 7,
+    "minPlayers": 2,
+    "impostorCount": 1,
+    "discussionTime": 60,
+    "voteTime": 30,
+    "nightTime": 20,
+    "anonymousVoting": false,
+    "language": "en"
+  },
+  "map": {
+    "locations": {
+      "48bfee29-a4c8-4a83-9416-f0b21cdaeae9": {
+        "playerId": "48bfee29-a4c8-4a83-9416-f0b21cdaeae9",
+        "room": "admin",
+        "movedAt": 1771109509234,
+        "isMoving": false
+      },
+      "6c693d2f-4103-45af-8f88-5e6a517ebd00": {
+        "playerId": "6c693d2f-4103-45af-8f88-5e6a517ebd00",
+        "room": "storage",
+        "movedAt": 1771109509234,
+        "isMoving": false
+      },
+      "f8f23308-1f39-4ac1-b120-f8b2bc83c342": {
+        "playerId": "f8f23308-1f39-4ac1-b120-f8b2bc83c342",
+        "room": "storage",
+        "movedAt": 1771109626821,
+        "isMoving": false
+      },
+      "4effff9e-9435-4c72-bef1-168d65fa33b3": {
+        "playerId": "4effff9e-9435-4c72-bef1-168d65fa33b3",
+        "room": "cafeteria",
+        "movedAt": 1771109626822,
+        "isMoving": false
+      },
+      "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db": {
+        "playerId": "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db",
+        "room": "o2",
+        "movedAt": 1771109626822,
+        "isMoving": false
+      },
+      "bcac1286-b464-493f-8649-9f7c9572f51a": {
+        "playerId": "bcac1286-b464-493f-8649-9f7c9572f51a",
+        "room": "storage",
+        "movedAt": 1771109741743,
+        "isMoving": false
+      },
+      "909dd596-f424-4309-a43d-875302e5651a": {
+        "playerId": "909dd596-f424-4309-a43d-875302e5651a",
+        "room": "o2",
+        "movedAt": 1771109741743,
+        "isMoving": false
+      }
+    },
+    "tasks": {
+      "48bfee29-a4c8-4a83-9416-f0b21cdaeae9": [
+        {
+          "id": "fc40bf38-cf3a-4a26-9d3a-427ed972373c",
+          "name": "Clean O2 Filter",
+          "room": "o2",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "54058ae2-0ca6-4cf1-ad62-f3f395e2d8e1",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "364ce4ab-2fb9-4dc2-ac3d-6c61d3c8f32e",
+          "name": "Submit Scan",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": true
+        },
+        {
+          "id": "132e6d75-d72b-447f-8192-5d7035cbdae2",
+          "name": "Align Engine",
+          "room": "lower_engine",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "19d06185-f54f-4778-8798-365bcb4a95d0",
+          "name": "Unlock Manifolds",
+          "room": "reactor",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "6c693d2f-4103-45af-8f88-5e6a517ebd00": [
+        {
+          "id": "9e33baaa-836c-49ef-b4fd-6c6fb8b3ec30",
+          "name": "Align Engine",
+          "room": "lower_engine",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "da043f13-7508-4684-93e5-a5af8541b5e3",
+          "name": "Swipe Card",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "5e731095-041d-40d1-8765-e69174fd7cd0",
+          "name": "Prime Shields",
+          "room": "shields",
+          "completed": false,
+          "isVisual": true
+        },
+        {
+          "id": "9a088e28-1a60-42d3-915b-f8ccbf25531d",
+          "name": "Fix Wiring",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "0b4e6708-faa3-4020-a70a-48e7bdb5003a",
+          "name": "Fix Wiring",
+          "room": "security",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "f8f23308-1f39-4ac1-b120-f8b2bc83c342": [
+        {
+          "id": "0825cb9f-53c0-4cd9-88dd-0703989fb39f",
+          "name": "Upload Data",
+          "room": "admin",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "43042c97-a116-4c86-887e-3a4fed3ad1ac",
+          "name": "Empty Garbage",
+          "room": "storage",
+          "completed": true,
+          "isVisual": true
+        },
+        {
+          "id": "7851b7bd-a316-48e6-97f8-da099ed6f149",
+          "name": "Fuel Engines",
+          "room": "storage",
+          "room2": "upper_engine",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "9d4a76a0-05b2-4053-ba32-e57ce4ff011f",
+          "name": "Swipe Card",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "e377159e-c50d-4344-89bd-caf3b33efe96",
+          "name": "Fix Wiring",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "4effff9e-9435-4c72-bef1-168d65fa33b3": [
+        {
+          "id": "dcfa1e78-b843-4f0e-834e-5ce858468f41",
+          "name": "Clean O2 Filter",
+          "room": "o2",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "8742b0c8-4ad8-488f-9ac6-5988b4e42723",
+          "name": "Stabilize Steering",
+          "room": "navigation",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "4b4c4ac3-c44f-4d2c-ad96-0d44472b4a53",
+          "name": "Submit Scan",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": true
+        },
+        {
+          "id": "4699ca59-fb58-4216-b55f-6405b3b2aae4",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "bba14925-1e40-4d59-b212-d43d8e76e586",
+          "name": "Download Data",
+          "room": "communications",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "82850ed3-2e91-48b4-bf6a-6e82fc4cc2db": [
+        {
+          "id": "e7e46967-cf6f-4ce1-958e-00b4a5b9f4a9",
+          "name": "Clear Asteroids",
+          "room": "weapons",
+          "completed": true,
+          "isVisual": true
+        },
+        {
+          "id": "beb12d16-cbba-4c93-920d-49a1c65e4054",
+          "name": "Align Engine",
+          "room": "lower_engine",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "6db00a9c-8ea7-4afc-b2b0-5b598c4fe9f7",
+          "name": "Inspect Sample",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "3abc334f-9052-4917-8ec9-8f9b8801ea89",
+          "name": "Swipe Card",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "2616a5a8-5165-4f58-bcd7-a054947c53c0",
+          "name": "Submit Scan",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": true
+        }
+      ],
+      "bcac1286-b464-493f-8649-9f7c9572f51a": [
+        {
+          "id": "972f1d0a-a211-48f9-8484-8d901411575a",
+          "name": "Upload Data",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "c23a1895-4fd8-4c78-8334-5e218a115d62",
+          "name": "Fix Wiring",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "656c8e0f-2221-44f4-aec3-4d467c93a986",
+          "name": "Fix Wiring",
+          "room": "security",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "501df599-cd75-494f-89e7-4e4f414f4b8a",
+          "name": "Fix Wiring",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "3f34b992-428c-4bdd-b264-b880d32ab6e5",
+          "name": "Submit Scan",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": true
+        }
+      ],
+      "909dd596-f424-4309-a43d-875302e5651a": [
+        {
+          "id": "b3b9a2aa-0084-49da-b791-c86238f6c4bc",
+          "name": "Stabilize Steering",
+          "room": "navigation",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "2243a78f-fab6-4485-ba3f-87c98d8e8be9",
+          "name": "Start Reactor",
+          "room": "reactor",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "331b2e51-1d7f-4192-bea5-20ecb9dc0c98",
+          "name": "Submit Scan",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": true
+        },
+        {
+          "id": "120f9af6-66c6-4082-910a-c67f5198dba6",
+          "name": "Download Data",
+          "room": "communications",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "536e02cd-a817-4f20-a253-f88968419741",
+          "name": "Empty Garbage",
+          "room": "storage",
+          "completed": false,
+          "isVisual": true
+        }
+      ]
+    },
+    "taskProgress": 0.16666666666666666,
+    "totalTasks": 30,
+    "completedTasks": 5
+  }
+}

@@ -15,13 +15,34 @@ if (!existsSync(DATA_DIR)) {
   mkdirSync(DATA_DIR, { recursive: true });
 }
 
+/** Kill event record for statistics */
+export interface KillEventRecord {
+  killerId: string;
+  killerName: string;
+  targetId: string;
+  targetName: string;
+  round: number;
+}
+
+/** Death cause for statistics - how a player died or survived */
+export type DeathCause = 'killed' | 'eliminated' | 'survived';
+
+/** Player record with optional deathCause for backwards compatibility */
+export interface PlayerRecord {
+  nickname: string;
+  role: string | null;
+  isAlive: boolean;
+  deathCause?: DeathCause; // Optional for backwards compatibility
+}
+
 export interface FinishedGameRecord {
   id: string;
   code: string;
   winner: string | null;
   rounds: number;
   playerCount: number;
-  players: Array<{ nickname: string; role: string | null; isAlive: boolean }>;
+  players: Array<PlayerRecord>;
+  killEvents?: KillEventRecord[]; // Optional for backwards compatibility
   finishedAt: number;
 }
 

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920">
+  <title>Prescio - AI Mafia Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 1080px;
+      height: 1920px;
+      background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+      font-family: 'VT323', monospace;
+      color: #fff;
+      overflow: hidden;
+    }
+    
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 60px 50px;
+    }
+    
+    /* Compact header at top */
+    .header {
+      text-align: center;
+      padding-bottom: 30px;
+      flex-shrink: 0;
+    }
+    
+    .logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 52px;
+      color: #e94560;
+      text-shadow: 0 0 40px rgba(233, 69, 96, 0.6);
+      margin-bottom: 20px;
+    }
+    
+    .game-info {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      font-size: 32px;
+      color: #888;
+    }
+    
+    .game-info span {
+      color: #4ecdc4;
+    }
+    
+    /* Players in vertical column on left side */
+    .players-column {
+      position: absolute;
+      left: 30px;
+      top: 250px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .player-avatar {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      border: 3px solid rgba(255,255,255,0.3);
+    }
+    
+    .player-avatar.dead {
+      opacity: 0.3;
+      filter: grayscale(100%);
+    }
+    
+    .player-avatar.impostor {
+      border-color: #ff4444;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    }
+    
+    /* Chat takes most of the space */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 30px;
+      margin-left: 80px;
+      overflow: hidden;
+    }
+    
+    .message {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 25px;
+      opacity: 0;
+      transform: translateX(-30px);
+      animation: slideIn 0.5s forwards;
+    }
+    
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .message-avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      flex-shrink: 0;
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+    
+    .message-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .message-name {
+      font-weight: bold;
+      font-size: 32px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .message-text {
+      background: rgba(255,255,255,0.08);
+      padding: 20px 25px;
+      border-radius: 20px;
+      font-size: 36px;
+      line-height: 1.4;
+      max-width: 800px;
+    }
+    
+    .system-message {
+      text-align: center;
+      padding: 30px 40px;
+      margin: 25px 0;
+      background: linear-gradient(90deg, transparent, rgba(233, 69, 96, 0.2), transparent);
+      font-size: 42px;
+      color: #e94560;
+      text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    /* Result overlay */
+    .result-overlay {
+      position: fixed;
+      bottom: 100px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 38px;
+      padding: 30px;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.8) 20%, rgba(0,0,0,0.8) 80%, transparent 100%);
+      opacity: 0;
+      animation: fadeInResult 0.5s 25s forwards;
+    }
+    
+    .result-overlay.impostor-wins {
+      color: #ff4444;
+      text-shadow: 0 0 30px rgba(255,0,0,0.8);
+    }
+    
+    .result-overlay.crew-wins {
+      color: #26de81;
+      text-shadow: 0 0 30px rgba(38,222,129,0.8);
+    }
+    
+    @keyframes fadeInResult {
+      to { opacity: 1; }
+    }
+    
+    /* Watermark */
+    .watermark {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 24px;
+      color: rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">PRESCIO</div>
+      <div class="game-info">
+        <span>Game RYP9M4</span>
+        <span>Round ?</span>
+      </div>
+    </div>
+    
+    <div class="players-column">
+      
+        <div class="player-avatar  impostor" 
+             style="background: #e94560">
+          A
+        </div>
+      
+        <div class="player-avatar dead " 
+             style="background: #4ecdc4">
+          B
+        </div>
+      
+        <div class="player-avatar  " 
+             style="background: #feca57">
+          C
+        </div>
+      
+        <div class="player-avatar dead " 
+             style="background: #a55eea">
+          D
+        </div>
+      
+        <div class="player-avatar dead " 
+             style="background: #26de81">
+          E
+        </div>
+      
+        <div class="player-avatar dead " 
+             style="background: #fd79a8">
+          F
+        </div>
+      
+        <div class="player-avatar dead " 
+             style="background: #0984e3">
+          G
+        </div>
+      
+    </div>
+    
+    <div class="chat-container">
+      
+          <div class="message" style="animation-delay: 0s">
+            <div class="message-avatar" style="background: #4ecdc4">B</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="message-text">Agent-Charlie, you wound me, thinking I'd be capable of such dastardly deeds ...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 2s">
+            <div class="message-avatar" style="background: #e94560">A</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="message-text">Okay everyone, let's focus. Agent-Bravo and Agent-Charlie are going back and ...</div>
+            </div>
+          </div>
+        <div class="system-message" style="animation-delay: 4s">💀 Agent-Echo's body was found!</div>
+          <div class="message" style="animation-delay: 6s">
+            <div class="message-avatar" style="background: #e94560">A</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="message-text">Oh my gosh, another body? This is insane! Agent-Bravo's been deflecting a lot...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 8s">
+            <div class="message-avatar" style="background: #4ecdc4">B</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="message-text">Well, this is just getting ridiculous, isn't it? Agent-Alpha and Agent-Charli...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 10s">
+            <div class="message-avatar" style="background: #feca57">C</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="message-text">...Agent-Bravo is a clear suspect. Agent-Alpha, I agree.</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 12s">
+            <div class="message-avatar" style="background: #e94560">A</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="message-text">I agree with Agent-Charlie, Agent-Bravo is looking very sus. It's convenient ...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 14s">
+            <div class="message-avatar" style="background: #4ecdc4">B</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="message-text">Alright, alright, Agent-Alpha and Agent-Charlie think I'm the baddie, but may...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 16s">
+            <div class="message-avatar" style="background: #feca57">C</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="message-text">Agent-Bravo has been deflecting, and now Agent-Echo is dead. It's too conveni...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 18s">
+            <div class="message-avatar" style="background: #4ecdc4">B</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="message-text">So, Agent-Alpha and Agent-Charlie, the dynamic duo, huh? Maybe they offed Age...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 20s">
+            <div class="message-avatar" style="background: #e94560">A</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="message-text">I'm with Agent-Charlie on this one, Agent-Bravo's defensiveness is really sus...</div>
+            </div>
+          </div>
+        
+          <div class="message" style="animation-delay: 22s">
+            <div class="message-avatar" style="background: #feca57">C</div>
+            <div class="message-content">
+              <div class="message-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="message-text">Agent-Bravo is trying too hard. Vote them.</div>
+            </div>
+          </div>
+        <div class="system-message" style="animation-delay: 24s">🔪 IMPOSTOR WINS</div>
+    </div>
+  </div>
+  
+  <div class="result-overlay impostor-wins">
+    🔪 IMPOSTOR WINS
+  </div>
+  
+  <div class="watermark">prescio.fun</div>
+</body>
+</html>

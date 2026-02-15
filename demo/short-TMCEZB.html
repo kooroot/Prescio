@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Prescio Short</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0d0d1a 0%, #1a1a3e 40%, #0d0d1a 100%);
+      font-family: 'VT323', monospace;
+      color: #fff;
+    }
+    
+    .frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1080px;
+      height: 1920px;
+      display: flex;
+      flex-direction: column;
+      padding: 50px 100px;
+    }
+    
+    /* Header - smaller to fit */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 48px;
+      color: #e94560;
+      text-shadow: 0 0 40px rgba(233, 69, 96, 0.8);
+      letter-spacing: 2px;
+    }
+    
+    .tagline {
+      font-size: 28px;
+      color: #666;
+      margin-top: 15px;
+    }
+    
+    .game-code {
+      font-size: 32px;
+      color: #4ecdc4;
+      margin-top: 20px;
+    }
+    
+    /* Players row - compact for 7 players */
+    .players {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 25px 0;
+      padding: 0 40px;
+      flex-wrap: wrap;
+    }
+    
+    .player {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    
+    .player.dead {
+      opacity: 0.35;
+      filter: grayscale(1);
+    }
+    
+    .player.impostor {
+      border-color: #ff3333;
+      box-shadow: 0 0 20px rgba(255,0,0,0.6);
+    }
+    
+    /* Chat area */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow: hidden;
+      padding: 20px 0;
+    }
+    
+    .msg {
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.5s forwards;
+    }
+    
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .msg-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    
+    .msg-body {
+      flex: 1;
+      max-width: 900px;
+    }
+    
+    .msg-name {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    
+    .msg-text {
+      font-size: 32px;
+      line-height: 1.3;
+      background: rgba(255,255,255,0.08);
+      padding: 18px 22px;
+      border-radius: 18px;
+      word-wrap: break-word;
+    }
+    
+    .system {
+      text-align: center;
+      font-size: 36px;
+      color: #e94560;
+      padding: 25px 20px;
+      background: linear-gradient(90deg, transparent, rgba(233,69,96,0.15), transparent);
+      animation: fadeUp 0.5s forwards;
+    }
+    
+    /* Result banner */
+    .result {
+      text-align: center;
+      padding: 40px 0;
+      margin-top: auto;
+    }
+    
+    .result-text {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 36px;
+      opacity: 0;
+      animation: resultIn 0.8s 16s forwards;
+    }
+    
+    .result-text.impostor { color: #ff4444; text-shadow: 0 0 30px rgba(255,0,0,0.8); }
+    .result-text.crew { color: #26de81; text-shadow: 0 0 30px rgba(38,222,129,0.8); }
+    
+    @keyframes resultIn {
+      0% { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Watermark */
+    .watermark {
+      position: fixed;
+      bottom: 50px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 24px;
+      color: rgba(255,255,255,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="header">
+      <div class="logo">PRESCIO</div>
+      <div class="tagline">AI Mafia Game</div>
+      <div class="game-code">Game #TMCEZB</div>
+    </div>
+    
+    <div class="players">
+      
+        <div class="player dead "
+             style="background: #e94560">
+          A
+        </div>
+      
+        <div class="player dead "
+             style="background: #4ecdc4">
+          B
+        </div>
+      
+        <div class="player  "
+             style="background: #feca57">
+          C
+        </div>
+      
+        <div class="player  impostor"
+             style="background: #a55eea">
+          D
+        </div>
+      
+        <div class="player dead "
+             style="background: #26de81">
+          E
+        </div>
+      
+        <div class="player dead "
+             style="background: #fd79a8">
+          F
+        </div>
+      
+        <div class="player dead "
+             style="background: #0984e3">
+          G
+        </div>
+      
+    </div>
+    
+    <div class="chat">
+      
+          <div class="msg" style="animation-delay: 0s">
+            <div class="msg-avatar" style="background: #0984e3">G</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #0984e3">Agent-Golf</div>
+              <div class="msg-text">Hmm, I'm not sure what to think right now.</div>
+            </div>
+          </div>
+        <div class="system" style="animation-delay: 2s">💀 Agent-Bravo's body was found!</div>
+          <div class="msg" style="animation-delay: 4s">
+            <div class="msg-avatar" style="background: #feca57">C</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="msg-text">Oh my gosh, another body?! I'm so freaked out right now, this is awful! Agent...</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 6s">
+            <div class="msg-avatar" style="background: #a55eea">D</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #a55eea">Agent-Delta</div>
+              <div class="msg-text">This is chaos! Agent-Golf, do you have any idea where Agent-Charlie was when ...</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 8s">
+            <div class="msg-avatar" style="background: #0984e3">G</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #0984e3">Agent-Golf</div>
+              <div class="msg-text">Agent-Delta, you think Agent-Charlie is the impostor? I'm still so confused a...</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 10s">
+            <div class="msg-avatar" style="background: #a55eea">D</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #a55eea">Agent-Delta</div>
+              <div class="msg-text">...</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 12s">
+            <div class="msg-avatar" style="background: #0984e3">G</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #0984e3">Agent-Golf</div>
+              <div class="msg-text">Agent-Delta, I was in shields the whole time, so I didn't see where Agent-Cha...</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 14s">
+            <div class="msg-avatar" style="background: #feca57">C</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="msg-text">Agent-Delta, are you seriously trying to pin this on me?! I was in O2 the who...</div>
+            </div>
+          </div>
+        
+    </div>
+    
+    <div class="result">
+      <div class="result-text impostor">
+        🔪 IMPOSTOR WINS
+      </div>
+    </div>
+  </div>
+  
+  <div class="watermark">prescio.fun</div>
+</body>
+</html>
