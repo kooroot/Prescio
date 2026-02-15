@@ -76,28 +76,92 @@ function botAddress(index: number): `0x${string}` {
 // ============================================
 // Finished Games Store (persisted to disk)
 // ============================================
-import { loadFinishedGames, appendFinishedGame, type FinishedGameRecord } from "../game/persistence.js";
+import { loadFinishedGames, appendFinishedGame, type FinishedGameRecord, type DeathCause, type KillEventRecord } from "../game/persistence.js";
 
 const finishedGames: FinishedGameRecord[] = loadFinishedGames();
 console.log(`[Persistence] Loaded ${finishedGames.length} finished games from disk`);
 
+/**
+ * Calculate death cause for each player based on game events
+ * @param playerId - Player ID to check
+ * @param isAlive - Whether the player is alive at game end
+ * @param killEvents - List of kill events in the game
+ * @param eliminatedPlayers - List of players eliminated by voting
+ * @returns DeathCause - 'killed' | 'eliminated' | 'survived'
+ */
+function calculateDeathCause(
+  playerId: string,
+  isAlive: boolean,
+  killEvents: Array<{ targetId: string }>,
+  eliminatedPlayers: string[]
+): DeathCause {
+  if (isAlive) return 'survived';
+  
+  // Check if killed by impostor (in killEvents)
+  const wasKilled = killEvents.some(ke => ke.targetId === playerId);
+  if (wasKilled) return 'killed';
+  
+  // Check if eliminated by vote
+  const wasEliminated = eliminatedPlayers.includes(playerId);
+  if (wasEliminated) return 'eliminated';
+  
+  // Fallback: if dead but not in either list, assume killed
+  return 'killed';
+}
+
 // Listen for game-over events to archive
 gameEngine.on("gameOver", (gameId, winner, game) => {
-  const record: FinishedGameRecord = {
-    id: game.id,
-    code: game.code,
-    winner: winner.toString(),
-    rounds: game.round,
-    playerCount: game.players.length,
-    players: game.players.map((p: any) => ({
-      nickname: p.nickname,
-      role: p.role ?? null,
-      isAlive: p.isAlive,
-    })),
-    finishedAt: Date.now(),
-  };
-  finishedGames.push(record);
-  appendFinishedGame(record);
+  try {
+    // Build killEvents records with names
+    const killEventsRecords: KillEventRecord[] = game.killEvents.map((ke: any) => ({
+      killerId: ke.killerId,
+      killerName: game.players.find((p: any) => p.id === ke.killerId)?.nickname ?? 'Unknown',
+      targetId: ke.targetId,
+      targetName: game.players.find((p: any) => p.id === ke.targetId)?.nickname ?? 'Unknown',
+      round: ke.round,
+    }));
+
+    const record: FinishedGameRecord = {
+      id: game.id,
+      code: game.code,
+      winner: winner.toString(),
+      rounds: game.round,
+      playerCount: game.players.length,
+      players: game.players.map((p: any) => ({
+        nickname: p.nickname,
+        role: p.role ?? null,
+        isAlive: p.isAlive,
+        deathCause: calculateDeathCause(
+          p.id,
+          p.isAlive,
+          game.killEvents,
+          game.eliminatedPlayers ?? []
+        ),
+      })),
+      killEvents: killEventsRecords,
+      finishedAt: Date.now(),
+    };
+    finishedGames.push(record);
+    appendFinishedGame(record);
+  } catch (err) {
+    console.error('[Persistence] Failed to save game record:', err);
+    // Fallback: save minimal record without new fields
+    const fallbackRecord: FinishedGameRecord = {
+      id: game.id,
+      code: game.code,
+      winner: winner.toString(),
+      rounds: game.round,
+      playerCount: game.players.length,
+      players: game.players.map((p: any) => ({
+        nickname: p.nickname,
+        role: p.role ?? null,
+        isAlive: p.isAlive,
+      })),
+      finishedAt: Date.now(),
+    };
+    finishedGames.push(fallbackRecord);
+    appendFinishedGame(fallbackRecord);
+  }
 });
 
 // ============================================
