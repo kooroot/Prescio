@@ -1,0 +1,692 @@
+{
+  "id": "c1eb1810-2d2b-411a-a423-51562318d9c8",
+  "code": "DXAV5U",
+  "hostId": "5ee934c9-1fbf-4818-91cf-36781d4f4572",
+  "players": [
+    {
+      "id": "f4ef1090-b0ad-4323-8ce4-6053b32f8d76",
+      "address": "0x0000000000000000000000000000000000000001",
+      "nickname": "Agent-Alpha",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "address": "0x0000000000000000000000000000000000000002",
+      "nickname": "Agent-Bravo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "address": "0x0000000000000000000000000000000000000003",
+      "nickname": "Agent-Charlie",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "address": "0x0000000000000000000000000000000000000004",
+      "nickname": "Agent-Delta",
+      "role": "CREW",
+      "isAlive": true,
+      "isConnected": true
+    },
+    {
+      "id": "0fa1ed3a-d24d-4652-b909-966b8091c555",
+      "address": "0x0000000000000000000000000000000000000005",
+      "nickname": "Agent-Echo",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+      "address": "0x0000000000000000000000000000000000000006",
+      "nickname": "Agent-Foxtrot",
+      "role": "CREW",
+      "isAlive": false,
+      "isConnected": true
+    },
+    {
+      "id": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "address": "0x0000000000000000000000000000000000000007",
+      "nickname": "Agent-Golf",
+      "role": "IMPOSTOR",
+      "isAlive": true,
+      "isConnected": true
+    }
+  ],
+  "phase": "RESULT",
+  "round": 4,
+  "votes": [],
+  "chatMessages": [
+    {
+      "id": "23c94281-4e47-44e4-b264-f18b01f77efc",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "💀 Agent-Alpha's body was found!",
+      "timestamp": 1770870203898,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "847b16da-6a70-4ba2-84cb-4270f444c6f0",
+      "playerId": "0fa1ed3a-d24d-4652-b909-966b8091c555",
+      "playerNickname": "Agent-Echo",
+      "content": "Alright, everyone, Agent-Alpha's dead, and they were found quickly. Does anyone have any immediate observations or whereabouts they can share from the start of the round?",
+      "timestamp": 1770870205806,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "02553802-aeb8-40bc-9f27-46d023e0272c",
+      "playerId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Echo, who did you see near Alpha's body in storage? I was also in storage, and I didn't see you, so where were you exactly? Don't give me some vague answer.",
+      "timestamp": 1770870209834,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "b21f46aa-7f0e-4b7c-b38b-959914a3830b",
+      "playerId": "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Charlie, are we not all, in a sense, near death, considering the fragility of our existence? And Echo, perhaps your proximity to Agent-Alpha was not physical, but spiritual.",
+      "timestamp": 1770870213621,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "c63a2456-808a-4bb1-bc8a-77a8e1c65cd6",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Foxtrot, that's a bit too philosophical for me right now, haha! Agent-Charlie, you're right to ask for specifics, Echo, can you give us more details about where you were in storage? Let's try to",
+      "timestamp": 1770870217081,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "28bff5dc-6b9a-4851-b079-0313e1bfcfc0",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "Okay, folks, let's try to stay focused and help each other remember details. Agent-Echo, can you give us a bit more information about where you were in storage, just to clear things up? Maybe we can j",
+      "timestamp": 1770870220622,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "c6fbdc43-50a8-4bb4-a2c5-049e0f3d72d0",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "I agree with Agent-Bravo and Agent-Delta, we need to stay focused. Agent-Echo, specifics are important right now, so please give them to us. I was in weapons with Agent-Bravo at the start of the round",
+      "timestamp": 1770870224544,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "bfb7e14d-20c9-4257-b1ba-bec812d57df1",
+      "playerId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Foxtrot, shut your mouth with that philosophical crap. Echo, you're dodging the question. Tell us exactly where in storage you were, and who you saw.",
+      "timestamp": 1770870229737,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "0be97b4e-3938-4f08-97fe-67b0b5e804f7",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Echo, thanks for the initial report, but Charlie is right, specifics are key! Maybe you were near the entrance, or by the boxes? I was in weapons with Golf, so I can vouch for them.",
+      "timestamp": 1770870233765,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "5a511db6-0dd0-471a-ae36-cecc32dfd875",
+      "playerId": "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+      "playerNickname": "Agent-Foxtrot",
+      "content": "Agent-Charlie seems particularly concerned with Agent-Echo's whereabouts; perhaps Agent-Charlie is aware of something we are not, or is fear itself the true impostor, haunting our every interaction? A",
+      "timestamp": 1770870236790,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "aabc3ad5-92d3-42e0-8fe3-a679b938d287",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "It's true, Agent-Charlie's aggressive questioning of Agent-Echo seems like an optimal strategy, but it also creates a higher risk profile for Agent-Charlie. If Agent-Echo is cleared, suspicion will im",
+      "timestamp": 1770870240820,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "8c9dfcb6-9512-4aaf-8f2d-426dd5ca8dfe",
+      "playerId": "0fa1ed3a-d24d-4652-b909-966b8091c555",
+      "playerNickname": "Agent-Echo",
+      "content": "Agent-Charlie, I appreciate the directness, but accusing me of dodging is a bit premature, I was near the fuel canisters, and Agent-Foxtrot and Agent-Charlie were both in the same area, though I didn'",
+      "timestamp": 1770870243974,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "ca99f1cc-93e2-4541-8333-77a933a0018a",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "Alright everyone, let's take a breath, Agent-Charlie's concern is understandable, but maybe we can all stay calm and let Agent-Echo finish their statement before jumping to conclusions. It sounds like",
+      "timestamp": 1770870248068,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "f6e95dc3-9879-420e-ae3d-d60f8587b08e",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "💀 Agent-Foxtrot's body was found!",
+      "timestamp": 1770870321079,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "51d2476b-5587-44a3-8711-92fadd345c81",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "Another body already? Agent-Echo's report about Agent-Foxtrot and Agent-Charlie being in storage is now highly relevant. It seems statistically unlikely that both deaths would occur without a connecti",
+      "timestamp": 1770870322920,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "7b5e8500-2d6d-4770-bb69-bd9e1322f004",
+      "playerId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Golf, are you blind? Echo just threw Charlie and Foxtrot under the bus together. Echo is the one who saw them both last, so vote Echo now.",
+      "timestamp": 1770870326247,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "fc757788-8d80-4b28-92ea-b41fb11eeb10",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "Okay, everyone, let's not jump to conclusions too quickly; Agent-Echo's statement and the new body definitely make things complicated, so we need to think this through carefully. Could Agent-Echo tell",
+      "timestamp": 1770870331116,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "38ad6088-4627-4860-a2e5-ed0d65e1711c",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Echo, thanks for clarifying! It's definitely suspicious that both Agent-Foxtrot and Agent-Alpha died in storage, let's work together to figure out what you saw, and if Charlie can verify that. A",
+      "timestamp": 1770870335296,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "1a4ad070-5509-4b44-8b27-8ca835fc09db",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Echo, now that Agent-Foxtrot is also dead, could you tell us exactly where Charlie and Foxtrot were in relation to you when you saw them in storage? I think it's really important to get this tim",
+      "timestamp": 1770870340996,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "6e664cdd-2895-409d-bb24-8500aa6aa0c8",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "The proximity of Agent-Foxtrot and Agent-Charlie to both deaths warrants closer examination, as Agent-Echo suggested. However, Agent-Charlie's immediate accusation of Agent-Echo could be a deflection ",
+      "timestamp": 1770870345357,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "9d83d924-d385-4256-8a80-6689264fbec3",
+      "playerId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "playerNickname": "Agent-Charlie",
+      "content": "Bravo and Golf are too slow. Echo's story puts Echo with both bodies, so Echo's gotta go. Don't fall for the impostor's lies.",
+      "timestamp": 1770870348796,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "95b43c23-21c4-479c-acc8-a0bfc6739d34",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "Alright folks, let's try to unpack this calmly, Agent-Echo, could you paint us a picture of where everyone was in relation to each other in storage? Maybe if we visualize it, we can find some common g",
+      "timestamp": 1770870351809,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "e8aeab5d-718d-4527-8c50-5ab0ede187d4",
+      "playerId": "SYSTEM",
+      "playerNickname": "System",
+      "content": "💀 Agent-Charlie's body was found!",
+      "timestamp": 1770870435977,
+      "phase": "DISCUSSION",
+      "isSystem": true
+    },
+    {
+      "id": "9379099b-430a-409b-bb5c-8f86375f4725",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Oh no, not Agent-Charlie too! Agent-Echo, now that Agent-Charlie is dead, it seems like you were the last one to see both Agent-Foxtrot and Agent-Charlie alive, can you give us as much detail as possi",
+      "timestamp": 1770870437922,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "90a85af5-0c72-4fbf-a37e-3363b99b8a22",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "Okay, everyone, this is incredibly difficult with Agent-Charlie gone too, so Agent-Echo, please take a deep breath and tell us *everything* you remember about storage. Let's try to listen carefully an",
+      "timestamp": 1770870440724,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "e59e70ed-b904-4e86-b92a-5c8dfb14d503",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "This situation is rapidly evolving, and the odds are increasingly against us. Agent-Echo's detailed account is now critical, but Agent-Delta and Agent-Bravo should also be carefully assessing Agent-Ec",
+      "timestamp": 1770870444046,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "fbe81365-e1ea-4c39-9882-4ac0b31f6fa2",
+      "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "playerNickname": "Agent-Bravo",
+      "content": "Agent-Echo, it's a lot to take in, but your memory is super important right now, so let's take it one step at a time. Agent-Delta is right, the more details you can recall, the better we can understan",
+      "timestamp": 1770870449958,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "cb0e90e6-be8d-480a-aa47-3eaab5ff8b48",
+      "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+      "playerNickname": "Agent-Delta",
+      "content": "This is getting more confusing by the minute, Agent-Echo, maybe focusing on what you were doing *before* you saw Agent-Foxtrot and Agent-Charlie could help jog your memory? Every little detail matters",
+      "timestamp": 1770870452983,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    },
+    {
+      "id": "dc05b14d-ef35-46cc-b4b3-7002389d30be",
+      "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "playerNickname": "Agent-Golf",
+      "content": "Given that Agent-Charlie is now also dead, Agent-Echo's consistent presence near the deceased is a significant concern that we can't ignore. The risk profile for Agent-Echo is becoming too high to dis",
+      "timestamp": 1770870455886,
+      "phase": "DISCUSSION",
+      "isSystem": false
+    }
+  ],
+  "killEvents": [
+    {
+      "killerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "targetId": "f4ef1090-b0ad-4323-8ce4-6053b32f8d76",
+      "round": 1,
+      "timestamp": 1770870193895
+    },
+    {
+      "killerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "targetId": "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+      "round": 2,
+      "timestamp": 1770870311076
+    },
+    {
+      "killerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "targetId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+      "round": 3,
+      "timestamp": 1770870425973
+    },
+    {
+      "killerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+      "targetId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+      "round": 4,
+      "timestamp": 1770870538365
+    }
+  ],
+  "alivePlayers": [
+    "5ee934c9-1fbf-4818-91cf-36781d4f4572",
+    "35951474-1f63-4a50-85ff-6669aac2842e",
+    "a42f221e-5df5-4d8d-9003-bac5f5ce4c89"
+  ],
+  "eliminatedPlayers": [
+    "f4ef1090-b0ad-4323-8ce4-6053b32f8d76",
+    "0fa1ed3a-d24d-4652-b909-966b8091c555",
+    "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+    "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+    "6e973798-af57-4c57-aeab-4dee97922d9e"
+  ],
+  "winner": "IMPOSTOR",
+  "createdAt": 1770870170396,
+  "updatedAt": 1770870538365,
+  "settings": {
+    "maxPlayers": 7,
+    "minPlayers": 2,
+    "impostorCount": 1,
+    "discussionTime": 60,
+    "voteTime": 30,
+    "nightTime": 20,
+    "anonymousVoting": false,
+    "language": "en"
+  },
+  "map": {
+    "locations": {
+      "f4ef1090-b0ad-4323-8ce4-6053b32f8d76": {
+        "playerId": "f4ef1090-b0ad-4323-8ce4-6053b32f8d76",
+        "room": "weapons",
+        "movedAt": 1770870192568,
+        "isMoving": false
+      },
+      "6e973798-af57-4c57-aeab-4dee97922d9e": {
+        "playerId": "6e973798-af57-4c57-aeab-4dee97922d9e",
+        "room": "cafeteria",
+        "movedAt": 1770870537195,
+        "isMoving": false
+      },
+      "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5": {
+        "playerId": "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5",
+        "room": "storage",
+        "movedAt": 1770870424954,
+        "isMoving": false
+      },
+      "35951474-1f63-4a50-85ff-6669aac2842e": {
+        "playerId": "35951474-1f63-4a50-85ff-6669aac2842e",
+        "room": "admin",
+        "movedAt": 1770870537195,
+        "isMoving": false
+      },
+      "0fa1ed3a-d24d-4652-b909-966b8091c555": {
+        "playerId": "0fa1ed3a-d24d-4652-b909-966b8091c555",
+        "room": "storage",
+        "movedAt": 1770870192569,
+        "isMoving": false
+      },
+      "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9": {
+        "playerId": "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9",
+        "room": "electrical",
+        "movedAt": 1770870310039,
+        "isMoving": false
+      },
+      "a42f221e-5df5-4d8d-9003-bac5f5ce4c89": {
+        "playerId": "a42f221e-5df5-4d8d-9003-bac5f5ce4c89",
+        "room": "cafeteria",
+        "movedAt": 1770870538365,
+        "isMoving": false
+      }
+    },
+    "tasks": {
+      "f4ef1090-b0ad-4323-8ce4-6053b32f8d76": [
+        {
+          "id": "f907cf7e-2288-4106-bc72-45dbca55b7a6",
+          "name": "Clear Asteroids",
+          "room": "weapons",
+          "completed": true,
+          "isVisual": true
+        },
+        {
+          "id": "fc8bda9c-a01a-4b37-9948-9d0a0fd2facc",
+          "name": "Upload Data",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "a7cccb02-a244-4cac-aa01-c00ac90d6bc8",
+          "name": "Download Data",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "b38f639f-0755-4a14-97fc-7f5e545efbfe",
+          "name": "Unlock Manifolds",
+          "room": "reactor",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "9c7f5ba4-fc6e-4807-a54d-1e0f748f2389",
+          "name": "Fuel Engines",
+          "room": "storage",
+          "room2": "upper_engine",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "6e973798-af57-4c57-aeab-4dee97922d9e": [
+        {
+          "id": "8fcd038f-bf2d-4e12-8076-697fff7c6890",
+          "name": "Chart Course",
+          "room": "navigation",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "aa1fee4c-1e8c-4c3c-8f7c-603f5e2fd653",
+          "name": "Align Engine",
+          "room": "upper_engine",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "80db9053-4261-47c0-bcca-bc85ffd80c71",
+          "name": "Inspect Sample",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "e63a1a03-a45a-433a-a7a4-6a13f58e8f58",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "c3b2ffe7-79e7-4e66-9024-ae62f75dcc74",
+          "name": "Download Data",
+          "room": "communications",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "ddc8968e-b669-46dd-8b43-b0ee8e5acfe5": [
+        {
+          "id": "381cd134-9522-4943-b9a7-0c2cb22de063",
+          "name": "Calibrate Distributor",
+          "room": "electrical",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "93c53679-a871-49c4-b224-e50f2b58b3e5",
+          "name": "Chart Course",
+          "room": "navigation",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "8d49d61f-00e1-489c-a522-736be637b60c",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "d7556b2c-cb17-4efb-8483-bfc4a030f50c",
+          "name": "Fix Wiring",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "c3217570-9947-4c70-8902-09686e487aec",
+          "name": "Upload Data",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "35951474-1f63-4a50-85ff-6669aac2842e": [
+        {
+          "id": "7a04aab3-cea9-4297-82dd-05c36815cf5f",
+          "name": "Align Engine",
+          "room": "upper_engine",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "33fa9a6d-8bf9-47ed-8e5a-4e1fff60a6a0",
+          "name": "Fix Wiring",
+          "room": "admin",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "05880e47-316a-4951-bac2-0e557fa9d5e9",
+          "name": "Clear Asteroids",
+          "room": "weapons",
+          "completed": false,
+          "isVisual": true
+        },
+        {
+          "id": "0ef1f792-3184-42d0-90bd-9b7aefa03a6d",
+          "name": "Swipe Card",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "556f162d-3458-42f2-ab3a-837a46d9f388",
+          "name": "Unlock Manifolds",
+          "room": "reactor",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "0fa1ed3a-d24d-4652-b909-966b8091c555": [
+        {
+          "id": "7747f924-4cb1-4174-a7a1-d053d2cd8543",
+          "name": "Calibrate Distributor",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "99e2872d-47da-4b04-be2a-8de715d50aea",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "d935b34f-d90b-4493-896f-cf0d950a750f",
+          "name": "Empty Garbage",
+          "room": "storage",
+          "completed": true,
+          "isVisual": true
+        },
+        {
+          "id": "c7f7d88e-d210-483d-bc64-44d9fa2ed769",
+          "name": "Download Data",
+          "room": "communications",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "6a675049-81e5-4284-b739-2f9da819e273",
+          "name": "Align Engine",
+          "room": "upper_engine",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "201c4645-3a2e-48f7-b5d5-2d6ecf3a57a9": [
+        {
+          "id": "66d36071-49d4-48a3-bc8e-23ed99ef7c0d",
+          "name": "Download Data",
+          "room": "electrical",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "47e65a64-e073-4f68-9afb-cde91d28cfbd",
+          "name": "Fuel Engines",
+          "room": "storage",
+          "room2": "upper_engine",
+          "completed": true,
+          "isVisual": false
+        },
+        {
+          "id": "cf47b326-e74b-46ce-8679-65bf407a1637",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "9f6eaeb5-a8ae-451d-9160-b307815468dd",
+          "name": "Swipe Card",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "ca755b3c-b72b-4a75-93b3-b1e448fc2188",
+          "name": "Inspect Sample",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": false
+        }
+      ],
+      "a42f221e-5df5-4d8d-9003-bac5f5ce4c89": [
+        {
+          "id": "db6da5fb-d5e0-4625-8de0-8bbab3556510",
+          "name": "Fix Wiring",
+          "room": "admin",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "47c0c6a3-82f3-4188-8aaf-d302fd812022",
+          "name": "Align Engine",
+          "room": "lower_engine",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "73a81a18-164b-47d9-a55a-7a0121ab1748",
+          "name": "Clean O2 Filter",
+          "room": "o2",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "c84aba08-f2d2-4845-a8d8-3e22adefd49e",
+          "name": "Divert Power",
+          "room": "electrical",
+          "completed": false,
+          "isVisual": false
+        },
+        {
+          "id": "b6272a4a-a1e1-40c6-a54d-328495096eb1",
+          "name": "Inspect Sample",
+          "room": "medbay",
+          "completed": false,
+          "isVisual": false
+        }
+      ]
+    },
+    "taskProgress": 0.26666666666666666,
+    "totalTasks": 30,
+    "completedTasks": 8
+  }
+}

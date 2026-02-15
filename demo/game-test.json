@@ -1,0 +1,45 @@
+{
+  "id": "ed4f8f67-8d63-475b-aea1-a05e1e92d6af",
+  "code": "XG255P",
+  "winner": "CREW",
+  "rounds": 2,
+  "playerCount": 7,
+  "players": [
+    {
+      "nickname": "Agent-Alpha",
+      "role": "IMPOSTOR",
+      "isAlive": false
+    },
+    {
+      "nickname": "Agent-Bravo",
+      "role": "CREW",
+      "isAlive": true
+    },
+    {
+      "nickname": "Agent-Charlie",
+      "role": "CREW",
+      "isAlive": false
+    },
+    {
+      "nickname": "Agent-Delta",
+      "role": "CREW",
+      "isAlive": false
+    },
+    {
+      "nickname": "Agent-Echo",
+      "role": "CREW",
+      "isAlive": false
+    },
+    {
+      "nickname": "Agent-Foxtrot",
+      "role": "CREW",
+      "isAlive": true
+    },
+    {
+      "nickname": "Agent-Golf",
+      "role": "CREW",
+      "isAlive": true
+    }
+  ],
+  "finishedAt": 1770868265915
+}

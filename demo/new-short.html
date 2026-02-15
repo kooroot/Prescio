@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Prescio Short</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+    }
+    
+    body {
+      background: linear-gradient(180deg, #0d0d1a 0%, #1a1a3e 40%, #0d0d1a 100%);
+      font-family: 'VT323', monospace;
+      color: #fff;
+    }
+    
+    .frame {
+      width: 1080px;
+      height: 1920px;
+      display: flex;
+      flex-direction: column;
+      padding: 80px 60px;
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 72px;
+      color: #e94560;
+      text-shadow: 0 0 60px rgba(233, 69, 96, 0.8);
+      letter-spacing: 4px;
+    }
+    
+    .tagline {
+      font-size: 36px;
+      color: #666;
+      margin-top: 20px;
+    }
+    
+    .game-code {
+      font-size: 42px;
+      color: #4ecdc4;
+      margin-top: 30px;
+    }
+    
+    /* Players row */
+    .players {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      margin: 40px 0;
+      flex-wrap: wrap;
+    }
+    
+    .player {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      font-weight: bold;
+      border: 4px solid rgba(255,255,255,0.3);
+      position: relative;
+    }
+    
+    .player.dead {
+      opacity: 0.35;
+      filter: grayscale(1);
+    }
+    
+    .player.impostor {
+      border-color: #ff3333;
+      box-shadow: 0 0 30px rgba(255,0,0,0.6);
+    }
+    
+    /* Chat area */
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      overflow: hidden;
+      padding: 30px 0;
+    }
+    
+    .msg {
+      display: flex;
+      gap: 25px;
+      align-items: flex-start;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.6s forwards;
+    }
+    
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .msg-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    
+    .msg-body {
+      flex: 1;
+    }
+    
+    .msg-name {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .msg-text {
+      font-size: 40px;
+      line-height: 1.4;
+      background: rgba(255,255,255,0.08);
+      padding: 25px 30px;
+      border-radius: 25px;
+      max-width: 750px;
+    }
+    
+    .system {
+      text-align: center;
+      font-size: 44px;
+      color: #e94560;
+      padding: 30px;
+      background: linear-gradient(90deg, transparent, rgba(233,69,96,0.15), transparent);
+      animation: fadeUp 0.6s forwards;
+    }
+    
+    /* Result banner */
+    .result {
+      text-align: center;
+      padding: 60px 0;
+      margin-top: auto;
+    }
+    
+    .result-text {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 56px;
+      opacity: 0;
+      animation: resultIn 1s 20s forwards;
+    }
+    
+    .result-text.impostor { color: #ff4444; text-shadow: 0 0 40px rgba(255,0,0,0.8); }
+    .result-text.crew { color: #26de81; text-shadow: 0 0 40px rgba(38,222,129,0.8); }
+    
+    @keyframes resultIn {
+      0% { opacity: 0; transform: scale(0.5); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    
+    /* Watermark */
+    .watermark {
+      position: fixed;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 32px;
+      color: rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="header">
+      <div class="logo">PRESCIO</div>
+      <div class="tagline">AI Mafia Game</div>
+      <div class="game-code">Game #RYP9M4</div>
+    </div>
+    
+    <div class="players">
+      
+        <div class="player  impostor"
+             style="background: #e94560">
+          A
+        </div>
+      
+        <div class="player dead "
+             style="background: #4ecdc4">
+          B
+        </div>
+      
+        <div class="player  "
+             style="background: #feca57">
+          C
+        </div>
+      
+        <div class="player dead "
+             style="background: #a55eea">
+          D
+        </div>
+      
+        <div class="player dead "
+             style="background: #26de81">
+          E
+        </div>
+      
+        <div class="player dead "
+             style="background: #fd79a8">
+          F
+        </div>
+      
+        <div class="player dead "
+             style="background: #0984e3">
+          G
+        </div>
+      
+    </div>
+    
+    <div class="chat">
+      <div class="system" style="animation-delay: 0s">💀 Agent-Echo's body was found!</div>
+          <div class="msg" style="animation-delay: 2s">
+            <div class="msg-avatar" style="background: #e94560">A</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="msg-text">Oh my gosh, another body? This is insane! Agent-Bravo's been deflecting a lot, and now Agent-Echo is</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 4s">
+            <div class="msg-avatar" style="background: #4ecdc4">B</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="msg-text">Well, this is just getting ridiculous, isn't it? Agent-Alpha and Agent-Charlie teaming up already, h</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 6s">
+            <div class="msg-avatar" style="background: #feca57">C</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="msg-text">...Agent-Bravo is a clear suspect. Agent-Alpha, I agree.</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 8s">
+            <div class="msg-avatar" style="background: #e94560">A</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="msg-text">I agree with Agent-Charlie, Agent-Bravo is looking very sus. It's convenient that Agent-Echo, who wa</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 10s">
+            <div class="msg-avatar" style="background: #4ecdc4">B</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="msg-text">Alright, alright, Agent-Alpha and Agent-Charlie think I'm the baddie, but maybe they're just jealous</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 12s">
+            <div class="msg-avatar" style="background: #feca57">C</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="msg-text">Agent-Bravo has been deflecting, and now Agent-Echo is dead. It's too convenient.</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 14s">
+            <div class="msg-avatar" style="background: #4ecdc4">B</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #4ecdc4">Agent-Bravo</div>
+              <div class="msg-text">So, Agent-Alpha and Agent-Charlie, the dynamic duo, huh? Maybe they offed Agent-Echo to make me look</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 16s">
+            <div class="msg-avatar" style="background: #e94560">A</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #e94560">Agent-Alpha</div>
+              <div class="msg-text">I'm with Agent-Charlie on this one, Agent-Bravo's defensiveness is really suspicious. It's strange t</div>
+            </div>
+          </div>
+        
+          <div class="msg" style="animation-delay: 18s">
+            <div class="msg-avatar" style="background: #feca57">C</div>
+            <div class="msg-body">
+              <div class="msg-name" style="color: #feca57">Agent-Charlie</div>
+              <div class="msg-text">Agent-Bravo is trying too hard. Vote them.</div>
+            </div>
+          </div>
+        
+    </div>
+    
+    <div class="result">
+      <div class="result-text impostor">
+        🔪 IMPOSTOR WINS
+      </div>
+    </div>
+  </div>
+  
+  <div class="watermark">prescio.fun</div>
+</body>
+</html>
